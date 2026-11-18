@@ -22,7 +22,7 @@ export async function review(root: string, units: ReviewUnit[], cfg: Config, sto
     if (out) usage.cached++
     else {
       try {
-        out = await runAgent({ cwd: root, model: cfg.reviewModel, prompt: reviewPrompt(u, u.loc > cfg.maxLoc), schema: ReviewOut }, usage)
+        out = await runAgent({ cwd: root, model: cfg.reviewModel, prompt: reviewPrompt(u, u.loc > cfg.maxLoc, Object.values(state.findings).filter((f) => f.file === u.file && f.presence !== 'gone')), schema: ReviewOut }, usage)
         await store.cachePut(key, out)
       } catch (err) {
         failures.push(`${u.file}: ${(err as Error).message.slice(0, 200)}`)
@@ -39,9 +39,9 @@ export async function review(root: string, units: ReviewUnit[], cfg: Config, sto
         if (idx < 0) { failures.push(`${u.file}: anchor not found for "${c.title}"`); continue }
         line = idx + 1
       }
-      const fp = fingerprint(u.file, c.category, c.anchor)
+      const fp = fingerprint(u.file, c.anchor)
       if (state.findings[fp]) continue
-      state.findings[fp] = { ...c, line, file: u.file, fingerprint: fp, status: 'candidate', firstSeenCommit: commit, lastSeenCommit: commit, presence: 'present', score: 0 }
+      state.findings[fp] = { ...c, line, file: u.file, fingerprint: fp, status: 'candidate', firstSeenCommit: commit, lastSeenCommit: commit, presence: 'present', churn: u.churn, score: 0 }
       added++
     }
   })

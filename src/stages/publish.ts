@@ -1,11 +1,12 @@
 import type { Config } from '../config.js'
 import { ghApi } from '../github.js'
-import { effectiveStatus, type State } from '../state.js'
+import type { State } from '../state.js'
 import { issueBody } from '../report.js'
 
 /**
- * Files confirmed findings as issues in a repository YOU control (never the
- * upstream). Idempotent: the fingerprint is embedded in the body and searched
+ * Files human-confirmed findings (status set in overrides.json: an agent
+ * verdict alone never creates an issue) in a repository YOU control, never the
+ * upstream. Idempotent: the fingerprint is embedded in the body and searched
  * before creating, and the issue URL is stored in state.
  */
 export async function publish(cfg: Config, state: State, opts: { dryRun: boolean }) {
@@ -13,7 +14,7 @@ export async function publish(cfg: Config, state: State, opts: { dryRun: boolean
   if (cfg.findingsRepo.toLowerCase() === cfg.upstreamRepo.toLowerCase()) throw new Error('refusing to file into the upstream repo')
   const out: string[] = []
   const ranked = Object.values(state.findings)
-    .filter((f) => effectiveStatus(f) === 'confirmed' && f.presence !== 'gone' && !f.issue)
+    .filter((f) => f.human?.status === 'confirmed' && f.presence !== 'gone' && !f.issue)
     .sort((a, b) => b.score - a.score)
   for (const f of ranked) {
     const title = `[${f.verdict?.severity ?? f.severity}] ${f.title}`

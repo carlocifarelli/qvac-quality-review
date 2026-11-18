@@ -14,11 +14,11 @@ const base = (over: Partial<Finding> = {}): Finding => ({
 
 describe('fingerprint', () => {
   it('ignores whitespace and line number', () => {
-    expect(fingerprint('a.ts', 'security', '  foo(  x )')).toBe(fingerprint('a.ts', 'security', 'foo( x )'))
+    expect(fingerprint('a.ts', '  foo(  x )')).toBe(fingerprint('a.ts', 'foo( x )'))
   })
-  it('differs by file and category', () => {
-    expect(fingerprint('a.ts', 'security', 'x')).not.toBe(fingerprint('b.ts', 'security', 'x'))
-    expect(fingerprint('a.ts', 'security', 'x')).not.toBe(fingerprint('a.ts', 'correctness', 'x'))
+  it('differs by file and anchor, not by category', () => {
+    expect(fingerprint('a.ts', 'x')).not.toBe(fingerprint('b.ts', 'x'))
+    expect(fingerprint('a.ts', 'x')).not.toBe(fingerprint('a.ts', 'y'))
   })
 })
 

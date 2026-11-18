@@ -3,13 +3,16 @@ import type { ReviewUnit, Finding } from './types.js'
 /** Bump when a prompt changes: it is part of the cache key, so old answers are not reused. */
 export const PROMPT_VERSION = 'v1'
 
-export function reviewPrompt(u: ReviewUnit, partial: boolean): string {
+export function reviewPrompt(u: ReviewUnit, partial: boolean, known: Finding[] = []): string {
+  const knownText = known.length
+    ? `\nAlready recorded for this file (do not report these again, even reworded):\n${known.map((f) => `- line ${f.line}: ${f.title}`).join('\n')}\n`
+    : ''
   const lint = Object.entries(u.lint).map(([r, ls]) => `${r} at lines ${ls.join(', ')}`).join('; ') || 'none'
   return `You are reviewing one file of the QVAC monorepo (Tether's local-AI SDK, JS/TS, runs on Node and Bare) for defects worth a maintainer's time.
 
 File: ${u.file} (${u.loc} lines of code${partial ? '; large file: focus on the riskiest functions' : ''})
 Deterministic signals: ${JSON.stringify(u.signals)}; correctness lint: ${lint}
-
+${knownText}
 Read the file. Open callers, types, tests and sibling files when a finding depends on them; do not guess what other code does.
 
 Report at most 5 findings, only ones where you can name a concrete trigger and a concrete consequence:

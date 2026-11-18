@@ -37,7 +37,9 @@ export function toMarkdown(state: State, repo: string, commit: string): string {
   const all = Object.values(state.findings)
   const by = (s: string) =>
     all.filter((f) => effectiveStatus(f) === s && f.presence !== 'gone').sort((a, b) => b.score - a.score)
-  const confirmed = by('confirmed')
+  const confirmedAll = by('confirmed')
+  const confirmed = confirmedAll.filter((f) => f.human?.status === 'confirmed')
+  const agentOnly = confirmedAll.filter((f) => f.human?.status !== 'confirmed')
   const uncertain = by('uncertain')
   const candidate = by('candidate')
   const rejected = by('rejected')
@@ -50,11 +52,17 @@ export function toMarkdown(state: State, repo: string, commit: string): string {
     [
       `# Findings for ${repo}@${commit.slice(0, 12)}`,
       '',
-      `Generated ${new Date().toISOString()}. ${confirmed.length} confirmed, ${uncertain.length} uncertain, ${candidate.length} unverified, ${rejected.length} rejected, ${gone.length} no longer present. ${fresh.length} first seen at this commit.`,
+      `Generated ${new Date().toISOString()}. ${confirmed.length} confirmed by a human, ${agentOnly.length} confirmed by the verifier agent only, ${uncertain.length} uncertain, ${candidate.length} unverified, ${rejected.length} rejected, ${gone.length} no longer present. ${fresh.length} first seen at this commit.`,
       '',
-      '## Confirmed (ranked)',
+      '## Confirmed: human-verified (ranked)',
       head,
       ...confirmed.map(row),
+      '',
+      '## Confirmed by the verifier agent, not yet human-verified (ranked)',
+      'Treat as leads: the adversarial pass could not disprove them, but nobody has reproduced them yet.',
+      '',
+      head,
+      ...agentOnly.map(row),
       '',
       '## Uncertain (needs a human or a runtime test)',
       head,
@@ -69,7 +77,7 @@ export function toMarkdown(state: State, repo: string, commit: string): string {
         : []),
       '',
       '## Details',
-      ...[...confirmed, ...uncertain].flatMap((f) => ['', `### ${f.title}`, '', issueBody(f)]),
+      ...[...confirmed, ...agentOnly, ...uncertain].flatMap((f) => ['', `### ${f.title}`, '', issueBody(f)]),
     ].join('\n') + '\n'
   )
 }

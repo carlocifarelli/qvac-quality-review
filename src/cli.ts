@@ -63,7 +63,10 @@ program
     const v = await verify(root, cfg, store, state, usage)
     console.error(`verify: ${v.verified} verdicts, ${v.failures.length} failures`)
     const churn = new Map(sel.units.map((u) => [u.file, u.churn]))
-    for (const f of Object.values(state.findings)) f.score = score(f, churn.get(f.file) ?? 0)
+    for (const f of Object.values(state.findings)) {
+      if (churn.has(f.file)) f.churn = churn.get(f.file)
+      f.score = score(f)
+    }
     state.runs.push({
       commit: sel.commit,
       at: new Date().toISOString(),
@@ -91,7 +94,7 @@ program
     const { store, state } = await openState(o.state)
     const commit = (await git(resolve(repo), ['rev-parse', 'HEAD'])).trim()
     await refreshPresence(resolve(repo), state, commit)
-    for (const f of Object.values(state.findings)) f.score = score(f, 0)
+    for (const f of Object.values(state.findings)) f.score = score(f)
     await store.save(state)
     await mkdir(o.out, { recursive: true })
     await writeFile(join(o.out, 'FINDINGS.md'), toMarkdown(state, cfg.upstreamRepo, commit))
@@ -103,10 +106,14 @@ program
   .option('-c, --config <file>', 'config file', 'qr.config.json')
   .option('-s, --state <dir>', 'state directory', 'state')
   .option('--force', 're-run searches already recorded')
+  .option('--human-confirmed', 'only findings a human marked confirmed (cheaper, avoids the search rate limit)')
   .action(async (o) => {
     const cfg = await loadConfig(o.config)
     const { store, state } = await openState(o.state)
-    console.error(await dedupe(cfg, state, { force: o.force }))
+    const only = o.humanConfirmed
+      ? Object.values(state.findings).filter((f) => f.human?.status === 'confirmed').map((f) => f.fingerprint)
+      : undefined
+    console.error(await dedupe(cfg, state, { force: o.force, only }))
     await store.save(state)
   })
 

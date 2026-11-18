@@ -6,11 +6,13 @@ import { normalizeLine, readJson, sha256, writeJson } from './util.js'
 /**
  * Durable state lives in the tool repo (state/), not in the target, so it can
  * be committed and reviewed: findings keyed by fingerprint, the review cache,
- * and human overrides. Fingerprint = file + category + normalized anchor line,
- * so a finding keeps its identity when code above it moves.
+ * and human overrides. Fingerprint = file + normalized anchor line, so a
+ * finding keeps its identity when code above it moves. The category is NOT part
+ * of it: re-reviews of a changed file classified the same defect differently
+ * (concurrency vs correctness), which created duplicates (v1 scheme, see README).
  */
-export const fingerprint = (file: string, category: string, anchor: string) =>
-  'qr1:' + sha256(`${file}\n${category}\n${normalizeLine(anchor)}`).slice(0, 16)
+export const fingerprint = (file: string, anchor: string) =>
+  'qr2:' + sha256(`${file}\n${normalizeLine(anchor)}`).slice(0, 16)
 
 export interface State {
   schemaVersion: 1
@@ -58,7 +60,7 @@ export function effectiveStatus(f: Finding): Status {
 }
 
 /** Ranking score: verified severity x confidence x verification state, nudged by churn. */
-export function score(f: Finding, churn: number): number {
+export function score(f: Finding, churn = f.churn ?? 0): number {
   const sev = SEV[f.verdict?.severity ?? f.severity]
   return +(sev * CONF[f.confidence] * STAT[effectiveStatus(f)] * (1 + Math.log2(1 + churn) / 4)).toFixed(2)
 }

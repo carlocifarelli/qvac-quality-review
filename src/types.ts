@@ -69,6 +69,8 @@ export interface Finding extends CandidateOut {
   presence: 'present' | 'moved' | 'gone'
   issue?: string
   duplicates?: { query: string; searchedAt: string; total: number; top: { title: string; url: string; state: string }[] }[]
+  /** Commits touching the file in the churn window when last reviewed */
+  churn?: number
   score: number
 }
 

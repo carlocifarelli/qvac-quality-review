@@ -66,16 +66,17 @@ jobs:
           RULES_NEW: ${{ steps.rules.outputs.new }}
         run: |
           sha=$(git -C target rev-parse --short=12 HEAD)
-          # Nothing to triage: no state change (new leads, presence) and no untriaged rule hit.
-          if git diff --quiet -- state && [ "${RULES_NEW:-0}" = 0 ]; then echo "nothing to triage at $sha"; exit 0; fi
+          # Only new leads, findings that disappeared or came back, or untriaged rule hits need a person.
+          if ! summary=$(node scripts/triage-needed.mjs); then echo "nothing to triage at $sha: $summary"; exit 0; fi
           branch="scan/$(date -u +%F)-$sha"
           git config user.name "qvac-quality-review[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
           git add state results
-          git commit -m "Scan of tetherto/qvac@$sha"
+          git commit -m "Scan of tetherto/qvac@$sha: $summary"
           git push -u origin "$branch"
-          leads=$(node -e 'const s=require("./state/findings.json");console.log(Object.values(s.findings).filter(f=>!f.human&&f.presence!=="gone"&&f.verdict?.verdict!=="rejected").length)')
-          gh pr create --base main --head "$branch" \
-            --title "Triage: scan of tetherto/qvac@$sha ($leads agent leads, $RULES_NEW untriaged rule hits)" \
-            --body "Weekly scan. Read results/FINDINGS.md and results/RULES.md, then record decisions in this PR: state/overrides.json for agent leads, state/rules-baseline.json for rule hits. Merging files the confirmed findings as issues (publish.yml). A confirmed class with a syntactic shape should get a rule in src/rules/ with the finding as its test case."
+          body="Scan of tetherto/qvac@$sha: $summary. Read results/FINDINGS.md and results/RULES.md, then record decisions on this branch: state/overrides.json for agent leads, state/rules-baseline.json for rule hits. Merging files the confirmed findings as issues (publish.yml). A confirmed class with a syntactic shape should get a rule in src/rules/ with the finding as its test case."
+          # Creating PRs from Actions needs "Allow GitHub Actions to create and approve pull requests"
+          # (Settings > Actions > General). Without it, fall back to an issue that links the branch.
+          gh pr create --base main --head "$branch" --title "Triage: tetherto/qvac@$sha ($summary)" --body "$body" \
+            || gh issue create --title "Triage: tetherto/qvac@$sha ($summary)" --body "$body Branch: $branch (open a PR from it)."

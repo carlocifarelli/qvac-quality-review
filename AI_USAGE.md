@@ -7,6 +7,7 @@ AI was used in two distinct roles. They are kept apart because they need differe
 - **Reviewer** and **verifier** stages run Claude Code headless (`claude -p`, model `claude-opus-5-5`) as a read-only agent inside the QVAC checkout. Prompts are in `src/prompts.ts`; tool restrictions in `src/backends/claude-cli.ts`.
 - Every model output is schema-validated (zod → JSON Schema), anchors are re-checked against the file, and each candidate is challenged by a second, adversarial pass.
 - No finding was filed on model output alone: the ones marked confirmed were reproduced by a script in `verification/` that I ran and read, or verified by reading the cited code paths myself (stated per finding in `state/overrides.json`).
+- The same stages can run on a local model through `qvac serve` (`src/backends/openai-compatible.ts`); measured with Qwen3-4B and KAT-Coder 35B MoE in `results/local-qvac*/`. Their findings were not used for the submission.
 - Model answers are cached (`state/cache/`), so the exact outputs behind this submission are inspectable and a re-run is reproducible.
 
 ## 2. AI as a development assistant (build time)

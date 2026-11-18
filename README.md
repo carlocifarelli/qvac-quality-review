@@ -4,7 +4,7 @@ A repeatable pipeline that finds, verifies and ranks **defects worth fixing** in
 
 - **Results:** [`results/FINDINGS.md`](results/FINDINGS.md) (generated) and the curated summary in [`FINDINGS-SUMMARY.md`](FINDINGS-SUMMARY.md)
 - **Tracked findings:** issues in this repository, labelled `qvac-finding` (IDs listed in the summary)
-- **Analyzed:** `tetherto/qvac@0c8a1510ab4fe89893de174b07eb4901a2f3e9fd` (main, 2026-11-18 12:13 +05:30, "infra[notask]: build consumer releases against the released @qvac/fabric (#5805)")`, scope below
+- **Analyzed:** `tetherto/qvac@0c8a1510ab4fe89893de174b07eb4901a2f3e9fd` (main, 2026-11-18 12:13 +05:30, "infra[notask]: build consumer releases against the released @qvac/fabric (#5805)"), scope below
 - **Time spent:** see [Time spent](#time-spent) (budget 8 h, started 09:07 CET)
 
 ## TL;DR
@@ -277,8 +277,9 @@ See [AI_USAGE.md](AI_USAGE.md).
 
 ## Time spent
 
-Assessment received 09:07 CET on 2026-11-18; first complete version pushed at about 09:45 CET. Timestamps in `state/findings.json` (`runs`), `results/run-log.json` and the duplicate-search log are in UTC and back this up. The agent stages ran in parallel (49 minutes of agent time in about 10 minutes of wall-clock time), which is why the elapsed time is short. Further work, if any, is logged below.
+Assessment received 09:07 CET on 2026-11-18; first complete version pushed at about 09:45 CET. Timestamps in `state/findings.json` (`runs`), `results/run-log.json` and the duplicate-search log are in UTC and back this up. The agent stages ran in parallel (49 minutes of agent time in about 10 minutes of wall-clock time), which is why the elapsed time is short. Further work is logged below. **Total: about 5 hours** (09:07 to about 14:05 CET), within the 8-hour budget.
 
 - **Assessment completed (same day):** human decision on all remaining 24 agent leads (18 confirmed, 6 rejected; one of the rejections came from the duplicate search, because PR #4379 documents the behaviour), 2 new executed reproductions, 188 more duplicate searches, 18 more issues filed (#14-#31).
 - **Deterministic rules (same day):** the `qvac-quality` ESLint plugin (6 rules, 42 RuleTester cases), the `qr rules` command with its triaged baseline and gate, a run over all 1,013 files with every hit triaged, one new finding filed (#32), and the fix and regression demos.
 - **Workflow (same day):** `qr pr` (rules blocking, agent advisory on changed files, fixed/open findings, PR comment), `prMaxFiles` cap, the simulated PR demo ($0.88), and four workflow files: tool CI, weekly scan with triage PR, publish on merge, and the proposed PR check for QVAC.
+- **QVAC local backend (same day):** the `openai-compatible` backend for `qvac serve`, and two measured runs on a workstation against the 31 confirmed findings (Qwen3-4B and KAT-Coder 35B MoE, about 30 minutes each, mostly unattended).

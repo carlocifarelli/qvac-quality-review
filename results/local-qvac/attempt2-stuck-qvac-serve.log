@@ -1,0 +1,188 @@
+(node:80109) [FSTDEP023] FastifyDeprecation: disableRequestLogging option is deprecated. Use the logController option with disableRequestLogging or isLogDisabled override instead. The disableRequestLogging top-level option will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Preloading 1 model(s): reviewer
+Loading model "reviewer" from registry://s3/qvac_models_compiled/ggml/Qwen3-4B/2025-06-27/Qwen3-4B-Q4_K_M.gguf...
+Model "reviewer" loaded (SDK modelId: 76ed454ad3f75d07).
+responses: in-memory only — IDs expire on restart, max 256 entries, 60m TTL
+videos: in-memory only — job IDs and rendered bytes are lost on restart, max 256 entries
+QVAC API server listening on http://127.0.0.1:11435
+Mounted surfaces: openai (OpenAI-compatible REST API).
+
+Endpoints:
+  ├── /openapi.json (GET, HEAD)
+  ├── /v1/audio/transcriptions (POST)
+  ├── /v1/audio/translations (POST)
+  ├── /v1/audio/speech (POST)
+  ├── /v1/audio/voices (GET, HEAD)
+  ├── /v1/audio/models (GET, HEAD)
+  ├── /v1/chat/completions (POST)
+  ├── /v1/completions (POST)
+  ├── /v1/decisions (POST)
+  ├── /v1/embeddings (POST)
+  ├── /v1/files (POST, GET, HEAD)
+  │   └── /:id (GET, HEAD)
+  │       └── /content (GET, HEAD)
+  ├── /v1/images/generations (POST)
+  ├── /v1/images/edits (POST)
+  ├── /v1/models (GET, HEAD)
+  │   ├── /catalog (GET, HEAD)
+  │   │   └── /:id (GET, HEAD)
+  │   └── /:id (GET, HEAD, DELETE)
+  ├── /v1/responses (POST)
+  │   └── /:id (GET, HEAD, DELETE)
+  │       └── /input_items (GET, HEAD)
+  ├── /v1/vector_stores (GET, HEAD, POST)
+  │   └── /:id (GET, HEAD, POST, DELETE)
+  │       ├── /search (POST)
+  │       └── /files (POST)
+  └── /v1/videos (POST, GET, HEAD)
+      └── /:id (GET, HEAD, DELETE)
+          └── /content (GET, HEAD)
+
+→ GET /v1/models
+← 200 GET /v1/models (2ms)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=1 stream=false tools=1 genParams={"temp":0}
+  completion done tokens=92 finish=tool_calls ttft=381ms tps=95.4 prompt=146 cache=238 gen=92 backend=gpu
+← 200 POST /v1/chat/completions (1.38s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=2389 finish=stop ttft=3467ms tps=89.1 prompt=4276 cache=6665 gen=2389 backend=gpu
+← 200 POST /v1/chat/completions (31.49s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=3285ms tps=40.8 prompt=4069 cache=4077 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (4.18s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=3419 finish=stop ttft=2247ms tps=96.3 prompt=3024 cache=6443 gen=3419 backend=gpu
+← 200 POST /v1/chat/completions (39.09s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=1509 finish=stop ttft=2746ms tps=86.0 prompt=2817 cache=4326 gen=1509 backend=gpu
+← 200 POST /v1/chat/completions (21.03s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=1438 finish=tool_calls ttft=10970ms tps=72.3 prompt=9722 cache=11160 gen=1438 backend=gpu
+← 200 POST /v1/chat/completions (30.90s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=848 finish=tool_calls ttft=14157ms tps=71.4 prompt=10189 cache=11037 gen=848 backend=gpu
+← 200 POST /v1/chat/completions (26.06s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=8 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=582 finish=tool_calls ttft=11842ms tps=83.5 prompt=10656 cache=11238 gen=582 backend=gpu
+← 200 POST /v1/chat/completions (18.84s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=12 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=12403ms tps=73.5 prompt=10916 cache=10924 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (14.72s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=1202 finish=tool_calls ttft=2554ms tps=107.8 prompt=3548 cache=4750 gen=1202 backend=gpu
+← 200 POST /v1/chat/completions (13.72s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=8 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=2265 finish=stop ttft=3588ms tps=94.9 prompt=3956 cache=6221 gen=2265 backend=gpu
+← 200 POST /v1/chat/completions (28.80s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=9 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=365 finish=stop ttft=2863ms tps=107.4 prompt=3749 cache=4114 gen=365 backend=gpu
+← 200 POST /v1/chat/completions (7.10s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=1668 finish=stop ttft=3494ms tps=106.4 prompt=3973 cache=5641 gen=1668 backend=gpu
+← 200 POST /v1/chat/completions (20.17s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=2744ms tps=90.1 prompt=3766 cache=3774 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (3.49s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=14890 finish=length ttft=22359ms tps=61.3 prompt=17878 cache=0 gen=14890 backend=gpu
+← 200 POST /v1/chat/completions (265.45s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=1162 finish=stop ttft=23309ms tps=73.5 prompt=17671 cache=18833 gen=1162 backend=gpu
+← 200 POST /v1/chat/completions (41.92s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=2820 finish=stop ttft=5472ms tps=81.6 prompt=6064 cache=8884 gen=2820 backend=gpu
+← 200 POST /v1/chat/completions (41.72s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=1323 finish=stop ttft=5515ms tps=84.5 prompt=5857 cache=7180 gen=1323 backend=gpu
+← 200 POST /v1/chat/completions (22.66s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=2837 finish=stop ttft=6688ms tps=82.1 prompt=6725 cache=9562 gen=2837 backend=gpu
+← 200 POST /v1/chat/completions (43.68s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=6224ms tps=56.5 prompt=6518 cache=6526 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (8.75s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=2002 finish=stop ttft=3684ms tps=86.5 prompt=4378 cache=6380 gen=2002 backend=gpu
+← 200 POST /v1/chat/completions (28.23s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=3678ms tps=72.8 prompt=4171 cache=4179 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (4.82s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=1038 finish=tool_calls ttft=3475ms tps=89.9 prompt=3600 cache=4638 gen=1038 backend=gpu
+← 200 POST /v1/chat/completions (15.08s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=1120 finish=stop ttft=3267ms tps=90.3 prompt=3688 cache=4808 gen=1120 backend=gpu
+← 200 POST /v1/chat/completions (16.96s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=2514ms tps=87.2 prompt=3481 cache=3489 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (3.63s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=3281 finish=stop ttft=5726ms tps=83.4 prompt=6877 cache=10158 gen=3281 backend=gpu
+← 200 POST /v1/chat/completions (47.99s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=5460ms tps=79.5 prompt=6670 cache=6678 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (8.16s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=2068 finish=tool_calls ttft=5635ms tps=96.3 prompt=6951 cache=9019 gen=2068 backend=gpu
+← 200 POST /v1/chat/completions (27.12s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=4 stream=false tools=2 genParams={"temp":0}
+  completion done tokens=1165 finish=stop ttft=13444ms tps=84.9 prompt=11441 cache=12606 gen=1165 backend=gpu
+← 200 POST /v1/chat/completions (32.05s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false genParams={"temp":0} responseFormat=json_schema
+  completion done tokens=713 finish=stop ttft=12679ms tps=82.2 prompt=11234 cache=11947 gen=713 backend=gpu
+← 200 POST /v1/chat/completions (30.69s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0}
+unhandled POST /v1/chat/completions
+WORKER_SHUTDOWN: SDK is shutting down — in-flight RPC call aborted
+    at file:///Users/carlo.cifarelli/.npm/_npx/b95a545d53e3a001/node_modules/@qvac/sdk/dist/src/client/rpc/node-rpc-client.js:413:37
+    at close (file:///Users/carlo.cifarelli/.npm/_npx/b95a545d53e3a001/node_modules/@qvac/sdk/dist/src/client/rpc/node-rpc-client.js:416:7)
+    at close (file:///Users/carlo.cifarelli/.npm/_npx/b95a545d53e3a001/node_modules/@qvac/sdk/dist/src/client/rpc/rpc-client.js:686:11)
+    at shutdownSDK (file:///Users/carlo.cifarelli/.npm/_npx/b95a545d53e3a001/node_modules/@qvac/cli/dist/serve/core/lifecycle.js:98:15)
+    at Object.<anonymous> (file:///Users/carlo.cifarelli/.npm/_npx/b95a545d53e3a001/node_modules/@qvac/cli/dist/serve/core/server.js:160:15)
+    at Object._encapsulateTwoParam (/Users/carlo.cifarelli/.npm/_npx/b95a545d53e3a001/node_modules/avvio/index.js:570:13)
+    at Boot.closeWithCbOrNextTick (/Users/carlo.cifarelli/.npm/_npx/b95a545d53e3a001/node_modules/avvio/index.js:552:7)
+    at Task.release (/Users/carlo.cifarelli/.npm/_npx/b95a545d53e3a001/node_modules/fastq/queue.js:172:16)
+    at worked (/Users/carlo.cifarelli/.npm/_npx/b95a545d53e3a001/node_modules/fastq/queue.js:260:10)
+    at Server.<anonymous> (/Users/carlo.cifarelli/.npm/_npx/b95a545d53e3a001/node_modules/fastify/fastify.js:447:15)
+SDK connection closed.

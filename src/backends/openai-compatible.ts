@@ -94,7 +94,8 @@ async function chat(opts: OpenAiOptions, body: Record<string, unknown>, timeoutM
   const r = await fetch(`${opts.baseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...(opts.apiKey ? { authorization: `Bearer ${opts.apiKey}` } : {}) },
-    body: JSON.stringify(body),
+    // Cap generation: an unbounded reasoning loop blocks the single-slot local server and outlives fetch's 5-min header timeout.
+    body: JSON.stringify({ max_tokens: 4096, ...body }),
     signal: AbortSignal.timeout(timeoutMs),
   })
   if (!r.ok) throw new Error(`chat/completions ${r.status}: ${(await r.text()).slice(0, 300)}`)

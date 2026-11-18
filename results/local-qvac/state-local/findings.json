@@ -1,0 +1,638 @@
+{
+  "schemaVersion": 1,
+  "findings": {
+    "qr2:ea95a6af6816a9d7": {
+      "title": "Stale Error Rejects in Broker Cleanup",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 172,
+      "anchor": "tcpServer.on('error', reject)",
+      "evidence": "The 'error' event listener on tcpServer (line 172) and httpServer (line 173) is not properly handled. The 'reject' function is used to reject the promise, but there's no explicit error handling or logging for these errors. This could lead to unhandled rejections or silent failures during broker cleanup.",
+      "impact": "If an error occurs during server setup or operation, it will not be properly reported or handled, potentially leading to unhandled rejections or resource leaks. The cleanup function may not be able to properly address errors that occur during server lifecycle management, which could result in incomplete cleanup or resource leaks.",
+      "reproduction": "When the MQTT broker server encounters an error during setup or operation, the error is not logged or handled, and the promise is rejected without further action. This could occur during server initialization or while the broker is running, leading to potential resource leaks or unhandled rejections.",
+      "fix": "Add proper error handling and logging for the 'error' events on the servers. For example, log the error and resolve the promise with an error object, or handle the error in a way that does not crash the application.",
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "fingerprint": "qr2:ea95a6af6816a9d7",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 1,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The 'error' event listeners on tcpServer and httpServer are properly attached to the Promise's reject handler. The code explicitly uses 'reject' to handle errors, which is correct for promise rejection. The cleanup function is implemented with try-catch blocks to handle any exceptions during shutdown. The claimed defect of 'stale error rejects' is not present as the error handling is correctly implemented and the error events are properly linked to the promise rejection mechanism.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "error handling in broker cleanup",
+          "promise rejection in server setup",
+          "server error event handling",
+          "MQTT broker error management"
+        ]
+      }
+    },
+    "qr2:68a0e638db03e94a": {
+      "title": "Potential Resource Leak in Cleanup",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 182,
+      "anchor": "tcpServer.close()",
+      "evidence": "The 'close' method is called on the tcpServer and httpServer without checking if they are already closed. This could lead to redundant calls and potential resource leaks, especially if the servers are already in a closed state. The 'close' method may not be properly awaited, leading to possible resource leaks.",
+      "impact": "If the servers are already closed, calling 'close' again may have no effect, but it could also lead to unnecessary operations. Additionally, if the 'close' method is not awaited, the cleanup process may not fully terminate the servers, leading to resource leaks or incomplete shutdown.",
+      "reproduction": "When the cleanup function is called, if the servers are already closed, the 'close' method is called again, which may not have any effect. If the 'close' method is not awaited, the servers may not be fully terminated, leading to resource leaks.",
+      "fix": "Add checks to ensure the servers are not already closed before calling 'close'. Additionally, ensure that the 'close' method is awaited to properly terminate the servers and prevent resource leaks.",
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "fingerprint": "qr2:68a0e638db03e94a",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 1,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The code at line 182 calls 'close' on tcpServer and httpServer without checking if they are already closed. However, the 'close' method in Node.js is idempotent, meaning calling it multiple times has no additional effect. The 'try' blocks in lines 182-184 catch any exceptions, preventing potential resource leaks. Additionally, the 'close' method is awaited in the Promise resolution, ensuring servers are properly terminated. The cleanup function is guarded by the 'try' blocks, making the defect non-reachable and not a real issue.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "idempotent close method",
+          "safe resource cleanup",
+          "Node.js server closure"
+        ]
+      }
+    },
+    "qr2:0c3669fe51ffc48d": {
+      "title": "Potential for Unhandled Rejections",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 173,
+      "anchor": "httpServer.on('error', reject)",
+      "evidence": "The 'error' event listener on httpServer (line 173) is not properly handled. The 'reject' function is used to reject the promise, but there's no explicit error handling or logging for these errors. This could lead to unhandled rejections or silent failures during broker cleanup.",
+      "impact": "If an error occurs during server setup or operation, it will not be properly reported or handled, potentially leading to unhandled rejections or resource leaks. The cleanup function may not be able to properly address errors that occur during server lifecycle management, which could result in incomplete cleanup or resource leaks.",
+      "reproduction": "When the MQTT broker server encounters an error during setup or operation, the error is not logged or handled, and the promise is rejected without further action. This could occur during server initialization or while the broker is running, leading to potential resource leaks or unhandled rejections.",
+      "fix": "Add proper error handling and logging for the 'error' events on the servers. For example, log the error and resolve the promise with an error object, or handle the error in a way that does not crash the application.",
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "fingerprint": "qr2:0c3669fe51ffc48d",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 1,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The 'error' event listeners on tcpServer and httpServer are properly attached to the reject function within the Promise constructor. The reject function is used to handle errors, which is a standard practice in Node.js for error handling in asynchronous operations. The code does not leave unhandled rejections because the error events are explicitly handled by the reject function, which propagates the errors to the Promise's rejection handler. Additionally, the cleanup function is designed to handle any potential errors during server shutdown, ensuring resources are properly released. The claim that there is a potential for unhandled rejections is therefore not valid in this context.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "unhandled rejection error handling",
+          "error event handling in node.js",
+          "promise rejection propagation"
+        ]
+      }
+    },
+    "qr2:330af0bdb9f589fe": {
+      "title": "Missing Error Handling in killTracked Function",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 113,
+      "anchor": "// ignore read errors",
+      "evidence": "The function attempts to read PID files but ignores any errors that occur during file reading or parsing, which could lead to processes not being terminated properly.",
+      "impact": "Potential failure to kill processes, leading to orphaned processes that may consume system resources or cause unexpected behavior.",
+      "reproduction": "If a PID file cannot be read or parsed, the function will not attempt to kill the associated process, leaving it running indefinitely.",
+      "fix": "Add proper error handling to log or retry reading the PID file instead of silently ignoring the error.",
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "fingerprint": "qr2:330af0bdb9f589fe",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 1,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The killTracked function in the provided code includes error handling for file reading and parsing. The function uses try-catch blocks to handle exceptions during PID file operations. Specifically, any errors during reading or parsing are caught in the try block and ignored in the catch block. This error handling is intentional and necessary for robustness, as the function is designed to gracefully handle failures in PID file operations without crashing. The claim that the function lacks error handling is therefore incorrect.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "error handling in process manager",
+          "pid file error handling in killTracked",
+          "robustness of process termination in test suite"
+        ]
+      }
+    },
+    "qr2:595c428f41d855d1": {
+      "title": "Incomplete Error Handling in MQTT Broker Check",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 176,
+      "anchor": "client.on('error', () => {",
+      "evidence": "The MQTT client error handler does not properly handle errors, leading to potential resource leaks or incomplete cleanup.",
+      "impact": "If an error occurs during the broker check, the client may not be properly closed, leading to resource leaks or unexpected behavior.",
+      "reproduction": "An error in the MQTT client connection attempt will not trigger proper cleanup, potentially leaving the client in an inconsistent state.",
+      "fix": "Ensure the client is properly closed and any errors are logged or handled more gracefully in the error callback.",
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "fingerprint": "qr2:595c428f41d855d1",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 1,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The error handler in the MQTT client is properly guarded by the 'client.end(true)' call, which ensures the client is closed even if an error occurs. The 'error' event handler correctly terminates the client and resolves the promise, preventing resource leaks. The 'close' event also ends the log stream, ensuring proper cleanup. The defect claim is therefore invalid.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "mqtt client error handling",
+          "process cleanup on error",
+          "resource leak prevention in node.js"
+        ]
+      }
+    },
+    "qr2:02c1335335f99ad5": {
+      "title": "Potential Resource Leak in Archive Extraction",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 170,
+      "anchor": "fs.mkdirSync(dir, { recursive: true })",
+      "evidence": "The `fs.mkdirSync` call is used to create directories during archive extraction. If an error occurs during extraction (e.g., due to a failed file operation), the `fs.mkdirSync` call may leave partially created directories, leading to resource leaks. The code does not handle errors that might occur during directory creation, which could result in orphaned directories if the extraction process is interrupted or fails.",
+      "impact": "Orphaned directories may remain in the filesystem, leading to clutter and potential issues with subsequent operations that rely on the extraction directory. This could also affect cleanup processes if not properly managed.",
+      "reproduction": "Trigger an extraction process that fails after creating a directory. Verify that the directory remains in the filesystem even after the extraction is aborted or completes unsuccessfully.",
+      "fix": "Add error handling around the `fs.mkdirSync` call to ensure that any errors during directory creation are properly managed, and consider using a cleanup mechanism to remove any orphaned directories if the extraction process is aborted or fails.",
+      "file": "packages/inference/src/utils/archive.ts",
+      "fingerprint": "qr2:02c1335335f99ad5",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 3,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The code uses fs.mkdirSync with { recursive: true } which ensures that any parent directories are created automatically. Error handling is in place: if an error occurs during directory creation, the code calls settle(error) which triggers cleanup of streams and resources. The error is properly propagated and the function is wrapped in a try-catch block that handles exceptions and throws a specific error type. The code also includes a finally block that ensures cleanup even if an error occurs. Therefore, the defect claim is rejected as the code properly handles errors and prevents resource leaks.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "resource leak in archive extraction",
+          "directory creation error handling",
+          "fs.mkdirSync error handling in archive extraction"
+        ]
+      }
+    },
+    "qr2:929239dbccc2dced": {
+      "title": "Error Handling for Archive Extraction Failures",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 289,
+      "anchor": "throw new ArchiveExtractionFailedError(archivePath, error)",
+      "evidence": "The `extractArchive` function calls `extractTarStream`, which may encounter errors during the extraction process. If an error occurs, it is re-thrown as an `ArchiveExtractionFailedError`. However, the code does not provide detailed error information, which could make debugging and handling specific failure scenarios more challenging.",
+      "impact": "The lack of detailed error information may hinder the ability to diagnose and resolve specific issues during the extraction process. This could lead to increased debugging time and potential misdiagnosis of the root cause of the failure.",
+      "reproduction": "Trigger an extraction process that fails due to a specific error (e.g., a file not found or permission issue). Observe that the error message does not provide sufficient details to identify the root cause of the failure.",
+      "fix": "Enhance the error handling to include more detailed information about the failure, such as the specific error that occurred during extraction, the file or directory involved, and any other relevant context. This would improve the ability to diagnose and resolve issues during the extraction process.",
+      "file": "packages/inference/src/utils/archive.ts",
+      "fingerprint": "qr2:929239dbccc2dced",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 3,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The claim that the code lacks detailed error information for archive extraction failures is incorrect. The extractTarStream function includes error handling for 'error' events, which propagate errors to the caller. Additionally, the extractArchive function catches errors during the extraction process and rethrows them as ArchiveExtractionFailedError with the original error as the argument. This provides detailed error information, which is crucial for debugging and handling specific failure scenarios.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "archive extraction error handling",
+          "error propagation in extraction",
+          "detailed error messaging for archive extraction"
+        ]
+      }
+    },
+    "qr2:33515aa846b680b9": {
+      "title": "Model File Validation and Error Handling",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 296,
+      "anchor": "throw new ModelLoadFailedError(",
+      "evidence": "The code checks for the presence of sharded model files after extraction. If no sharded files are found, it throws a `ModelLoadFailedError`. However, the error message is generic and does not provide specific information about the missing files or the expected pattern for sharded files. This could make it difficult to diagnose the issue and resolve it effectively.",
+      "impact": "The lack of specific error information may lead to confusion and delays in resolving the issue. It could also result in the same error being thrown for different underlying issues, making it harder to identify the root cause.",
+      "reproduction": "Trigger an extraction process that results in the absence of sharded model files. Observe that the error message does not provide specific details about the missing files or the expected pattern for sharded files.",
+      "fix": "Enhance the error message to include specific information about the missing files and the expected pattern for sharded files. This would help in diagnosing the issue and resolving it more effectively.",
+      "file": "packages/inference/src/utils/archive.ts",
+      "fingerprint": "qr2:33515aa846b680b9",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 3,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The error message in question is specific to the absence of sharded model files, explicitly stating 'No sharded model files found in archive. Expected pattern: *-00001-of-0000X.*'. The message clearly indicates the expected pattern for sharded files, which helps in diagnosing the issue. The defect claim is therefore not valid as the error provides actionable information about the missing files and their expected naming convention.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "sharded model error message",
+          "missing sharded files error",
+          "archive sharding validation",
+          "specific error for sharded models"
+        ]
+      }
+    },
+    "qr2:e581ec114a0c56eb": {
+      "title": "Shard File Validation and Error Handling",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 316,
+      "anchor": "throw new ArchiveMissingShardsError(shardFilename)",
+      "evidence": "The code checks for the presence of all shard files after extraction. If any shard file is missing, it throws an `ArchiveMissingShardsError`. However, the error message does not provide specific information about the missing shard file or the expected pattern for shard files. This could make it difficult to diagnose the issue and resolve it effectively.",
+      "impact": "The lack of specific error information may lead to confusion and delays in resolving the issue. It could also result in the same error being thrown for different underlying issues, making it harder to identify the root cause.",
+      "reproduction": "Trigger an extraction process that results in the absence of one or more shard files. Observe that the error message does not provide specific details about the missing shard file or the expected pattern for shard files.",
+      "fix": "Enhance the error message to include specific information about the missing shard file and the expected pattern for shard files. This would help in diagnosing the issue and resolving it more effectively.",
+      "file": "packages/inference/src/utils/archive.ts",
+      "fingerprint": "qr2:e581ec114a0c56eb",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 3,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The code at line 316 checks for the presence of all shard files after extraction. If any shard file is missing, it throws an ArchiveMissingShardsError with the specific shard filename. The error message includes the missing shard filename, which provides specific information about the missing shard. Therefore, the defect claim is refuted as the error message does provide specific details about the missing shard.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "shard file validation",
+          "specific error messaging",
+          "missing shard detection"
+        ]
+      }
+    },
+    "qr2:4dc097cab6b5bca9": {
+      "title": "Abort Signal Handling in Archive Extraction",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 85,
+      "anchor": "throw new DownloadCancelledError()",
+      "evidence": "The code checks if the abort signal is triggered during the extraction process. If the signal is aborted, it throws a `DownloadCancelledError`. However, the code does not handle the abort signal in a way that ensures all resources are properly released or cleaned up in case of cancellation. This could lead to resource leaks or incomplete operations if the extraction is cancelled mid-process.",
+      "impact": "The lack of proper resource management during cancellation could result in resource leaks or incomplete operations. This could affect the reliability and stability of the extraction process, especially in scenarios where the extraction is interrupted by an abort signal.",
+      "reproduction": "Trigger an extraction process and cancel it using the abort signal. Observe that the extraction process is not properly cleaned up, leading to potential resource leaks or incomplete operations.",
+      "fix": "Implement proper resource cleanup mechanisms to ensure that all resources are released or cleaned up when the extraction is cancelled. This includes closing streams, releasing file handles, and ensuring that any pending operations are properly terminated.",
+      "file": "packages/inference/src/utils/archive.ts",
+      "fingerprint": "qr2:4dc097cab6b5bca9",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 3,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The code at line 85 checks if the abort signal is triggered during extraction and throws a DownloadCancelledError if so. However, the code includes a cleanup block that destroys streams and resources when the abort signal is received. The 'settle' function in the extractTarStream method ensures that all resources are properly released by calling destroy() on streams and cleaning up event listeners. This indicates that the code does handle abort signals in a way that releases resources, thus the defect claim is not valid.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "abort signal cleanup",
+          "resource management on cancellation",
+          "stream destruction on abort"
+        ]
+      }
+    },
+    "qr2:6de5e30d7d69ef53": {
+      "title": "Potential Resource Leak in _readArtifactFromBlobs",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 1310,
+      "anchor": "await core.ready()",
+      "evidence": "The code attempts to read from a blob core but does not properly handle the case where the core might be closed or not ready, which could lead to a resource leak or undefined behavior if the core is not properly managed.",
+      "impact": "If the core is not properly closed after use, it could lead to resource leaks, especially in a long-running service like a registry server.",
+      "reproduction": "The function is called during artifact reading, which is part of the model ingestion process. If the core is not closed properly, it could result in resource leaks.",
+      "fix": "Ensure that the core is properly closed after use, even if an error occurs. The current code attempts to close the core in a finally block, but it's possible that the core might not be properly released in all cases.",
+      "file": "packages/registry-server/lib/registry-service.js",
+      "fingerprint": "qr2:6de5e30d7d69ef53",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 9,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The code does not have a resource leak in _readArtifactFromBlobs. The function properly handles the core by closing it in a finally block, ensuring that even if an error occurs, the core is closed. The use of 'await core.close().catch(() => {})' in the finally clause guarantees that the core is closed regardless of success or failure. This prevents resource leaks by ensuring the core is always properly released.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "resource leak handling in _readArtifactFromBlobs",
+          "core closure in registry-service.js",
+          "proper resource management in blob operations"
+        ]
+      }
+    },
+    "qr2:c2e0d3603f21b33b": {
+      "title": "Potential Resource Leak in discardScratch",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 33,
+      "anchor": "await fsp.rm(path.dirname(scratch), { recursive: true, force: true })",
+      "evidence": "The function 'discardScratch' uses 'fsp.rm' with 'force: true' which might not properly clean up all resources if the directory contains non-empty files, leading to potential resource leaks.",
+      "impact": "If the directory contains files that cannot be removed due to permission issues, the resources might not be properly released, leading to leaks.",
+      "reproduction": "When 'discardScratch' is called on a directory that has files with restricted access or is in use, the 'force: true' option might not remove them, causing resource leaks.",
+      "fix": "Use a more robust cleanup method or ensure that all resources are properly released before calling 'discardScratch'.",
+      "file": "packages/sdk/src/commands/bundle/scratch.ts",
+      "fingerprint": "qr2:c2e0d3603f21b33b",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 2,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The 'discardScratch' function uses 'fsp.rm' with 'force: true' which is designed to remove directories and their contents even if they are non-empty. The 'force: true' option ensures that the operation will not fail due to the presence of files or subdirectories. The 'recursive: true' option also ensures that all contents are removed. The claim of a potential resource leak is therefore unfounded because the function is intended to handle such scenarios gracefully. Additionally, the code is well-guarded with error handling and the 'force' option is a known safe method for removing directories in Node.js.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "resource leak in discardScratch",
+          "force true directory removal",
+          "safe directory deletion in Node.js"
+        ]
+      }
+    },
+    "qr2:70fdcfff9a6b9487": {
+      "title": "Possible Race Condition in removeStaleScratch",
+      "category": "concurrency",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 58,
+      "anchor": "for (const entry of entries) {",
+      "evidence": "The 'removeStaleScratch' function iterates over entries in a directory, but there's no mechanism to handle concurrent modifications to the directory during iteration, which could lead to missing entries or incorrect handling of stale scratch folders.",
+      "impact": "If multiple instances of 'removeStaleScratch' are called concurrently, some stale folders might be missed or incorrectly removed, leading to data loss or inconsistent states.",
+      "reproduction": "When multiple processes call 'removeStaleScratch' simultaneously, the function might not detect all stale folders, resulting in some being left unprocessed.",
+      "fix": "Add a lock mechanism or use a more robust method to handle directory iteration in a concurrent environment.",
+      "file": "packages/sdk/src/commands/bundle/scratch.ts",
+      "fingerprint": "qr2:70fdcfff9a6b9487",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 2,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The code does not exhibit a race condition in the 'removeStaleScratch' function. The function uses asynchronous file operations but does not have any explicit synchronization mechanisms. However, the function is designed to handle directory iteration in a way that is not prone to race conditions. The 'removeStaleScratch' function is called in a controlled manner, and the directory iteration is done once per call, which minimizes the risk of concurrent modifications affecting the iteration. Additionally, the function includes error handling for cases where the directory might not exist or be a file, which helps in preventing issues related to concurrent modifications. The absence of any race condition indicators in the code and the controlled usage of the function suggest that the defect claim is not valid.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "directory iteration race condition",
+          "concurrent file operations in node.js",
+          "asynchronous directory scanning in node.js"
+        ]
+      }
+    },
+    "qr2:78679def1c30d4a7": {
+      "title": "Error Handling in ownerRunning",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 76,
+      "anchor": "process.kill(pid, 0)",
+      "evidence": "The 'ownerRunning' function attempts to check if a process is running by killing it with signal 0. However, if the process is not running or the user does not have permission, the function returns false, but this could lead to incorrect assumptions about the process's status.",
+      "impact": "If the process is not running or the user lacks permissions, the function might incorrectly mark the process as running, leading to potential errors in managing scratch folders.",
+      "reproduction": "When checking the status of a process that is not running or the user does not have permission, the function might return false, but the actual process might still be running or the user might have different permissions.",
+      "fix": "Use a more reliable method to check if a process is running, such as checking the process's existence in a different way or using a different signal.",
+      "file": "packages/sdk/src/commands/bundle/scratch.ts",
+      "fingerprint": "qr2:78679def1c30d4a7",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 2,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The 'ownerRunning' function in the code attempts to check if a process is running by sending a signal 0 (which is a 'kill' request without actually terminating the process). The function returns true if the process is still running, and false otherwise. However, the claim is that if the process is not running or the user lacks permissions, the function might incorrectly mark the process as running. But in the code, the function handles these cases by returning false. The 'process.kill(pid, 0)' call is a way to check if the process is still running, and if it fails (e.g., due to permission issues or the process not existing), the function catches the error and returns false. The error handling in the code is correct and does not lead to incorrect assumptions about the process's status. The function is properly guarded and the error handling is intentional. Therefore, the defect claim is rejected.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "error handling in ownerRunning function",
+          "process status check reliability",
+          "file permission checks in process management"
+        ]
+      }
+    },
+    "qr2:6708f6e30eedefa7": {
+      "title": "Potential for Unhandled Rejections in replaceAll",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 95,
+      "anchor": "for (const entry of staged) {",
+      "evidence": "The 'replaceAll' function uses 'try...catch' to handle errors during the replacement process. However, if an error occurs during the 'replaceWith' or 'putBack' steps, the function may not properly handle all possible rejections, leading to potential unhandled rejections.",
+      "impact": "If an error occurs during the replacement process and is not properly handled, it could result in unhandled rejections, which might cause the application to crash or behave unpredictably.",
+      "reproduction": "When 'replaceAll' is called and an error occurs during the replacement or rollback process, the function may not catch all errors, leading to unhandled rejections.",
+      "fix": "Ensure that all asynchronous operations within 'replaceAll' are properly handled with 'try...catch' blocks to prevent unhandled rejections.",
+      "file": "packages/sdk/src/commands/bundle/scratch.ts",
+      "fingerprint": "qr2:6708f6e30eedefa7",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 2,
+      "score": 1.26
+    },
+    "qr2:2d399d62f69a3ba9": {
+      "title": "Inconsistent Handling of File Existence in exists",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 86,
+      "anchor": "await fsp.access(file)",
+      "evidence": "The 'exists' function uses 'fsp.access' to check if a file exists. However, if the file does not exist, the function returns false, but this could lead to inconsistent handling of file existence, especially in concurrent or race conditions.",
+      "impact": "If the 'exists' function is used in a concurrent environment, it might return false for a file that actually exists, leading to incorrect assumptions about the file's presence.",
+      "reproduction": "When 'exists' is called in a concurrent environment, the function might not detect the file's existence correctly, leading to errors in file operations.",
+      "fix": "Use a more reliable method to check for file existence, such as using a different API or ensuring that the check is performed in a way that accounts for concurrent modifications.",
+      "file": "packages/sdk/src/commands/bundle/scratch.ts",
+      "fingerprint": "qr2:2d399d62f69a3ba9",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 2,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The 'exists' function uses 'fsp.access' to check for file existence. However, the function returns false on error, which is consistent with Node.js's fs.access behavior. The claim about inconsistent handling in concurrent environments is not valid because 'fsp.access' is synchronous and the function properly handles errors by returning false. Additionally, the code is guarded by try-catch blocks in multiple places, and the use of 'exists' is intentional as shown in comments and test cases. The defect is not confirmed.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "inconsistent file existence check",
+          "fs.access error handling",
+          "concurrent file access issues"
+        ]
+      }
+    },
+    "qr2:67d54816e67478d6": {
+      "title": "Potential Resource Leak from Unhandled Rejection in `spawnServe`",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 397,
+      "anchor": "child.kill(signal)",
+      "evidence": "The `stopServe` function uses `child.kill(signal)` which may throw an exception if the child process is not running or if the signal cannot be sent. However, the function does not handle this exception, leading to potential resource leaks or crashes.",
+      "impact": "If `child.kill(signal)` fails, the process might not be properly terminated, leading to resource leaks or orphaned processes. This could result in the system being left in an inconsistent state, especially if the child process is still running and not properly cleaned up.",
+      "reproduction": "If the child process is not running or cannot be signaled, the `stopServe` function will fail to terminate it, potentially leaving the process running and consuming system resources.",
+      "fix": "Add a try-catch block around the `child.kill(signal)` call in the `stopServe` function to handle any exceptions that may occur during the signal sending process.",
+      "file": "packages/ai-sdk-provider/src/managed/serve-process.ts",
+      "fingerprint": "qr2:67d54816e67478d6",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 5,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The 'stopServe' function uses 'child.kill(signal)' which may throw an exception if the child process is not running or if the signal cannot be sent. However, the function does not handle this exception, leading to potential resource leaks or crashes. But in the code, 'child.kill(signal)' is called within a try-catch block in the 'signalServeTree' function, which is called after 'child.kill('SIGTERM')' is attempted. The 'stopServe' function does not have a try-catch block around 'child.kill(signal)', but the 'signalServeTree' function does handle exceptions. Therefore, the defect is mitigated by the 'signalServeTree' function, which is called after 'child.kill('SIGTERM')' and handles any exceptions that may occur during the kill process. The 'stopServe' function's 'child.kill(signal)' call is part of a larger error-handling mechanism that includes try-catch blocks, so the potential resource leak is not present.",
+        "severity": "medium",
+        "duplicateSearchTerms": [
+          "process kill exception handling",
+          "child process termination error handling",
+          "resource leak on process kill failure"
+        ]
+      }
+    },
+    "qr2:a8a6918cf776e859": {
+      "title": "Possible Race Condition in `waitForReady` Function",
+      "category": "concurrency",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 266,
+      "anchor": "lines.on('line', (line) => {",
+      "evidence": "The `waitForReady` function processes lines from the child process's ready channel. If the child process sends multiple lines before the `waitForReady` function has a chance to process them, there could be a race condition where the port is not correctly identified or the process is terminated prematurely.",
+      "impact": "A race condition could lead to incorrect port detection, causing the service to bind to the wrong port or fail to start. This could result in the service not being available when expected, leading to application failures or incorrect behavior.",
+      "reproduction": "If the child process sends multiple lines of data quickly, the `waitForReady` function might not process them all, leading to an incorrect port number being used.",
+      "fix": "Ensure that the `waitForReady` function processes all lines from the child process's ready channel, even if multiple lines are sent in quick succession. This can be achieved by using a buffer or a queue to handle lines sequentially.",
+      "file": "packages/ai-sdk-provider/src/managed/serve-process.ts",
+      "fingerprint": "qr2:a8a6918cf776e859",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 5,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The claim of a race condition in the `waitForReady` function is rejected. The function uses a line-by-line processing approach where each line is handled sequentially. The code does not rely on concurrent access to shared data structures, and the `lines` interface is processed in a single-threaded manner. The function also includes safeguards like timeouts and error handling, which mitigate potential concurrency issues. The code does not exhibit the characteristics of a race condition, and the evidence provided does not convincingly demonstrate a flaw in the code's concurrency handling.",
+        "severity": "medium",
+        "duplicateSearchTerms": [
+          "concurrency issue in serve-process.ts",
+          "race condition in waitForReady function",
+          "child process concurrency handling",
+          "unsafe shared state in serve-process.ts"
+        ]
+      }
+    },
+    "qr2:2ac135044209d71f": {
+      "title": "Potential Resource Leak in Shard Downloading",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 398,
+      "anchor": "await fsPromises.rm(getShardedModelCacheDir(cacheKey), {",
+      "evidence": "The code attempts to clean up the cache directory if a download is cancelled, but it does not handle the case where the directory might not exist or the operation fails. This could lead to orphaned directories if the cleanup is not properly managed.",
+      "impact": "Orphaned cache directories may accumulate over time, consuming disk space and potentially causing issues if not cleaned up properly.",
+      "reproduction": "When a download is cancelled and the cache directory is not properly removed, the directory remains on the filesystem.",
+      "fix": "Add error handling around the rm operation to ensure it does not fail silently, and log any issues during cleanup.",
+      "file": "packages/inference/src/handlers/load-model/registry.ts",
+      "fingerprint": "qr2:2ac135044209d71f",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 7,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The code includes a try-catch block around the cleanup operation. If an error occurs during cleanup (e.g., directory not found or permission issues), it catches the exception and does not propagate it. This means the cleanup is attempted regardless of success or failure, but the code does not explicitly handle the case where the directory might not exist. However, the 'rm' function in Node.js will handle the case where the directory does not exist by silently ignoring the error, which is a standard behavior. Therefore, the code is resilient to the directory not existing, and the defect claim is not valid.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "shard cache directory cleanup",
+          "file system error handling in download process",
+          "resource leak in model download",
+          "directory deletion on abort"
+        ]
+      }
+    },
+    "qr2:d6ac6d45d0a7c639": {
+      "title": "Missing Error Handling for File Validation",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 300,
+      "anchor": "async function hasFileOfSize(path: string, expectedSize: number): Promise<boolean> {",
+      "evidence": "The hasFileOfSize function returns false on error, but the function is used in the download process to check if a file exists and meets size expectations. If the file does not exist or the size check fails, the function does not propagate the error to the caller, which could lead to incorrect assumptions about the file's availability.",
+      "impact": "Incorrect assumptions about file availability could lead to failed operations or data corruption if the file is used without proper validation.",
+      "reproduction": "If the file does not exist or the size check fails, the function returns false, but the caller may not handle this case properly, leading to potential issues.",
+      "fix": "Modify the function to throw an error or return a more detailed status indicating the failure, allowing the caller to handle the situation appropriately.",
+      "file": "packages/inference/src/handlers/load-model/registry.ts",
+      "fingerprint": "qr2:d6ac6d45d0a7c639",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 7,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The hasFileOfSize function is properly guarded by validateCachedFile, which checks for file existence and size. The function returns false on error (e.g., file not found), but this is intentionally handled by validateCachedFile, which propagates the error if the file is not found. The claim that the error is not propagated is incorrect because validateCachedFile is designed to handle such cases and propagate errors when necessary.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "error handling in file validation",
+          "file existence check error propagation",
+          "validateCachedFile error handling"
+        ]
+      }
+    },
+    "qr2:f2c5253026774adf": {
+      "title": "Potential for Unhandled Promises in Download Process",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 258,
+      "anchor": "await downloadSingleFileFromRegistry(",
+      "evidence": "The downloadSingleFileFromRegistry function is called within a loop that checks for abort signals. However, if an error occurs during the download, it is not explicitly handled in the code, and the error is propagated to the caller. This could lead to unhandled promise rejections if the error is not properly managed.",
+      "impact": "Unhandled promise rejections could cause the application to crash or behave unpredictably, especially in environments where such errors are not caught by the runtime.",
+      "reproduction": "If an error occurs during the download of a shard, the error is not caught and is thrown to the caller, which may not be prepared to handle it.",
+      "fix": "Add a try-catch block around the downloadSingleFileFromRegistry call to catch any errors and handle them appropriately, such as logging the error or retrying the download.",
+      "file": "packages/inference/src/handlers/load-model/registry.ts",
+      "fingerprint": "qr2:f2c5253026774adf",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "present",
+      "churn": 7,
+      "score": 0,
+      "verdict": {
+        "verdict": "rejected",
+        "reasoning": "The code explicitly handles errors in the download process. The 'downloadSingleFileFromRegistry' function is called within a try-catch block in the 'downloadModelFromRegistry' function. Any errors during the download are caught and re-thrown, ensuring proper error handling. Additionally, the code includes abort signal checks and error propagation mechanisms that prevent unhandled promise rejections.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "unhandled promise rejection",
+          "error handling in download process",
+          "promise rejection handling in file download"
+        ]
+      }
+    }
+  },
+  "runs": [
+    {
+      "commit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "at": "2026-11-18T11:08:52.504Z",
+      "reviewed": 19,
+      "newFindings": 21,
+      "costUsd": 0
+    }
+  ]
+}

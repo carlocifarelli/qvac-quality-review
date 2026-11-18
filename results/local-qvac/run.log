@@ -1,0 +1,5 @@
+scope 1013 files, 681 above minLoc, reviewing top 19
+review: 21 new candidates, 1 failures
+verify: 20 verdicts, 1 failures
+usage: 96 agent calls (0 cached), $0.00, 1767s agent time
+npx tsx src/cli.ts run ../qvac -c qr.local.config.json -s state-local -o   19  14.19s user 2.58s system 0% cpu 29:32.92 total

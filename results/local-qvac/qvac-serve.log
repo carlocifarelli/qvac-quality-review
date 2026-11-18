@@ -1,0 +1,427 @@
+(node:89065) [FSTDEP023] FastifyDeprecation: disableRequestLogging option is deprecated. Use the logController option with disableRequestLogging or isLogDisabled override instead. The disableRequestLogging top-level option will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Preloading 1 model(s): reviewer
+Loading model "reviewer" from registry://s3/qvac_models_compiled/ggml/Qwen3-4B/2025-06-27/Qwen3-4B-Q4_K_M.gguf...
+Model "reviewer" loaded (SDK modelId: 76ed454ad3f75d07).
+responses: in-memory only — IDs expire on restart, max 256 entries, 60m TTL
+videos: in-memory only — job IDs and rendered bytes are lost on restart, max 256 entries
+QVAC API server listening on http://127.0.0.1:11435
+Mounted surfaces: openai (OpenAI-compatible REST API).
+
+Endpoints:
+  ├── /openapi.json (GET, HEAD)
+  ├── /v1/audio/transcriptions (POST)
+  ├── /v1/audio/translations (POST)
+  ├── /v1/audio/speech (POST)
+  ├── /v1/audio/voices (GET, HEAD)
+  ├── /v1/audio/models (GET, HEAD)
+  ├── /v1/chat/completions (POST)
+  ├── /v1/completions (POST)
+  ├── /v1/decisions (POST)
+  ├── /v1/embeddings (POST)
+  ├── /v1/files (POST, GET, HEAD)
+  │   └── /:id (GET, HEAD)
+  │       └── /content (GET, HEAD)
+  ├── /v1/images/generations (POST)
+  ├── /v1/images/edits (POST)
+  ├── /v1/models (GET, HEAD)
+  │   ├── /catalog (GET, HEAD)
+  │   │   └── /:id (GET, HEAD)
+  │   └── /:id (GET, HEAD, DELETE)
+  ├── /v1/responses (POST)
+  │   └── /:id (GET, HEAD, DELETE)
+  │       └── /input_items (GET, HEAD)
+  ├── /v1/vector_stores (GET, HEAD, POST)
+  │   └── /:id (GET, HEAD, POST, DELETE)
+  │       ├── /search (POST)
+  │       └── /files (POST)
+  └── /v1/videos (POST, GET, HEAD)
+      └── /:id (GET, HEAD, DELETE)
+          └── /content (GET, HEAD)
+
+→ GET /v1/models
+← 200 GET /v1/models (3ms)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=2389 finish=stop ttft=4412ms tps=91.8 prompt=4276 cache=6665 gen=2389 backend=gpu
+← 200 POST /v1/chat/completions (31.57s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=3061ms tps=89.4 prompt=4069 cache=4077 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (7.49s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=3419 finish=stop ttft=2462ms tps=106.0 prompt=3024 cache=6443 gen=3419 backend=gpu
+← 200 POST /v1/chat/completions (35.86s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=1509 finish=stop ttft=1972ms tps=108.8 prompt=2817 cache=4326 gen=1509 backend=gpu
+← 200 POST /v1/chat/completions (16.60s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1438 finish=tool_calls ttft=9809ms tps=87.9 prompt=9722 cache=11160 gen=1438 backend=gpu
+← 200 POST /v1/chat/completions (26.18s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=848 finish=tool_calls ttft=10838ms tps=86.6 prompt=10189 cache=11037 gen=848 backend=gpu
+← 200 POST /v1/chat/completions (20.67s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=8 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=582 finish=tool_calls ttft=11432ms tps=92.3 prompt=10656 cache=11238 gen=582 backend=gpu
+← 200 POST /v1/chat/completions (17.76s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=12 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=11822ms tps=55.0 prompt=10916 cache=10924 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (13.75s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1202 finish=tool_calls ttft=2578ms tps=104.4 prompt=3548 cache=4750 gen=1202 backend=gpu
+← 200 POST /v1/chat/completions (14.11s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=8 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=2265 finish=stop ttft=3288ms tps=103.7 prompt=3956 cache=6221 gen=2265 backend=gpu
+← 200 POST /v1/chat/completions (26.22s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=9 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=365 finish=stop ttft=2741ms tps=83.5 prompt=3749 cache=4114 gen=365 backend=gpu
+← 200 POST /v1/chat/completions (8.46s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=4096 finish=tool_calls ttft=3444ms tps=100.4 prompt=4329 cache=8425 gen=4096 backend=gpu toolerrors=1 (PARSE_ERROR)
+← 200 POST /v1/chat/completions (44.26s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=85 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=1408 finish=stop ttft=8396ms tps=84.8 prompt=9454 cache=10862 gen=1408 backend=gpu
+← 200 POST /v1/chat/completions (28.53s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1668 finish=stop ttft=2948ms tps=95.2 prompt=3973 cache=5641 gen=1668 backend=gpu
+← 200 POST /v1/chat/completions (23.29s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=3012ms tps=87.7 prompt=3766 cache=3774 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (4.37s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=4096 finish=length ttft=25809ms tps=55.7 prompt=17878 cache=21974 gen=4096 backend=gpu
+← 200 POST /v1/chat/completions (99.44s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=1162 finish=stop ttft=22755ms tps=67.3 prompt=17671 cache=18833 gen=1162 backend=gpu
+← 200 POST /v1/chat/completions (47.47s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=4096 finish=length ttft=812ms tps=112.1 prompt=1202 cache=5298 gen=4096 backend=gpu
+← 200 POST /v1/chat/completions (37.36s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=749ms tps=98.9 prompt=995 cache=1003 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (903ms)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=4096 finish=length ttft=2249ms tps=106.9 prompt=2884 cache=6980 gen=4096 backend=gpu
+← 200 POST /v1/chat/completions (40.59s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=1172 finish=stop ttft=2123ms tps=111.4 prompt=2677 cache=3849 gen=1172 backend=gpu
+← 200 POST /v1/chat/completions (12.93s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=2820 finish=stop ttft=5467ms tps=96.6 prompt=6064 cache=8884 gen=2820 backend=gpu
+← 200 POST /v1/chat/completions (35.54s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=1323 finish=stop ttft=4889ms tps=98.1 prompt=5857 cache=7180 gen=1323 backend=gpu
+← 200 POST /v1/chat/completions (19.73s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=2837 finish=stop ttft=5778ms tps=91.1 prompt=6725 cache=9562 gen=2837 backend=gpu
+← 200 POST /v1/chat/completions (39.93s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=5156ms tps=86.6 prompt=6518 cache=6526 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (7.40s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=2002 finish=stop ttft=3218ms tps=100.3 prompt=4378 cache=6380 gen=2002 backend=gpu
+← 200 POST /v1/chat/completions (27.28s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=3118ms tps=90.4 prompt=4171 cache=4179 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (4.05s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1038 finish=tool_calls ttft=2563ms tps=113.3 prompt=3600 cache=4638 gen=1038 backend=gpu
+← 200 POST /v1/chat/completions (11.73s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1120 finish=stop ttft=2798ms tps=100.2 prompt=3688 cache=4808 gen=1120 backend=gpu
+← 200 POST /v1/chat/completions (14.83s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=2951ms tps=92.2 prompt=3481 cache=3489 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (3.85s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=3281 finish=stop ttft=5896ms tps=91.3 prompt=6877 cache=10158 gen=3281 backend=gpu
+← 200 POST /v1/chat/completions (42.38s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=6256ms tps=84.9 prompt=6670 cache=6678 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (6.80s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=2068 finish=tool_calls ttft=5776ms tps=92.5 prompt=6951 cache=9019 gen=2068 backend=gpu
+← 200 POST /v1/chat/completions (28.14s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=4 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1165 finish=stop ttft=12695ms tps=81.4 prompt=11441 cache=12606 gen=1165 backend=gpu
+← 200 POST /v1/chat/completions (28.46s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=713 finish=stop ttft=11864ms tps=82.4 prompt=11234 cache=11947 gen=713 backend=gpu
+← 200 POST /v1/chat/completions (22.15s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=4096 finish=length ttft=1986ms tps=99.1 prompt=2872 cache=6968 gen=4096 backend=gpu
+← 200 POST /v1/chat/completions (43.33s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=2231ms tps=81.5 prompt=2665 cache=2673 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (2.73s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=4096 finish=length ttft=2823ms tps=103.6 prompt=3706 cache=7802 gen=4096 backend=gpu
+← 200 POST /v1/chat/completions (42.38s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=2878ms tps=92.7 prompt=3499 cache=3507 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (3.54s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=4096 finish=length ttft=821ms tps=112.9 prompt=1208 cache=5304 gen=4096 backend=gpu
+← 200 POST /v1/chat/completions (37.14s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=705ms tps=76.9 prompt=1001 cache=1009 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (1.03s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=2857 finish=stop ttft=3816ms tps=102.5 prompt=4524 cache=7381 gen=2857 backend=gpu
+← 200 POST /v1/chat/completions (33.28s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=8 finish=stop ttft=3150ms tps=91.7 prompt=4317 cache=4325 gen=8 backend=gpu
+← 200 POST /v1/chat/completions (4.50s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1087 finish=tool_calls ttft=2058ms tps=113.0 prompt=2969 cache=4056 gen=1087 backend=gpu
+← 200 POST /v1/chat/completions (11.69s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1882 finish=stop ttft=2383ms tps=113.2 prompt=3277 cache=5159 gen=1882 backend=gpu
+← 200 POST /v1/chat/completions (28.21s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=146 finish=stop ttft=2224ms tps=113.4 prompt=3070 cache=3216 gen=146 backend=gpu
+← 200 POST /v1/chat/completions (3.73s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=705 finish=stop ttft=2132ms tps=115.2 prompt=2954 cache=3659 gen=705 backend=gpu
+← 200 POST /v1/chat/completions (8.62s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=169 finish=stop ttft=2131ms tps=113.9 prompt=2747 cache=2916 gen=169 backend=gpu
+← 200 POST /v1/chat/completions (4.00s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1519 finish=tool_calls ttft=2393ms tps=110.8 prompt=2957 cache=4476 gen=1519 backend=gpu
+← 200 POST /v1/chat/completions (16.11s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1778 finish=stop ttft=2783ms tps=108.9 prompt=3265 cache=5043 gen=1778 backend=gpu
+← 200 POST /v1/chat/completions (19.79s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=172 finish=stop ttft=2252ms tps=113.2 prompt=3058 cache=3230 gen=172 backend=gpu
+← 200 POST /v1/chat/completions (4.13s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1109 finish=stop ttft=2807ms tps=108.3 prompt=3414 cache=4523 gen=1109 backend=gpu
+← 200 POST /v1/chat/completions (13.61s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=153 finish=stop ttft=2685ms tps=112.6 prompt=3207 cache=3360 gen=153 backend=gpu
+← 200 POST /v1/chat/completions (4.81s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=748 finish=tool_calls ttft=2460ms tps=111.9 prompt=3409 cache=4157 gen=748 backend=gpu
+← 200 POST /v1/chat/completions (9.15s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=729 finish=stop ttft=3326ms tps=107.5 prompt=3592 cache=4321 gen=729 backend=gpu
+← 200 POST /v1/chat/completions (11.49s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=124 finish=stop ttft=2486ms tps=111.0 prompt=3385 cache=3509 gen=124 backend=gpu
+← 200 POST /v1/chat/completions (4.63s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1023 finish=tool_calls ttft=3253ms tps=105.8 prompt=4303 cache=5326 gen=1023 backend=gpu
+← 200 POST /v1/chat/completions (12.93s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1252 finish=stop ttft=4287ms tps=102.0 prompt=4727 cache=5979 gen=1252 backend=gpu
+← 200 POST /v1/chat/completions (18.63s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=165 finish=stop ttft=3334ms tps=106.5 prompt=4520 cache=4685 gen=165 backend=gpu
+← 200 POST /v1/chat/completions (6.54s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=869 finish=stop ttft=3188ms tps=90.1 prompt=4291 cache=5160 gen=869 backend=gpu
+← 200 POST /v1/chat/completions (14.74s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=137 finish=stop ttft=3236ms tps=101.8 prompt=4084 cache=4221 gen=137 backend=gpu
+← 200 POST /v1/chat/completions (6.52s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=748 finish=stop ttft=3153ms tps=93.9 prompt=4298 cache=5046 gen=748 backend=gpu
+← 200 POST /v1/chat/completions (14.18s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=150 finish=stop ttft=2956ms tps=103.2 prompt=4091 cache=4241 gen=150 backend=gpu
+← 200 POST /v1/chat/completions (5.66s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=551 finish=stop ttft=3147ms tps=110.5 prompt=4294 cache=4845 gen=551 backend=gpu
+← 200 POST /v1/chat/completions (9.25s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=127 finish=stop ttft=2948ms tps=106.0 prompt=4087 cache=4214 gen=127 backend=gpu
+← 200 POST /v1/chat/completions (5.25s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=770 finish=stop ttft=3147ms tps=110.9 prompt=4300 cache=5070 gen=770 backend=gpu
+← 200 POST /v1/chat/completions (11.07s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=149 finish=stop ttft=2953ms tps=107.2 prompt=4093 cache=4242 gen=149 backend=gpu
+← 200 POST /v1/chat/completions (5.12s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1160 finish=stop ttft=24140ms tps=69.5 prompt=17787 cache=18947 gen=1160 backend=gpu
+← 200 POST /v1/chat/completions (41.33s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=145 finish=stop ttft=23687ms tps=70.1 prompt=17580 cache=17725 gen=145 backend=gpu
+← 200 POST /v1/chat/completions (26.28s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1003 finish=tool_calls ttft=2369ms tps=101.2 prompt=2830 cache=3833 gen=1003 backend=gpu
+← 200 POST /v1/chat/completions (12.29s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=756 finish=stop ttft=2720ms tps=103.1 prompt=3113 cache=3869 gen=756 backend=gpu
+← 200 POST /v1/chat/completions (10.16s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=7 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=175 finish=stop ttft=2419ms tps=110.5 prompt=2906 cache=3081 gen=175 backend=gpu
+← 200 POST /v1/chat/completions (4.16s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1666 finish=tool_calls ttft=2222ms tps=107.0 prompt=2843 cache=4509 gen=1666 backend=gpu
+← 200 POST /v1/chat/completions (17.80s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1586 finish=stop ttft=2442ms tps=107.8 prompt=2978 cache=4564 gen=1586 backend=gpu
+← 200 POST /v1/chat/completions (17.76s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=7 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=202 finish=stop ttft=2204ms tps=107.1 prompt=2771 cache=2973 gen=202 backend=gpu
+← 200 POST /v1/chat/completions (4.69s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1387 finish=stop ttft=2298ms tps=108.2 prompt=2849 cache=4236 gen=1387 backend=gpu
+← 200 POST /v1/chat/completions (15.66s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=238 finish=stop ttft=2191ms tps=110.3 prompt=2642 cache=2880 gen=238 backend=gpu
+← 200 POST /v1/chat/completions (4.65s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=911 finish=tool_calls ttft=2144ms tps=109.3 prompt=2858 cache=3769 gen=911 backend=gpu
+← 200 POST /v1/chat/completions (10.48s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=802 finish=stop ttft=2515ms tps=110.2 prompt=2994 cache=3796 gen=802 backend=gpu
+← 200 POST /v1/chat/completions (10.45s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=7 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=4096 finish=length ttft=2144ms tps=103.8 prompt=2787 cache=6883 gen=4096 backend=gpu
+← 200 POST /v1/chat/completions (41.63s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1310 finish=tool_calls ttft=2347ms tps=109.4 prompt=2849 cache=4159 gen=1310 backend=gpu
+← 200 POST /v1/chat/completions (14.34s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=4096 finish=length ttft=2621ms tps=103.1 prompt=3100 cache=7196 gen=4096 backend=gpu
+← 200 POST /v1/chat/completions (42.37s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=151 finish=stop ttft=2387ms tps=112.7 prompt=2893 cache=3044 gen=151 backend=gpu
+← 200 POST /v1/chat/completions (4.16s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1115 finish=tool_calls ttft=5174ms tps=97.4 prompt=6014 cache=7129 gen=1115 backend=gpu
+← 200 POST /v1/chat/completions (16.63s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1467 finish=stop ttft=5760ms tps=96.5 prompt=6155 cache=7622 gen=1467 backend=gpu
+← 200 POST /v1/chat/completions (21.96s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=255 finish=stop ttft=4987ms tps=93.9 prompt=5948 cache=6203 gen=255 backend=gpu
+← 200 POST /v1/chat/completions (8.68s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=804 finish=tool_calls ttft=5043ms tps=88.9 prompt=6008 cache=6812 gen=804 backend=gpu
+← 200 POST /v1/chat/completions (14.11s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=4 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=844 finish=stop ttft=5703ms tps=93.2 prompt=6060 cache=6904 gen=844 backend=gpu
+← 200 POST /v1/chat/completions (15.92s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=171 finish=stop ttft=4723ms tps=100.9 prompt=5853 cache=6024 gen=171 backend=gpu
+← 200 POST /v1/chat/completions (7.76s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=650 finish=stop ttft=6126ms tps=95.1 prompt=6901 cache=7551 gen=650 backend=gpu
+← 200 POST /v1/chat/completions (15.54s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=181 finish=stop ttft=5697ms tps=88.7 prompt=6694 cache=6875 gen=181 backend=gpu
+← 200 POST /v1/chat/completions (11.90s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=820 finish=tool_calls ttft=5695ms tps=93.0 prompt=6916 cache=7736 gen=820 backend=gpu
+← 200 POST /v1/chat/completions (14.52s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=5 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=1072 finish=stop ttft=7261ms tps=93.3 prompt=7180 cache=8252 gen=1072 backend=gpu
+← 200 POST /v1/chat/completions (19.16s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=6 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=136 finish=stop ttft=6644ms tps=99.0 prompt=6973 cache=7109 gen=136 backend=gpu
+← 200 POST /v1/chat/completions (8.77s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=2 stream=false tools=2 genParams={"temp":0,"predict":4096}
+  completion done tokens=4096 finish=length ttft=6108ms tps=90.4 prompt=6924 cache=11020 gen=4096 backend=gpu
+← 200 POST /v1/chat/completions (51.46s)
+→ POST /v1/chat/completions
+  chat model=reviewer messages=3 stream=false genParams={"temp":0,"predict":4096} responseFormat=json_schema
+  completion done tokens=127 finish=stop ttft=6346ms tps=98.2 prompt=6717 cache=6844 gen=127 backend=gpu
+← 200 POST /v1/chat/completions (8.78s)

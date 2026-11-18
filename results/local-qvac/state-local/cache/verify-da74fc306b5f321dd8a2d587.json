@@ -1,0 +1,10 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The 'error' event listeners on tcpServer and httpServer are properly attached to the reject function within the Promise constructor. The reject function is used to handle errors, which is a standard practice in Node.js for error handling in asynchronous operations. The code does not leave unhandled rejections because the error events are explicitly handled by the reject function, which propagates the errors to the Promise's rejection handler. Additionally, the cleanup function is designed to handle any potential errors during server shutdown, ensuring resources are properly released. The claim that there is a potential for unhandled rejections is therefore not valid in this context.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "unhandled rejection error handling",
+    "error event handling in node.js",
+    "promise rejection propagation"
+  ]
+}

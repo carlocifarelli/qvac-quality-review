@@ -1,0 +1,13 @@
+{
+  "commit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+  "usage": {
+    "calls": 96,
+    "cached": 0,
+    "costUsd": 0,
+    "seconds": 1766.7189999999994
+  },
+  "failures": [
+    "packages/test-suite/src/cli/utils/local-broker.ts: anchor not found for \"Missing Error Handling in Broker Initialization\"",
+    "qr2:6708f6e30eedefa7: Unterminated string in JSON at position 17843 (line 3 column 17817)"
+  ]
+}

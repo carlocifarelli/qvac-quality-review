@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The 'error' event listeners on tcpServer and httpServer are properly attached to the Promise's reject handler. The code explicitly uses 'reject' to handle errors, which is correct for promise rejection. The cleanup function is implemented with try-catch blocks to handle any exceptions during shutdown. The claimed defect of 'stale error rejects' is not present as the error handling is correctly implemented and the error events are properly linked to the promise rejection mechanism.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "error handling in broker cleanup",
+    "promise rejection in server setup",
+    "server error event handling",
+    "MQTT broker error management"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The code does not have a resource leak in _readArtifactFromBlobs. The function properly handles the core by closing it in a finally block, ensuring that even if an error occurs, the core is closed. The use of 'await core.close().catch(() => {})' in the finally clause guarantees that the core is closed regardless of success or failure. This prevents resource leaks by ensuring the core is always properly released.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "resource leak handling in _readArtifactFromBlobs",
+    "core closure in registry-service.js",
+    "proper resource management in blob operations"
+  ]
+}

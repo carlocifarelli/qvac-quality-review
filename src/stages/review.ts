@@ -2,7 +2,16 @@ import { readFile } from 'node:fs/promises'
 import type { z } from 'zod'
 import { join } from 'node:path'
 import type { Config } from '../config.js'
-import { runAgent } from '../backends/claude-cli.js'
+import { type AgentCall, runAgent } from '../backends/claude-cli.js'
+import { runOpenAi } from '../backends/openai-compatible.js'
+
+/** One agent call through the configured backend. `file` is inlined for backends without strong tool use. */
+function ask<T>(cfg: Config, call: AgentCall<T>, usage: Usage, file?: string): Promise<T> {
+  if (cfg.backend === 'openai-compatible') {
+    return runOpenAi(call, { baseUrl: cfg.openaiBaseUrl, apiKey: process.env.QR_OPENAI_API_KEY, maxToolCalls: cfg.openaiMaxToolCalls, inlineFile: file }, usage)
+  }
+  return runAgent(call, usage)
+}
 import { PROMPT_VERSION, reviewPrompt, verifyPrompt } from '../prompts.js'
 import { fingerprint, type State, type Store } from '../state.js'
 import { ReviewOut, VerdictOut, type Finding, type ReviewUnit, type Usage } from '../types.js'
@@ -22,7 +31,7 @@ export async function review(root: string, units: ReviewUnit[], cfg: Config, sto
     if (out) usage.cached++
     else {
       try {
-        out = await runAgent({ cwd: root, model: cfg.reviewModel, prompt: reviewPrompt(u, u.loc > cfg.maxLoc, Object.values(state.findings).filter((f) => f.file === u.file && f.presence !== 'gone')), schema: ReviewOut }, usage)
+        out = await ask(cfg, { cwd: root, model: cfg.reviewModel, prompt: reviewPrompt(u, u.loc > cfg.maxLoc, Object.values(state.findings).filter((f) => f.file === u.file && f.presence !== 'gone')), schema: ReviewOut }, usage, u.file)
         await store.cachePut(key, out)
       } catch (err) {
         failures.push(`${u.file}: ${(err as Error).message.slice(0, 200)}`)
@@ -58,7 +67,7 @@ export async function verify(root: string, cfg: Config, store: Store, state: Sta
     if (v) usage.cached++
     else {
       try {
-        v = await runAgent({ cwd: root, model: cfg.verifyModel, prompt: verifyPrompt(f), schema: VerdictOut }, usage)
+        v = await ask(cfg, { cwd: root, model: cfg.verifyModel, prompt: verifyPrompt(f), schema: VerdictOut }, usage, f.file)
         await store.cachePut(key, v)
       } catch (err) {
         failures.push(`${f.fingerprint}: ${(err as Error).message.slice(0, 200)}`)

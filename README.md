@@ -170,6 +170,25 @@ The first run had shown two problems, both fixed:
 
 The QVAC PR workflow is proposed only, because the exercise forbids changes upstream.
 
+## Running on QVAC itself: a local model, no code leaves the machine (implemented, not yet run on a real model)
+
+The review and verify stages can run on any OpenAI-compatible endpoint instead of Claude (`backend: "openai-compatible"`, `src/backends/openai-compatible.ts`). It is built for `qvac serve --openai`, QVAC's own local server, so the model runs on the reviewer's machine and the source code never leaves it.
+
+```bash
+# 1. serve a local model with QVAC (config in local/qvac.config.json: Qwen3-4B, preloaded)
+cd local && npx @qvac/cli serve --openai --no-default
+# 2. review with it (concurrency 1, reviewTop 10; cost $0)
+npx tsx src/cli.ts run ../qvac -c qr.local.config.json -s state-local --only <files>
+```
+
+How it works, since QVAC (like OpenAI) does not combine `tools` and `response_format` in one request:
+1. **Exploration:** the model may call two read-only tools, `read_file` and `grep` (via `git grep`), up to `openaiMaxToolCalls` (6). Paths are confined to the checkout.
+2. **Answer:** one more request with no tools and a JSON-schema `response_format`, validated with the same zod schema as the Claude backend, so selection, fingerprints, verify, report and publish are unchanged.
+
+Local models are small, so the file under review is inlined (line-numbered) in the first message: the review still works when the model never calls a tool. The backend is covered by a test against a stub server (`test/openai-backend.test.ts`).
+
+**Status:** in the sandbox where this was built, QVAC resolved the model from its registry but the 2.5 GB weights never downloaded (P2P and Hugging Face both blocked by the network), so it has not yet run against a real model. The next step is to run it on a workstation on the files of the 31 confirmed findings and compare recall, time and cost with the Claude backend. My expectation: a 4B model will find far fewer of the cross-file bugs, so the realistic use is the per-PR check on private code, with the deterministic rules doing most of the work.
+
 ## Scope and verification for this submission
 
 - **Repository:** `tetherto/qvac` at the commit above, cloned fresh; `pnpm install --ignore-scripts` (no native builds needed for anything below).
@@ -205,13 +224,13 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 
 ### Security
 - The agent cannot write, execute or browse: tool allow-list plus deny-list, and it runs in a checkout, not a dev machine's home.
-- Source code is sent to the model provider (Anthropic). For a private codebase that is a policy decision; the backend is isolated in `src/backends/` so a local model can replace it.
+- Source code is sent to the model provider (Anthropic). For a private codebase that is a policy decision; the backend is isolated in `src/backends/`, and the `openai-compatible` backend runs the same pipeline on a local model through `qvac serve` (see above).
 - Untrusted repository content reaches the prompt (prompt-injection surface). Mitigations: read-only tools, schema-validated output, anchors re-checked against the file, a second independent pass, and a human gate before anything is filed.
 - No credentials in the repo or the state: GitHub access goes through the operator's own `gh` login, and `publish` refuses to file into the upstream repo.
 - Sensitive findings: `publish` files into a private repo only; nothing is sent upstream.
 
 ### Maintainability
-~1,500 lines of TypeScript (about 500 of them the rules), strict mode, zod at every boundary, unit tests for fingerprinting, presence tracking, ranking and signals, and RuleTester cases for every rule (`npm test`, 54 tests). Prompts are versioned (`PROMPT_VERSION`) and part of the cache key. State format changes ship with a migration script (`scripts/migrate-fingerprints-v2.ts`). Each stage is one file with one exported function, so a stage can be replaced (e.g. another backend in `src/backends/`) without touching the others.
+~1,500 lines of TypeScript (about 500 of them the rules), strict mode, zod at every boundary, unit tests for fingerprinting, presence tracking, ranking and signals, and RuleTester cases for every rule (`npm test`, 56 tests). Prompts are versioned (`PROMPT_VERSION`) and part of the cache key. State format changes ship with a migration script (`scripts/migrate-fingerprints-v2.ts`). Each stage is one file with one exported function, so a stage can be replaced (e.g. another backend in `src/backends/`) without touching the others.
 
 ## Limitations (honest)
 
@@ -232,14 +251,14 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 2. **Evaluation set:** seed known bugs (from QVAC's closed `fix:` PRs, reverting the fix) to measure reviewer recall and verifier precision per model and prompt version; this is how prompt changes should be judged.
 3. **Group by root cause:** several findings share one fix (e.g. the three `process.exit(code || 0)` sites); cluster them before ranking.
 4. **Reproduction scaffolding:** let the agent draft the repro test in the package's own runner (brittle/Bare), with a human reviewing and running it.
-5. **Local model backend** (e.g. through QVAC itself) for code that must not leave the machine.
+5. **Measure the local backend:** run the QVAC backend on the confirmed-finding files and compare recall with Claude; try larger local models if a 4B one misses too much.
 6. **Feed QVAC's own `quality:audit` hotspots** into selection instead of my churn heuristic.
 7. **Upstream the rules:** propose the six rules to QVAC as a lint preset next to `lunte` (after the maintainers agree the classes are worth enforcing), and add a rule whenever a newly confirmed finding has a syntactic shape. Candidates already visible: `.part`-file cleanup keyed on `instanceof` instead of `signal.aborted` (#4), pid-file ownership (#10, #30).
 
 ## Demonstrated vs proposed
 
 - **Demonstrated** (ran, outputs committed): selection, review, verify, report, presence tracking across commits, cache reuse, dedupe with logged searches, idempotent publish to this repo's issues, the fingerprint migration, all reproductions in `verification/`, the `qvac-quality` rules with their baseline gate on a fix and on a regression, including the PR-scoped `--changed` mode for the rules, and `qr pr` on a simulated pull request (rules + agent + presence, PR comment in `demo/pr/`).
-- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), the agent stage inside Actions (needs an `ANTHROPIC_API_KEY` secret), `publish.yml` in Actions (no triage PR has been merged yet), the QVAC PR workflow (cannot be installed upstream), a non-Claude backend. Everything under "Next priorities" is proposed only.
+- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), the agent stage inside Actions (needs an `ANTHROPIC_API_KEY` secret), `publish.yml` in Actions (no triage PR has been merged yet), the QVAC PR workflow (cannot be installed upstream), the QVAC local backend on a real model (implemented and stub-tested only). Everything under "Next priorities" is proposed only.
 
 ## AI use
 

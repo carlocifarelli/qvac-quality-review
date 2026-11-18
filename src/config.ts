@@ -16,7 +16,11 @@ export const Config = z.object({
   minLoc: z.number().int().default(40),
   /** Files larger than this are still reviewed but flagged as partial */
   maxLoc: z.number().int().default(1500),
-  backend: z.enum(['claude-cli', 'none']).default('claude-cli'),
+  /** claude-cli: Claude Code headless. openai-compatible: e.g. `qvac serve --openai`, a local model. none: deterministic stages only */
+  backend: z.enum(['claude-cli', 'openai-compatible', 'none']).default('claude-cli'),
+  /** openai-compatible backend: base URL (QVAC serve default) and how many tool calls the model may make before answering */
+  openaiBaseUrl: z.string().default('http://127.0.0.1:11435/v1'),
+  openaiMaxToolCalls: z.number().int().default(6),
   reviewModel: z.string().default('claude-opus-5-5'),
   verifyModel: z.string().default('claude-opus-5-5'),
   concurrency: z.number().int().default(4),

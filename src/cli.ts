@@ -38,6 +38,7 @@ program
   .option('--top <n>', 'override reviewTop')
   .option('--select-only', 'deterministic stage only: no LLM calls')
   .option('--typed-lint', 'type-aware lint (needs the target dependencies installed)')
+  .option('--only <files...>', 'review only these files (repo-relative), e.g. to compare backends on known findings')
   .action(async (repo: string, o) => {
     const root = resolve(repo)
     const cfg = await loadConfig(o.config)
@@ -46,7 +47,7 @@ program
     const usage: Usage = { calls: 0, cached: 0, costUsd: 0, seconds: 0 }
 
     const sel = await select(root, cfg, { typedLint: Boolean(o.typedLint) })
-    const top = sel.units.slice(0, cfg.reviewTop)
+    const top = o.only ? sel.units.filter((u) => o.only.includes(u.file)) : sel.units.slice(0, cfg.reviewTop)
     await mkdir(o.out, { recursive: true })
     await writeJson(join(o.out, 'selection.json'), {
       commit: sel.commit,

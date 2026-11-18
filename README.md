@@ -85,15 +85,16 @@ The verifier gets the claim, not the reviewer's conversation, and is told to dis
 
 ## What happens on subsequent runs (demonstrated)
 
-Both runs below are recorded in `demo/` (state and reports), so they can be inspected without re-running.
+Runs 2-4 are recorded in `demo/` (state and reports), so they can be inspected without re-running.
 
 | Run | Target | Agent calls | Cost | Wall time | Result |
 |---|---|---|---|---|---|
 | 1 (submission) | `0c8a151` | 86 (40 reviews + 46 verifications) | $27.47 | ~10 min (5 parallel agents; 49 min of agent time) | 47 candidates; 10 human-confirmed, 27 agent-confirmed, 1 uncertain, 9 rejected |
 | 2 (same commit) | `0c8a151` | **0** (40 cache hits) | **$0.00** | 12 s | identical findings; nothing re-reviewed |
-| 3 (simulated next commit) | `0c8a151` + a local commit that fixes finding #9 in one file | **2** (39 cache hits) | **$0.64** | 87 s | the fixed finding moved to **"No longer present"**; only the changed file was re-reviewed and re-verified |
+| 3 (simulated next commit) | `0c8a151` + a local commit that fixes finding #8 in one file | **2** (39 cache hits) | **$0.64** | 87 s | the fixed finding moved to **"No longer present"**; only the changed file was re-reviewed and re-verified; one duplicate (see below) |
+| 4 (same simulated commit, after the v2 fix) | as run 3 | **1** (39 cache hits) | **$0.32** | ~40 s | fixed finding "No longer present", **0 new candidates**, no duplicate |
 
-Run 3 also exposed a defect in my own design, which I fixed and kept here as evidence: the re-review of the changed file found the *other* known finding in that file again, and classified it `correctness` instead of `concurrency`. Category was part of the v1 fingerprint, so it became a duplicate. The fix (v2): the fingerprint is `file + anchor` only, and the reviewer prompt now lists the findings already recorded for that file so it does not re-report them. `scripts/migrate-fingerprints-v2.ts` migrated the state and the human overrides.
+Run 3 also exposed a defect in my own design, which I fixed and kept here as evidence: the re-review of the changed file found the *other* known finding in that file again, and classified it `correctness` instead of `concurrency`. Category was part of the v1 fingerprint, so it became a duplicate. The fix (v2): the fingerprint is `file + anchor` only, and the reviewer prompt now lists the findings already recorded for that file so it does not re-report them. `scripts/migrate-fingerprints-v2.ts` migrated the state and the human overrides, and run 4 shows the duplicate no longer appears.
 
 ## Scope and verification for this submission
 
@@ -157,6 +158,7 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 4. **Reproduction scaffolding:** let the agent draft the repro test in the package's own runner (brittle/Bare), with a human reviewing and running it.
 5. **Local model backend** (e.g. through QVAC itself) for code that must not leave the machine.
 6. **Feed QVAC's own `quality:audit` hotspots** into selection instead of my churn heuristic.
+7. **Close the loop on issues:** when a filed finding becomes "No longer present", comment on its issue with the commit and close it (today this is a manual step).
 
 ## Demonstrated vs proposed
 

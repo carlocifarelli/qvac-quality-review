@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "title": "Runner killed by a signal (OOM, SIGKILL, crash) is reported as exit code 0",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 47,
+      "anchor": "process.exit(code || 0)",
+      "evidence": "run-consumer-external.ts:46-48 listens to `child.on('exit', (code) => process.exit(code || 0))`. When the child dies from a signal, Node passes `code === null` with a non-null `signal`, so `null || 0` makes the CLI exit 0. Sibling code handles this case: utils/external-consumer.ts:105 uses `code ?? (signal ? 1 : 0)`, and run-consumer-snap.ts:110-114 exits 1 when `signal` is set. This command never reads the `signal` argument.",
+      "impact": "A CI job running `run-consumer-external` reports success when the in-place runner is OOM-killed (likely when it loads local models), SIGKILLed by a timeout wrapper, or crashes with SIGSEGV or SIGABRT in a native addon. Any test run cut short this way is hidden from the pipeline.",
+      "reproduction": "Start the command with a valid external consumer config. While it runs, `kill -9 <pid of node run-consumer-external-inplace.js>`. Then `echo $?` on the parent prints 0.",
+      "fix": "`child.on('exit', (code, signal) => process.exit(code ?? (signal ? 1 : 0)))`, the same as runMqttClient."
+    },
+    {
+      "title": "Ctrl+C sends SIGINT to the runner twice, and the second one kills it during graceful shutdown",
+      "category": "concurrency",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 43,
+      "anchor": "process.on('SIGINT', () => child.kill('SIGINT' as never))",
+      "evidence": "The child is spawned without `detached` and with stdio 'inherit' (lines 33-36), so it is in the parent's foreground process group and gets the terminal's SIGINT directly. Line 43 then forwards another SIGINT. The runner registers `process.once('SIGINT', ...)` (run-consumer-external-inplace.ts:134), and in mqtt mode utils/external-consumer.ts:103 does the same. After the first delivery the once-listener is removed and Node restores the default SIGINT behaviour, so the forwarded signal ends the runner immediately. That cuts off the async `consumer.forceShutdown()` and `executor.stop()` (lines 119-133), and in mqtt mode it kills the runner before it can mirror its client's exit. Because the child then exits by signal (code null), finding 1 also applies and the parent exits 0.",
+      "impact": "Pressing Ctrl+C in an interactive run can skip the consumer's MQTT shutdown and the stop of the external bridge client. The spawned interpreter or worker can be left orphaned, and the parent still exits 0.",
+      "reproduction": "Run the command interactively in bridge mode and press Ctrl+C once. The '⚠️ Force shutdown' / graceful path does not finish, and `ps` can still show the external client process. Delivery order of the two signals depends on timing, so this may not happen every run.",
+      "fix": "Do not forward SIGINT when the child shares the terminal's process group, for example by only forwarding SIGTERM. Or spawn the child with `detached: true` so it receives only the forwarded signal. Making the runner's handlers `process.on` (idempotent) would also prevent the default kill."
+    }
+  ]
+}

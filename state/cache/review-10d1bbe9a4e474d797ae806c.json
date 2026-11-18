@@ -1,0 +1,52 @@
+{
+  "findings": [
+    {
+      "title": "Abort during file lookup or metadata fetch is missed, so the hyperdrive transfer hangs and keeps the lock and corestore",
+      "category": "concurrency",
+      "severity": "high",
+      "confidence": "medium",
+      "line": 481,
+      "anchor": "signal?.addEventListener('abort', () => reject(new DownloadCancelledError()), { once: true })",
+      "evidence": "downloadAndValidateFile registers the reject-on-abort listener only at line 481. That comes after validateFileExistence (lines 405-406), which awaits drive.core.update() and drive.entry(..., { wait: true }) (lines 160, 167) and can block until a peer answers. If the signal aborts in that window, the outer `cleanup` (lines 306-314) suspends the swarm, so the pending drive.entry and the read stream never get blocks. When execution reaches line 481 the signal is already aborted, and addEventListener on an already-aborted signal never fires. There is no `if (signal.aborted)` check before the await at 476. The promise never settles and nothing has timeouts. download-manager.ts:185-189 settles the subscriber on its own, so the caller sees a cancellation. Meanwhile the background startDownload promise stays pending forever. It holds the `await using` download lock (hyperdrive.ts:747), the open Corestore/Hyperdrive and its entry in runningDownloads.",
+      "impact": "After a user cancels a pear:// download early (while peers are still being found or the entry/blob metadata is still arriving), the next load of the same model waits forever in acquireDownloadLock or fails to open the still-locked corestore. Shutdown, which waits for runningDownloads, can also hang.",
+      "reproduction": "Start loading a hyperdrive model while the seeding peer is offline or slow, so drive.entry waits. Cancel the request, then bring the peer online or retry the load: the retry logs '⏳ … is being downloaded elsewhere' and never proceeds. In a unit test, stub drive.entry to resolve after the signal is aborted and observe that downloadAndValidateFile never settles.",
+      "fix": "Check `if (signal?.aborted) throw new DownloadCancelledError()` right before creating the streams and inside the Promise at 476. Also race validateFileExistence against the abort signal, or pass a timeout or abort to drive.entry/update. Remove the listener once the promise settles."
+    },
+    {
+      "title": "Corestore dir is keyed per drive but the lock is per file, so concurrent downloads from one drive collide and one deletes the other's store",
+      "category": "concurrency",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 374,
+      "anchor": "await deleteCorestoreDirectory(corestoreDir)",
+      "evidence": "getCorestoreDir (line 73-75) uses only hyperdriveKey. The download lock and the transfer dedupe use createHyperdriveDownloadKey(hyperdriveKey, modelFileName) (lines 739, 747), which is per file. Two loads of different files from the same drive (for example a model and its projector, or two models published in one drive) therefore run concurrently. Each calls setupHyperdrive → `new Corestore(sameDir)`, and the second instance contends for the same on-disk lock. When the first download succeeds and seed is false, line 374 does an `fsPromises.rm(corestoreDir, { recursive: true, force: true })` on the directory the second download is still writing.",
+      "impact": "Loading two files from one hyperdrive key in parallel makes the second download fail (corestore lock error) or lose its storage mid-transfer. The user sees HyperdriveDownloadFailedError or corrupted resume state.",
+      "reproduction": "Call loadModel for `pear://<key>/a.gguf` and `pear://<key>/b.gguf` at the same time with a fresh cache. One of the two fails while opening or using the corestore, or the first one's completion removes ~/.qvac/corestore/<key> under the second.",
+      "fix": "Lock on the corestore resource (hyperdriveKey) rather than the per-file key, or share one ref-counted setup per hyperdriveKey. Delete the directory only when no other transfer on that key is active."
+    },
+    {
+      "title": "Failed or cancelled seed downloads never close the corestore; a retry cannot reopen it and clearCache deletes the dir while it is still open",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 370,
+      "anchor": "if (!seed) {",
+      "evidence": "In both finally blocks (lines 367-391 and 711-726) cleanupHyperdrive runs only when `!seed`, whatever the outcome. For seed=true, an error (checksum mismatch, NoBlobFoundError, network failure) or an abort leaves the Corestore, Hyperdrive and swarm open. On abort, `cleanup` has already suspended the swarm, so the open swarm is not even seeding. A retry calls setupHyperdrive with the same corestoreDir while the old Corestore still holds its storage lock. Also, if the user aborts with clearCache, line 389/724 deletes corestoreDir while that corestore is still open. The comment at line 372 flags exactly this as an EBUSY hazard on Windows.",
+      "impact": "With seed: true, one failed or cancelled download makes every later attempt for that drive fail until the process restarts. Handles and swarm connections leak, and clearCache can fail with EBUSY or leave a corrupted store.",
+      "reproduction": "loadModel with seed: true for a hyperdrive model whose registry checksum mismatches, or cancel it mid-download. Then call loadModel again for the same model: opening the corestore fails because the previous instance still holds the lock.",
+      "fix": "Call cleanupHyperdrive(setup) in the finally block whenever downloadSucceeded is false, and keep the setup alive only for a successful seed."
+    },
+    {
+      "title": "setupHyperdrive leaks an opened Corestore when Hyperdrive.ready() throws",
+      "category": "resource-leak",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 85,
+      "anchor": "await drive.ready()",
+      "evidence": "The corestore is opened at lines 81-82, but registerCorestore runs only at line 109 and callers get `setup` only on success. If `drive.ready()` throws (for example on corrupted local storage or an invalid key length), nothing closes or registers the corestore. Neither caller can clean it up, because the throw happens before `setup` exists (lines 304, 589).",
+      "impact": "The corestore's storage lock stays held for the rest of the process, so every retry against that hyperdriveKey fails and the runtime shutdown sweep never closes the store.",
+      "reproduction": "Corrupt the files under ~/.qvac/corestore/<key> so Hyperdrive.ready rejects, then call loadModel twice. The second call fails on the corestore lock instead of the original error.",
+      "fix": "Wrap the drive.ready() call in try/catch and `await corestore.close()` before rethrowing, or register the corestore right after corestore.ready()."
+    }
+  ]
+}

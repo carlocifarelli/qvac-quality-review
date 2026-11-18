@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The mechanism holds up. spawnTracked writes `<name>.pid` (process-manager.ts:68), and the 'close' handler (:80-82) only ends the log stream. No code anywhere in src/cli deletes a .pid file. killTracked (:90-115) reads every `*.pid` in reportDir and sends SIGTERM (or `taskkill /F /T` on Windows) without checking that the PID is still one of its own children. setupCleanup (run-local.ts:214-254) calls it on SIGINT, on SIGTERM, on producer exit and on a failed consumer exit. Users can reach this: `--report-dir` is a public option on every run:local:* command (index.ts:260), and createReportDir (:187-193) reuses that directory with nothing to clear it. A fixed `--runId` also gives the same default dir.\n\nThe claimed impact is overstated, though. On a rerun, spawnTracked overwrites producer.pid and consumer-<same name>.pid before cleanup can happen, so those files are not stale. The stale files that actually survive are:\n(a) consumer-<other>.pid from an earlier run with a different consumer, for example a desktop run followed by a python run in the same dir;\n(b) broker.pid, which local-broker.ts:178 writes with the old CLI's own process.pid when the earlier run started the embedded broker and the new run did not.\n\nWithin a single run, a consumer may exit cleanly with code 0, which run-local.ts:247 ignores, and its reaped PID is signalled later when the producer finishes. The producer-exit window the reviewer cites is microseconds, so PID reuse there is negligible.\n\nExploiting this needs an opt-in reused directory or an early-exiting consumer, plus PID reuse by another process of the same user. Low likelihood, but a real wrong-process kill, and on Windows `/F /T` also kills that process's children.\n\nA side note: broker.pid holds the CLI's own PID, so killTracked SIGTERMs itself. The cleaningUp guard keeps that harmless.\n\nRe-rated low: not the default path, and it needs PID reuse.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "stale pid files killTracked",
+    "report-dir reuse kills unrelated process",
+    "pid file not removed on child exit",
+    "killTracked PID reuse"
+  ]
+}

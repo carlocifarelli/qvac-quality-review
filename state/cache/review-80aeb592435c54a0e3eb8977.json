@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "runFfmpeg has no cancellation path: aborted requests/jobs leave ffmpeg running until exit or the 5-minute timeout",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 38,
+      "anchor": "export async function runFfmpeg(",
+      "evidence": "FfmpegRunOptions (ffmpeg.ts:3-10) only has ffmpegPath/timeoutMs/maxStderrBytes, and there is no AbortSignal. The only kill path is the timeout handler (ffmpeg.ts:61-68). Callers have cancellation signals they cannot pass on: music.ts:491 has job.controller.signal and still calls transcodeWav at music.ts:583 without one. videos.ts:235/257 checks job.controller.signal, but transcodeAviToMp4 at videos.ts:379 cannot be cancelled. The HTTP routes (audio.ts:534, videos.ts:379) never observe client disconnect for the transcode, even though require-model.ts:134 shows the server already builds disconnect signals for model loads.",
+      "impact": "If a client disconnects, a job is cancelled or a client retries GET /v1/videos/{id}/content, ffmpeg keeps running at full CPU for up to 5 minutes (DEFAULT_TIMEOUT_MS) per request. Its whole output is buffered in memory and then thrown away. Repeated retries pile up concurrent ffmpeg processes on the local machine.",
+      "reproduction": "Generate a long video, request /v1/videos/{id}/content?format=mp4, then abort the HTTP request right away. `ps` shows ffmpeg still running until the transcode finishes or 5 minutes pass. Repeat the request N times and N ffmpeg processes run concurrently.",
+      "fix": "Add `signal?: AbortSignal` to FfmpegRunOptions. In runFfmpeg, if signal.aborted, reject at once. Otherwise add an 'abort' listener that calls child.kill('SIGKILL') and settles with an abort error, and remove the listener in settle(). Thread the request disconnect signal or job.controller.signal through transcodeWav/transcodeAviToMp4."
+    }
+  ]
+}

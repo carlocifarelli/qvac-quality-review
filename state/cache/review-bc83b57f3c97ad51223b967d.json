@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "title": "deviceDefaults entries for onnx-tts, bci, audiogen and classification models are silently dropped during config parsing",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 54,
+      "anchor": "export const deviceConfigDefaultsSchema = z",
+      "evidence": "deviceConfigDefaultsSchema (config.ts:54-81) is a plain z.object, so Zod strips unknown keys. It lists canonical keys for only 13 of the 17 ModelType values and only 9 aliases. ModelType (model-types.ts:10-42) also defines 'onnx-tts', 'bci-whispercpp-transcription', 'audiogen-ggml' and 'ggml-classification', plus the aliases 'bci', 'audiogen' and 'classification'. CANONICAL_TO_ALIAS (runtime/model-config-utils.ts:25-43) and MODEL_CONFIG_SCHEMAS (lines 45-60) resolve defaults for these types: audioGenConfigSchema has `device`/`backend` and bciConfigSchema has `gpu_device`/`backendsDir`. But both config loaders (inference/src/config/config-utils.ts:8 and sdk/src/client/config-loader/config-utils.ts:8) run qvacConfigSchema.safeParse, which removes these keys before they reach configRegistry.deviceDefaults (state.ts:145). getDefaultsFromPattern (model-config-utils.ts:120-135) then finds nothing for them.",
+      "impact": "A user who writes `\"defaults\": { \"audiogen\": { \"device\": \"cpu\" } }` (or \"classification\", \"bci\", \"audiogen-ggml\", \"ggml-classification\", \"bci-whispercpp-transcription\") gets no error and no warning. The pattern is never applied, so on the target device the model loads with its normal backend/device, which is the problem the override was written to avoid (e.g. GPU crashes on specific Android devices).",
+      "reproduction": "`qvacConfigSchema.parse({ deviceDefaults: [{ name: 'x', match: { platform: 'android' }, defaults: { audiogen: { device: 'cpu' }, 'ggml-classification': { backend: 'cpu' } } }] }).deviceDefaults[0].defaults` returns `{}`. resolveModelConfigWithContext('audiogen-ggml', {}, { platform: 'android' }, thatPatterns) reports appliedPatterns = [].",
+      "fix": "Add schema entries for ModelType.onnxTts, bciWhispercppTranscription, audiogenGgml and ggmlClassification, and for the 'bci', 'audiogen' and 'classification' aliases, using their partial config schemas. Alternatively, call .strict() on the object so an unsupported key fails validation instead of disappearing. Better still, derive the key list from ModelType/CANONICAL_TO_ALIAS so new model types cannot be missed again."
+    },
+    {
+      "title": "Documented 'first matching pattern wins' contradicts the implementation, where every match is merged and the last one wins",
+      "category": "api-contract",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 226,
+      "anchor": "* First matching pattern wins.",
+      "evidence": "The deviceDefaults JSDoc (config.ts:222-227) says user patterns are checked before built-in ones and the first matching pattern wins. resolveModelConfigWithContext (model-config-utils.ts:151-174) does something else. It collects ALL matching built-in patterns, then ALL matching user patterns, and spreads each into mergedDefaults in array order (`mergedDefaults = { ...mergedDefaults, ...defaults }`). So the LAST matching user pattern overrides earlier ones for every shared key. The comment at model-config-utils.ts:62 also says 'later patterns override earlier'.",
+      "impact": "A user following the documented rule puts the specific pattern first and the general fallback after it, e.g. [{ match: {platform:'android', deviceBrand:'samsung'}, defaults:{llm:{device:'gpu'}} }, { match:{platform:'android'}, defaults:{llm:{device:'cpu'}} }]. On a Samsung device both patterns match, and the general one, listed last, overrides the specific one, so the Samsung override never takes effect.",
+      "reproduction": "Call resolveModelConfigWithContext('llamacpp-completion', {}, { platform: 'android', deviceBrand: 'samsung' }, [specificFirst, generalSecond], []). finalConfig.device is 'cpu', not 'gpu', and appliedPatterns lists both patterns.",
+      "fix": "Change the doc to match the code: all matching patterns are merged, built-in patterns first, then user patterns in order, and later matches override earlier ones, so list general patterns before specific ones. Or change the resolver to stop at the first matching user pattern if that is the intended contract."
+    }
+  ]
+}

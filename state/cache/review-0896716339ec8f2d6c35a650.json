@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "close() returns early on a background-stop promise without bumping generation, so a pending getRPC starts a new worker after close() resolved",
+      "category": "concurrency",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 482,
+      "anchor": "if (closePromise) {",
+      "evidence": "`stopInBackground` (node-rpc-client.ts:333-344) stores its terminate promise in the shared `closePromise`. It is called from `notifyChannelClosed` (l.447) and from `ensureRPC`'s failure path (l.427). `close()` (l.481-485) treats any non-null `closePromise` as \"a close is already running\": it awaits that promise and returns. It skips `generation++` and does not abort a launch. Meanwhile, `ensureRPC` callers that arrived after the crash are parked at l.356-358 (`await closePromise; return ensureRPC()`). When the background stop resolves, they re-enter `ensureRPC` with `rpcPromise === null` and the unchanged `generation`, so they spawn a fresh worker (l.361-415). That happens after `close()` has already resolved to its caller.",
+      "impact": "An app calls `close()` for shutdown right after a worker crash or channel close, while another call is waiting in `getRPC()`. `close()` resolves, but a new Bare worker process starts afterward and stays alive with live IPC handles. The Node process does not exit, and the caller gets a working client after it shut the SDK down.",
+      "reproduction": "Start the client and get an RPC. Kill the worker so the RPC layer calls `notifyChannelClosed()` (which sets `closePromise` via `stopInBackground`). Call `getRPC()` without awaiting, then `await close()` right away. After `close()` resolves, check that a new worker was spawned (e.g. spy on `startUnbundled`/the harness `start`) and that `getWorkerLifeSignal()` becomes non-null again.",
+      "fix": "Keep a separate promise for background stops (e.g. `stoppingPromise`), which `ensureRPC` awaits and `close()` does not take as a finished close. Or, in `close()`, always run `generation++` before awaiting an existing `closePromise`, so starts that are waiting fail with `WorkerShutdownError` (and check `generation` again in `ensureRPC` after `await closePromise`)."
+    }
+  ]
+}

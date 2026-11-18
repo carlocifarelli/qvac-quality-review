@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "I traced the code and the path is real. `stopInBackground` (l.333-344) sets the shared `closePromise` to the terminate promise. It is called from `notifyChannelClosed` (l.447), which the RPC layer calls in rpc-client.ts:142, and from the `ensureRPC` failure path (l.427). After `resetModuleState()`, a later `getRPC()` waits at l.356-358 and then calls `ensureRPC()` again. If `close()` runs during that window, l.482-485 only awaits `closePromise` and returns. It does not run `generation++`, and since `rpcPromise` is null there is no pending start to cancel. When the terminate promise settles, its `.finally` clears `closePromise`. The waiting caller then finds `rpcPromise` and `closePromise` both null, takes `startGeneration` equal to the unchanged `generation`, and spawns a new worker. Nothing at l.364, 373, 378 or 411 stops it, because no bump happened. I found no guard in a caller or wrapper and no test covering this. expo-rpc-client.ts:153/250 has the same pattern.\n\nThe impact is overstated. `close()` is not a terminal shutdown by design: any `getRPC()` after `close()` starts a worker again. On the normal path (l.487+), a call that arrives *while* `close()` runs also waits on `closePromise` and then restarts a worker. So \"a working client after shutdown\" is partly how the code behaves anyway. The real inconsistency is narrower. A start that was already waiting before `close()` was called escapes the generation cancel that an in-flight launch would get (l.364/373/378). Triggering it needs three things at once: a worker crash or channel close, a concurrent `getRPC` caught in the short terminate window, and an app shutdown at that moment. The orphaned worker would keep the Node process alive, so the bug is real but rare. Severity: low.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "close() does not bump generation after worker crash",
+    "worker restarts after close resolves",
+    "stopInBackground closePromise close race",
+    "pending getRPC spawns worker after close"
+  ]
+}

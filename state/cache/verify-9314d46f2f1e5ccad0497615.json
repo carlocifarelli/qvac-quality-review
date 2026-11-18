@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "I could not disprove the claim. codegen.ts:222-224 emits `modelNameCompatibilityAliases` as a plain `{...}` literal. It is not built with `Object.create(null)` or a `Map`. At codegen.ts:233 (generated as models.ts:29617), `getModelByName` returns `models.find(...) ?? modelNameCompatibilityAliases[name]` without an own-property check (no `Object.hasOwn`). In JavaScript this means `getModelByName('constructor')` returns `Object`, `'toString'` and `'hasOwnProperty'` return functions, and `'__proto__'` returns `Object.prototype`. None of these is undefined, which breaks the JSDoc promise that the function returns `undefined` when nothing matches. The function is public. models/registry/index.ts re-exports `@/models/registry/models`, and both @qvac/inference (package.json:82) and @qvac/sdk (package.json:157) export `./models/registry`. The docs (ocr-ggml registry-models.md:145) show it being called with a string. Nothing guards the input: there is no schema validation, and no internal caller wraps it. The only use I found is model-constant-compatibility.test.ts, which tests only real legacy names. The impact is overstated, though. No code inside the repo passes untrusted names to it. Only an external caller doing a lookup by a name taken from config could hit it, and only with Object.prototype key names, which is unlikely. The likely result is a confusing error later on, with no security impact. The fix is one line: use `Object.hasOwn`, `Object.create(null)`, or a `Map`. Severity stays low.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "getModelByName prototype",
+    "getModelByName constructor",
+    "modelNameCompatibilityAliases hasOwn",
+    "getModelByName returns non-undefined"
+  ]
+}

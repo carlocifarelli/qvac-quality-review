@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "Cancelling during post-download size/checksum verification is ignored: the file is published and the call resolves as success",
+      "category": "concurrency",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 165,
+      "anchor": "await publishDownload(modelPath)",
+      "evidence": "The function checks `signal?.aborted` only at entry (registry-download-utils.ts:105). The signal is also passed to the registry client for the transfer (lines 126-143). After the transfer it runs `fsPromises.stat`, then `measureChecksum(partialPath, hooks)` (line 155), which is a full SHA-256 stream over the file (utils/checksum.ts:8-31) and takes no signal. Then it calls `publishDownload(modelPath)` (line 165) and sends a 100% progress event, without checking the signal again. Callers handle cancellation only when this function throws `DownloadCancelledError`: registry.ts:566-578 deletes `.part` on cancel+clearCache, and registry-companion-set.ts:164-170 removes the set directory. A cancel that arrives during hashing is therefore never seen. registry.ts:581 returns `modelPath` as a successful load, and the clear-cache cleanup never runs.",
+      "impact": "The user cancels a model load (optionally with clear-cache) while a multi-GB GGUF is being hashed, which can take tens of seconds. The cancel has no effect: the SDK keeps hashing, publishes the file into the cache, reports 100%, and the load continues. A cancel with clear-cache leaves the full model on disk. For sharded or companion-set downloads, the loop moves on to the next shard, and that shard's transfer only then sees the aborted signal, so earlier shards stay published.",
+      "reproduction": "Unit test: stub `acquireRegistryClient` so `downloadBlob` writes a file of `expectedSize` to the `.part` path and resolves. Stub `measureChecksum` (or use a large file) to wait on a promise and call `controller.abort()` before resolving it with the right digest. Call `downloadSingleFileFromRegistry(..., controller.signal, ...)`. Observed: the call resolves, `modelPath` exists and a 100% progress event is emitted. Expected: it rejects with `DownloadCancelledError` and nothing is published.",
+      "fix": "Check the signal after the transfer and again right before publishing, for example `if (signal?.aborted) throw new DownloadCancelledError()` after `measureChecksum` and before `publishDownload`. Leave `.part` for the caller's clear-cache cleanup. Optionally, pass the signal into the checksum stream so it stops early."
+    }
+  ]
+}

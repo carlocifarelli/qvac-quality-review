@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The defect is real, but part of the claim is overstated.\n\n**What holds.** run-consumer-desktop.ts:50-52 is `child.on('exit', (code) => process.exit(code || 0))`. When Node's child dies from a signal, the 'exit' event passes `code = null` and a non-null `signal`, so `null || 0` makes the CLI exit 0. Nothing else guards this path: there is no other exit handling, and the try/catch only covers setup. Any consumer that is SIGKILLed (OOM killer, CI timeout kill) or dies from SIGSEGV or SIGABRT in a native addon therefore makes `run-consumer-desktop` report success. Sibling commands show this is not intended and is an inconsistency:\n- run-consumer-snap.ts:110-114 handles it: `process.exit(signal ? 1 : (code ?? 1))`\n- utils/external-consumer.ts:105 handles it: `code ?? (signal ? 1 : 0)`\n- run-local.ts:246-247 checks `signal`\n\n**What is overstated.** The forwarded SIGINT/SIGTERM case is mostly not reached. The runner run-consumer-desktop-inplace.ts:137-138 traps both signals and calls `shutdown()`. That function deliberately calls `process.exit(0)` (lines 123 and 132), so a cancelled run exits 0 on purpose and not through the signal-null path. Only a signal the child cannot catch, or a second signal after the `once` handler has been removed, reaches the bug.\n\n**Severity: low.** The pass/fail verdict for tests most likely comes from the producer/orchestrator over MQTT, and a consumer that dies there would show up as missing results or a timeout. The main harm is that the consumer's own CI step looks green after a native crash or OOM kill, which hides the cause and makes debugging harder.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "run-consumer-desktop exit code 0 on signal",
+    "consumer crash SIGSEGV reported as success",
+    "child exit signal ignored code || 0",
+    "OOM killed consumer exits 0"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The mechanics are as the reviewer describes. In addModel (registry-service.js:845-866) the blob is uploaded, the core is mirrored, and DISPATCH_PUT_MODEL is appended at line 861. Only after that does it await `this.reseedTracker.waitForComplete()`. There is no try/catch around that wait, only a `finally` that removes the temp directory (901-903). waitForComplete (reseed-tracker.js:94-121) rejects if no replication progress is seen within 30s. The add-model RPC handler (563-595) re-throws, so the client gets an error for a model that was in fact committed.\n\nReachability: the path runs whenever blind peers are configured. `_setupBlindPeering` creates the tracker at line 440, and `_mirrorBlobCore` tracks the blob core at line 524. A blind peer that is down, unreachable or slow is enough to trigger it, which is realistic for multi-GB GGUF blobs under a 30s no-progress window.\n\nMitigations that cut the severity down:\n1. Only a writer can reach this path (`ensureWriterAccess`), so the client is an operator script such as add-model.js or add-all-models.js, not an untrusted user.\n2. The error text says \"ReseedTracker: stalled …\" plainly, and the scripts have a --skip-existing flag. A retry with that flag returns the existing record (803-811) without re-uploading.\n3. Skipping clearAfterReseed on a stall is the safe outcome. Clearing local blocks that never replicated would lose data, so that part of the claim is not a defect.\n4. Blind peering stays active, so replication can still finish in the background.\n\nWaiting on replication is clearly deliberate (it protects clearAfterReseed). The defect is narrower: success is reported as failure after the commit, and nothing marks the record as committed-but-unreplicated. A naive retry without --skip-existing appends a second blob and orphans the first, so the storage-growth impact is real but depends on operator behaviour.\n\nSeverity: low. The path is operator-only, the error is explicit, and a documented mitigation exists.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "add-model fails after commit when blind peer replication stalls",
+    "ReseedTracker stalled error after model added",
+    "addModel retry duplicates blob orphaned storage",
+    "reseed timeout reports add-model failure"
+  ]
+}

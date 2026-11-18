@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "title": "Blob-core swarm topics are joined on every download and retry but never left, so DHT discovery sessions pile up",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 361,
+      "anchor": "this.hyperswarm.join(core.discoveryKey, { client: true, server: false })",
+      "evidence": "downloadModel (client.js:361), downloadBlob (:465) and _reconnectCore (:310) all call hyperswarm.join(core.discoveryKey). Nothing in the file ever calls hyperswarm.leave(), including _doReleaseDownload (:578-612), which closes the blob core. In hyperswarm 4.17.x, join() (index.js:510-525) adds a PeerDiscovery to this._discovery and returns a new discovery.session(). Only leave() (index.js:529) destroys it. So every downloaded blob topic keeps being announced, looked up and refreshed on the DHT for the life of the client. Each retry adds one more session. hyperswarm.flush() (index.js:571-573) waits on `[...this._discovery.values()].map(v => v.flushed())`, so each new download's flush also waits on lookups for every topic joined before.",
+      "impact": "In a long-running SDK process that downloads many models, the client keeps doing DHT lookups and opening peer connections for blob cores it already closed. Memory and network use grow, and later downloads get slower to discover peers because flush() covers every stale topic.",
+      "reproduction": "Create a QVACRegistryClient and call downloadModel(..., {outputFile}) for N different models. After each one finishes, check client.hyperswarm._discovery.size: it grows to N+1 (the metadata topic plus N blob topics) and never shrinks. Peer connections keep being made for topics whose cores are closed.",
+      "fix": "Keep the discovery session returned by join(), or call this.hyperswarm.leave(core.discoveryKey) in _doReleaseDownload (ref-counted per discovery key so concurrent downloads of the same core don't drop each other's topic). Also avoid re-joining in _reconnectCore if the topic is already joined (for example, call discovery.refresh() on the existing session)."
+    },
+    {
+      "title": "The abort listener added in _streamBlobToFile is never removed, so listeners and stream references build up on the caller's signal",
+      "category": "resource-leak",
+      "severity": "low",
+      "confidence": "high",
+      "line": 760,
+      "anchor": "options.signal.addEventListener(",
+      "evidence": "Each call to _streamBlobToFile adds an 'abort' listener with { once: true } (client.js:760-768). The finally block (:771-778) destroys the streams and turns off the 'download' handler, but it never calls removeEventListener. A once listener is only removed when abort actually fires, so after a successful or failed attempt the closure (which holds stream, writeStream and reject) stays attached to the signal. withRetry calls _streamBlobToFile up to maxRetries times per download (:379-391, :489-499), and each attempt adds another listener.",
+      "impact": "When a caller reuses one AbortSignal across many downloads (for example a session-wide cancel signal), listeners and the destroyed read/write streams they reference build up without limit. On Node this can raise MaxListenersExceeded warnings. A later abort then runs destroy/reject on stale streams from downloads that already finished.",
+      "reproduction": "Create a single AbortController and run 20 downloadModel(path, source, { outputFile, signal: ctrl.signal }) calls one after another. On Node, use events.getEventListeners(ctrl.signal, 'abort').length: it reports 20 or more after every download has finished.",
+      "fix": "Keep the handler in a variable, and in the finally block call options.signal.removeEventListener('abort', onAbort)."
+    }
+  ]
+}

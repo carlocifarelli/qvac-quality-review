@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "I read the code and the claim holds. In prebuilds.ts:89-96, mismatchedVersion is set only when the platform package's own manifest version differs from addon.version. Lines 97-106 then fill that same field with the inner `addon/` manifest version when the wrapper's version matched. PrebuildLocation does not record which of the two mismatched. So when the wrapper is 0.8.1 (the same as the addon) and the inner addon is 0.8.0, three things follow. (1) missingPlatformPackageHint (lines 203-207) prints \"<platformPackage> 0.8.0 is installed ... Pin it ...: \\\"<pkg>\\\": \\\"0.8.1\\\"\". That is false: the wrapper is already at 0.8.1, so the pin changes nothing. (2) checkPrebuilds sets needsPin from any mismatchedVersion (lines 151-155), so issue.platformPackage = {name, version: addon.version}. (3) For mobile hosts, host-prebuilds/index.ts:108-145 runs `<pm> add pkg@0.8.1`, which installs the version already present, and checks again at line 135. The inner addon is still 0.8.0, so the same pin comes back and the command throws HostPrebuildsInstallFailedError(\"... succeeded, but <pkg> is still not installed under node_modules\"). That error is misleading. Nothing upstream guards this. The test at commands-verify.test.ts:1052-1057 sets up exactly this state but asserts only the issue count, and the test at 1058-1066 covers only the precedence when both versions mismatch. So the behavior is untested, not shown to be intended. Impact is overstated in one respect: the inner addon only disagrees with its own wrapper when the platform package was published wrongly or node_modules was hand-edited or corrupted, which is uncommon. Rejecting the prebuild is still the right outcome there. Only the diagnosis and the auto-install remedy are wrong. Severity: low.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "inner addon version mismatch blamed on platform package",
+    "host-prebuilds still not installed under node_modules after install",
+    "mismatchedVersion nested addon wrong pin message",
+    "verify prebuilds platform package already installed same version"
+  ]
+}

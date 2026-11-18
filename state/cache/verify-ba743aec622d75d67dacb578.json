@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The claim holds up. In lib/metrics-server.js:14, `this._port = opts.port || DEFAULT_PORT` (DEFAULT_PORT = 9210, line 6) turns an explicit port 0 into 9210, and `_open()` then calls `listen(this._port, ...)` on line 40. No caller guards against this. tests/integration/metrics.integration.test.js:46-51 passes `port: opts.port || 0`, and no test ever passes a port, so every call ends up passing 0. The test at lines 240-244 also passes `port: 0` directly. Both then read the real port from `_server.address().port`, which shows they expect an OS-assigned port. Nothing in the code or comments suggests the fallback is meant to catch 0. Tests in this file close their server in cleanup, so running them one after another works, which is why the bug went unnoticed. They fail with EADDRINUSE in ready() if anything else already holds 127.0.0.1:9210 (for example a local registry-server running bin.js with the default metrics port) or if test files run in parallel. In that case the tests could also end up talking to the wrong process. The production path is not affected: scripts/bin.js:120-138 creates MetricsServer only when `metricsPort > 0` and treats 0 as 'disabled'. So the impact is limited to the tests and any embedder that passes 0. Severity stays low. The fix is `opts.port ?? DEFAULT_PORT`.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "MetricsServer port 0 ignored",
+    "metrics server ephemeral port defaults to 9210",
+    "EADDRINUSE 9210 metrics integration test",
+    "opts.port || DEFAULT_PORT falsy zero"
+  ]
+}

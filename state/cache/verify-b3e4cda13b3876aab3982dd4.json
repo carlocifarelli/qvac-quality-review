@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The ordering the claim describes is real: tmpdir (profiler.js:167), the Corestore (169-170) and the Hyperswarm (172) are all created before the try at 192. But the failure paths it relies on are not realistic.\n\n1. The swarm only leaks if something between line 172 and line 192 throws. That code is all synchronous and practically cannot throw:\n   - `HypercoreStats.fromCorestore` (hypercore-stats@2.4.0 index.js:492-507) is a plain synchronous static method. It creates a PassiveWatcher, routes its errors to an 'internal-error' event and returns. It does not return a promise, so the `await` on line 173 is a no-op and there is nothing to reject. scripts/bin.js:134 calls it synchronously too.\n   - `new HyperswarmStats(swarm)` and `swarm.on(...)` are ordinary constructor and listener calls.\n   - So the claimed impact, a process kept alive by an open swarm socket, has no reachable trigger.\n\n2. If `store.ready()` (line 170) rejects, the swarm has not been created yet (line 172), so it cannot leak. Only the store handle and the empty qvac-profile-* dir would remain. A fresh Corestore on a directory that `mkdirSync` just created only fails on environmental faults such as disk full or EIO, which would most likely have broken `mkdirSync` first. In that case the CLI path (cli.js:239) surfaces the error and the run is over anyway.\n\n3. Every realistic failure, such as a bad key from `IdEnc.decode`, a missing model, no blob binding or a timeout, happens inside the try/finally and is cleaned up.\n\nAt most this is a theoretical hygiene nit: an empty temp dir could be left behind on a disk-level failure. The described swarm leak and process hang are not reachable. If it were kept, it would be low and cosmetic at best.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "profiler temp dir not cleaned up on setup failure",
+    "profileDownload swarm not destroyed on error",
+    "qvac-registry profile hangs after error",
+    "move profiler setup inside try/finally"
+  ]
+}

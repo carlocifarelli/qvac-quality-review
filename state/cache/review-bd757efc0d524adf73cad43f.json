@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "title": "Throughput rates divide swarm-lifetime byte counters by download-only elapsed time, inflating rx/tx per second",
+      "category": "correctness",
+      "severity": "low",
+      "confidence": "high",
+      "line": 46,
+      "anchor": "rxPerSec: elapsedSec > 0 ? bytesRx / elapsedSec : 0,",
+      "evidence": "collectStats takes bytesRx/bytesTx from swarmStats.dhtStats.udxBytesReceived/Transmitted (lines 29-30). These counters are cumulative since the Hyperswarm was created at profiler.js:172. That covers DHT bootstrap, view-core metadata sync and blob-core update. But elapsedSec comes from emitStats as (performance.now() - tDownloadStart)/1000 (line 244), and tDownloadStart is only set at line 241, after all of that work. So rxPerSec = (metadata bytes + DHT bytes + blob bytes) / blob-transfer seconds.",
+      "impact": "The 'Bytes received ... (X/s)' figure that the profiler exists to report is overstated, badly so in the first intervals and on small or fast blobs. A user diagnosing slow downloads sees a misleading throughput number. The 'Bytes received' total also includes non-blob traffic, while the line suggests it is the download.",
+      "reproduction": "Profile a small model against a registry with a large view core. At the first stats tick, rxPerSec is far above the real blob throughput: compare it with blob.byteLength / transferSec from the final summary.",
+      "fix": "Snapshot udxBytesReceived/Transmitted at tDownloadStart. Pass the baseline into collectStats and compute rates from (current - baseline) / elapsedSec, or label the totals as cumulative swarm traffic."
+    },
+    {
+      "title": "Swarm, store and temp dir leak if setup fails before the try/finally",
+      "category": "resource-leak",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 173,
+      "anchor": "const hcStats = await HypercoreStats.fromCorestore(store, { cacheExpiryMs: 1000 })",
+      "evidence": "The temp dir (line 167), Corestore (169-170) and Hyperswarm (172) are all created before cleanupResources is defined (184) and before the try at 192. If store.ready() or HypercoreStats.fromCorestore() rejects, the error propagates directly. The Hyperswarm (with its DHT/UDX socket) is never destroyed, the store is never closed and the qvac-profile-* dir is never removed.",
+      "impact": "The CLI `qvac-registry profile` prints the error, but the process can stay alive on the open swarm socket instead of exiting. Each failed run leaves an orphaned temp directory under os.tmpdir().",
+      "reproduction": "Stub HypercoreStats.fromCorestore to throw, or make store.ready() fail (for example an unwritable tmpdir after mkdir), then call profileDownload. The returned promise rejects, the swarm handle stays open, and the tmp dir stays on disk.",
+      "fix": "Define cleanup first and wrap everything from mkdirSync onward in the try/finally, guarding each resource with an existence check (for example `swarm && await swarm.destroy()`)."
+    },
+    {
+      "title": "cleanupResources skips store close and temp-dir removal if swarm.destroy() rejects, and masks the original error",
+      "category": "error-handling",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 185,
+      "anchor": "await swarm.destroy()",
+      "evidence": "cleanupResources runs `await swarm.destroy(); await store.close();` and only then the guarded rmSync (lines 185-189). Any rejection from swarm.destroy() or store.close() aborts the remaining steps. Because the function is awaited inside `finally` (line 296), that rejection replaces whatever error the try block threw, for example a stream-timeout from pipeline.",
+      "impact": "The downloaded model copy (download.bin, possibly multi-GB) stays in os.tmpdir(). The caller sees a teardown error instead of the real download failure it was profiling.",
+      "reproduction": "Make swarm.destroy() reject (for example monkeypatch it) while pipeline throws a timeout. profileDownload rejects with the destroy error, the timeout is lost, and the qvac-profile-* directory with download.bin remains.",
+      "fix": "Run each teardown step in its own try/catch (or use Promise.allSettled), always run the rmSync, and do not let cleanup errors override an in-flight error from the try block."
+    }
+  ]
+}

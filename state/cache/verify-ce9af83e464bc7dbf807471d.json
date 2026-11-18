@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The code matches the claim. In packages/ai-sdk-provider/src/managed/index.ts, `parentWatch` is armed at lines 193-205, before `resolveServe()`. The catch at lines 291-297 only calls `removeConsumer` and rethrows. It never calls `clearInterval(parentWatch)`. The only other place that clears the interval is `close()` (line 375), and `close()` only exists after startup succeeds. You can reach this from the public API: `startManagedQvac` (or `createQvac` with mode 'managed') with `closeOnParentExit: true` and a startup failure, such as ServeStartTimeoutError, ServeSpawnFailedError, or an fs/lock error from addConsumer or writeEphemeralConfig. No finally block or wrapper guards it, and no test or comment says the interval should outlive a failed start. Each failed attempt leaves one more unref'd 2s interval running.\n\nThe claimed impact is overstated, though. According to types.ts:77-85, `closeOnParentExit` is opt-in and only meant for daemon-style hosts \"whose lifetime must not exceed its parent's\", and it explicitly \"exits this process\" when the parent dies. A host that sets it has already agreed to be exited when the parent dies. So the leftover watch exiting the process after a failed start is close to what that host asked for, not an unexpected kill of an unrelated caller. The real problems are:\n- the timers leak, one per retry, but each is cheap and unref'd;\n- the behavior is inconsistent: a successful provider stops the pact on `close()`, while a failed start can never stop it;\n- the exit skips the host's own shutdown, and the stale `removeConsumer` runs on an already-removed marker, which does no harm.\n\nIt's a real but minor lifecycle bug in an opt-in, niche path, so I'm keeping the severity at low.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "closeOnParentExit interval not cleared on startup failure",
+    "parentWatch leak startManagedQvac error",
+    "managed provider process.exit after failed start",
+    "clearInterval parentWatch catch resolveServe"
+  ]
+}

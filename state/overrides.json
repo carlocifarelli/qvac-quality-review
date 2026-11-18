@@ -1,0 +1,70 @@
+{
+  "qr2:bfcce14348173adb": {
+    "status": "confirmed",
+    "verifiedBy": "reproduction",
+    "note": "Reproduced with verification/F-device-defaults.ts: qvacConfigSchema.parse keeps only 'llm' out of {audiogen, ggml-classification, bci, llm}; getDefaultsFromPattern returns undefined for audiogen-ggml, ggml-classification and bci-whispercpp-transcription. dispatch.ts:151/168 resolves config for every model type through resolveModelConfig, so these patterns are reachable and silently ignored."
+  },
+  "qr2:ccf5e961f2ad013e": {
+    "status": "confirmed",
+    "verifiedBy": "reproduction",
+    "note": "Reproduced with verification/F-device-defaults.ts: with user patterns [samsung-specific gpu, android-general cpu] on a Samsung device the resolved device is 'cpu'. The public JSDoc (schemas/config.ts:222-227) says the first matching pattern wins; the resolver (model-config-utils.ts:151-174) merges all matches and the last wins. Docs-vs-behaviour contract issue: fix either side, but they must agree."
+  },
+  "qr2:7733cb156d083b6d": {
+    "status": "confirmed",
+    "verifiedBy": "reproduction",
+    "note": "Reproduced on Bare with the package's own runner (verification/inference-archive.repro.test.ts): an archive with model/model-0000N-of-00002.gguf entries writes both shards under out/model/ and extractAndValidateShardedArchive rejects with 'No sharded model files found in archive'. Uncertainty: depends on whether published QVAC archives ever wrap shards in a folder; any third-party archive made with `tar czf x.tar.gz dir/` does."
+  },
+  "qr2:02c1335335f99ad5": {
+    "status": "confirmed",
+    "verifiedBy": "reproduction",
+    "note": "Reproduced on Bare: archive {a.gguf, a.gguf/b.gguf} makes fs.mkdirSync throw EEXIST inside the tar-stream 'entry' listener; the extractTarStream promise is still pending after 3 s and the error surfaces as an unhandled rejection. Without handlers it killed the brittle process ('Uncaught (in promise) FileError: EEXIST'). Same path is hit by EACCES/ENOSPC on the cache dir, i.e. ordinary disk conditions, not only crafted archives."
+  },
+  "qr2:cfb072e2fcad7932": {
+    "status": "rejected",
+    "verifiedBy": "code reading",
+    "note": "No trust boundary. The serial and package name come from the operator's own test-suite config/CLI on a developer or CI machine; whoever controls them can already run arbitrary commands. Using execFile would be tidier, but this is not a security finding worth a maintainer's time."
+  },
+  "qr2:781492aeff65c792": {
+    "status": "rejected",
+    "verifiedBy": "duplicate search",
+    "note": "Real, but already known upstream. Dedupe surfaced merged PR tetherto/qvac#5689 (\"stop separate processes from corrupting or deleting each other's model downloads\"), whose 'Known limits' section says: \"A Hyperdrive corestore can still be removed while another process uses it, since it is shared by every file in a drive but locked per file.\" Not filed as an issue there, but acknowledged by the maintainers, so not a new finding. Next action if wanted: a tracking issue referencing #5689."
+  },
+  "qr2:5b003a69f0a7be69": {
+    "status": "rejected",
+    "note": "Duplicate root cause of qr2:6b77a3edfe85576e (same `process.exit(code || 0)` handler); filed together as one finding with all three locations."
+  },
+  "qr2:80af97bd280b2fb2": {
+    "status": "confirmed",
+    "verifiedBy": "reproduction",
+    "note": "Reproduced with verification/registry-reseed-hang.repro.cjs against the real ReseedTracker: of two overlapping waitForComplete() calls the second stays pending after replication completes; a caller waiting when destroy() runs stays pending even past progressTimeout. registry-service.js awaits it in every addModel (866) and destroy() is called from reseed() (490) and _close() (365); add-model RPCs are not serialized (563). Only affects deployments with blind peers configured."
+  },
+  "qr2:fee72a8bed423445": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read registry-service.js:1379-1445: listModels() is snapshotted once, each record may take minutes (source download + fit blob + upload/mirror), then `{ ...model, fitBlobBinding }` is appended as DISPATCH_PUT_MODEL, whose apply handler (line 107) replaces the whole record. No lock or version check anywhere in the service; fill-fit-blobs is an RPC (598-618) that runs alongside update-model-metadata and add-model. Classic lost update. Not reproduced at runtime (needs an Autobase/HyperDB fixture); uncertainty is only about how often operators run both at once."
+  },
+  "qr2:6b77a3edfe85576e": {
+    "status": "confirmed",
+    "verifiedBy": "reproduction",
+    "note": "Reproduced with verification/test-suite-signal-exit.repro.mjs using the exact handler: child SIGKILLed -> code=null -> parent exits 0. Same bug, same fix, in run-consumer-desktop.ts:51 and run-consumer-electron.ts:205 (findings qr2:5b003a69f0a7be69 and qr2:45c70474ce0b15ed, folded into this one). Siblings already handle it correctly (external-consumer.ts:105, run-consumer-snap.ts:110-114), which shows the intended behaviour."
+  },
+  "qr2:378ffe3bc0f6b548": {
+    "status": "rejected",
+    "verifiedBy": "code reading",
+    "note": "Real but cosmetic: the error message at get-model-info.ts:41 lacks an opening quote. No behavioural impact; below the bar for this report (would be a one-character drive-by fix)."
+  },
+  "qr2:fbef8f97b8d025af": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Initially rejected by me as unreachable in production (bin.js only constructs MetricsServer when port > 0). The verifier showed the integration tests pass `port: 0` expecting an OS-assigned port and get 9210 instead, so the suite fails with EADDRINUSE whenever a local registry-server is running. Kept as a low-severity, test-reliability finding: an example of the verifier correcting the human."
+  },
+  "qr2:45c70474ce0b15ed": {
+    "status": "rejected",
+    "note": "Duplicate root cause of qr2:6b77a3edfe85576e (same `process.exit(code || 0)` handler); filed together as one finding with all three locations."
+  },
+  "qr2:6211347ee9db2601": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read registry.ts:396 and :567 (cleanup only if `error instanceof DownloadCancelledError`), registry-download-utils.ts:134-143 (transfer awaited with no error mapping) and registry-server/client/lib/client.js:256/277/301/757/765 (client rejects with plain `new Error('Download cancelled')`). The lease wrapper maps only cancels during the lease wait (runtime/registry-client.ts:236-245). registry.ts:468 in the same file already checks `ctx.signal.aborted ||`, which is the fix pattern. Not reproduced at runtime (needs a registry peer). Dedupe check: merged PR #5689 states clearCache deletes the cancelled download's own .part, and its tests cover that for HTTP; the registry test (test/registry-client-cache.test.ts:30-50) stubs downloadBlob to throw exactly `new Error('Download cancelled')` and only asserts clearBlocksOnCancel, never that the .part file is removed. So the gap is consistent with the existing tests, not contradicted by them."
+  }
+}

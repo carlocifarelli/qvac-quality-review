@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "title": "Stealing a dead owner's lock is check-then-delete, so two waiters can both 'win' and spawn duplicate serves",
+      "category": "concurrency",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 100,
+      "anchor": "await rm(lockPath(key), { force: true }).catch(() => {})",
+      "evidence": "tryLock (index.ts:97-101) reads the owner pid, sees it is dead, then unconditionally `rm`s the lock path and retries `open(...,'wx')`. Nothing checks that the file being removed is still the dead owner's lock. Interleaving: waiters A and B both call readLockOwner and get the dead pid. A runs rm and then open('wx'), so the lock is now A's with A's pid. B then runs its rm, which deletes A's fresh lock, and B's open('wx') succeeds. Both return true, so both run the spawn branch (index.ts:230-256) for the same fleetKey. A's `finally releaseLock` (line 273) later deletes B's lock as well. The mtime branch at lines 105-107 has the same race. This is the exact 'duplicate runner/serve and double-load the model' case the comment at lines 80-86 says the lock exists to prevent.",
+      "impact": "After a spawner crashes, several clients waiting on the same fleet key (e.g. several editor/agent sessions started together) can each launch a detached runner. You get two `qvac serve` processes that both load the same model, doubling RAM/VRAM, and one serve's registry record overwrites the other's.",
+      "reproduction": "Write `<key>.lock` holding a dead pid. Make `rm` slow by stubbing fs (or loop many times), then run `Promise.all([tryLock(k), tryLock(k)])`. Both can resolve true. In an integration run, kill a spawner while it holds the lock and start two providers with the same models at once: two runners appear.",
+      "fix": "Make the steal atomic. Rename the stale lock to a unique temp name (rename is atomic, and only one stealer's rename succeeds) and re-check its contents before deleting it. Or re-read the owner just before rm and only remove the file if it still holds the same dead pid and inode (compare with stat). After winning open('wx'), check that the file contains our own pid."
+    },
+    {
+      "title": "A lock whose dead owner's pid gets reused is never stolen, so starts on that fleet key time out until that unrelated process exits",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 99,
+      "anchor": "if (isProcessAlive(owner)) return false // owner still working — wait for its record",
+      "evidence": "The lock lives in ~/.qvac/managed-serves (registry.ts:20-21, 50-51), so it survives crashes and reboots. A client killed while holding it (SIGKILL, OOM, power loss, or the `process.exit(0)` at index.ts:201, which skips the `finally releaseLock`) leaves `<key>.lock` holding its pid. Liveness is only `kill(pid,0)` (registry.ts:57-65), and EPERM also counts as alive. Once any unrelated process reuses that pid, which is common after a reboot, tryLock returns false forever. The mtime fallback (lines 105-108) only covers locks with no readable pid. sweepServes never touches lock files. Every later startManagedQvac for that fleet key then loops in waitForHealthyRecord until overallDeadline and throws ServeStartTimeoutError (lines 279-284), without ever spawning.",
+      "impact": "The user cannot start the managed provider for that model set. Every attempt waits the full serveStartTimeout+10s (minutes) and then fails, until the unrelated pid exits, which may be never for a system daemon. The only fix is to delete the lock file by hand.",
+      "reproduction": "Write `~/.qvac/managed-serves/<fleetKey>.lock` containing the pid of a long-lived process, e.g. `1` or the shell's pid. Call startManagedQvac with models that hash to that fleetKey: it times out and never spawns.",
+      "fix": "Record a start time, boot id, or nonce with the pid and check it. At a minimum, treat a lock as stealable when its mtime is older than serveStartTimeout plus a margin, even if the pid looks alive. The owner could also refresh the lock's mtime as a heartbeat while it waits."
+    },
+    {
+      "title": "The closeOnParentExit interval is never cleared when startup fails and can later process.exit() the caller",
+      "category": "resource-leak",
+      "severity": "low",
+      "confidence": "high",
+      "line": 295,
+      "anchor": "removeConsumer(fleetKey, consumerId)",
+      "evidence": "With closeOnParentExit, `parentWatch` is armed at lines 193-205, before resolveServe. If resolveServe throws (ServeStartTimeoutError, ServeSpawnFailedError, an fs error), the catch at lines 291-297 only removes the consumer and rethrows. `parentWatch` is not cleared, and no provider or close() is returned that could clear it. The interval is unref'd, so it doesn't keep the loop alive, but it keeps polling for the life of the process. If the parent later goes away, it calls `process.exit(0)` (line 201) for a provider that does not exist. Each failed attempt adds another interval.",
+      "impact": "A host that catches the startup failure and keeps running (e.g. falls back to another backend or retries) is left with leaked timers, one per failed attempt. If the parent dies later, the host is force-exited with code 0 by an object it never got back, without its own shutdown logic.",
+      "reproduction": "Call startManagedQvac({models, closeOnParentExit: true, serveBinPath: '/nonexistent'}) and catch the rejection. Check that the interval is still registered (e.g. via process._getActiveHandles or a fake-timer spy on setInterval/clearInterval): it was never cleared.",
+      "fix": "In the catch block around resolveServe (line 291), add `if (parentWatch !== undefined) clearInterval(parentWatch)` before rethrowing."
+    }
+  ]
+}

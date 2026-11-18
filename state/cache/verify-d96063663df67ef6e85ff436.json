@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The code matches the claim. activeBlobCoreLabel becomes 'models-<generation>' when a generation is configured (registry-service.js:69-72). addModel (845-849) and fillFitBlobs (1427-1430) write to that core and call _mirrorBlobCore on it. _setupBlindPeering (427-464) runs at startup (278) and from reseed() (494). It clears _mirroredCoreIds (441), then calls _getOrCreateBlobsCore(BLOB_CORE_NAME) with the hard-coded 'models' (451). _getOrCreateBlobsCore (1165-1172) opens 'blobs-models' with writable:true. On a node that never used the legacy label, that creates an empty, unused local core and mirrors it.\n\nThe eager open at 286-303 does use activeBlobCoreLabel, but it runs after _setupBlindPeering and never calls _mirrorBlobCore. So the active core is not added to the blind peers or to the ReseedTracker, and _waitForInitialSeeding (463, 497-503) logs 'finished initial sync' without having checked it. The core is mirrored again only when the next addModel or fillFitBlobs runs.\n\nReachability: QVAC_BLOB_CORE_GENERATION or the blobCoreGeneration option at startup, or a public reseed() call. reseed() also accepts new blindPeerKeys, and in that case the new mirrors never receive the rotated core until the next ingest. Nothing else guards this path. The rotation test (blob-core-rotation.integration.test.js) does not use blind peers, so this case is untested. I found no comment saying the behaviour is intentional.\n\nThe impact is somewhat smaller than claimed. Blind peers that had already mirrored the rotated core through an earlier addModel probably keep it across a restart, so the worst case is a reseed to new or wiped mirrors, especially with --clear-after-reseed. There is also no data corruption: models stay readable locally until that local data is cleared. Medium severity stands.",
+  "severity": "medium",
+  "duplicateSearchTerms": [
+    "blind peering mirrors legacy models blob core",
+    "reseed ignores blob core generation",
+    "_setupBlindPeering activeBlobCoreLabel",
+    "rotated blob core not mirrored to blind peers"
+  ]
+}

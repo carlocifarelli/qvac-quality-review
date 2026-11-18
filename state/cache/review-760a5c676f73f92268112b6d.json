@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "An abort that fires during the state-dir await is lost: the fitter still starts and the caller waits up to 30 s instead of getting 'cancelled'",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 218,
+      "anchor": "const stateDir = await resolveStateDir(options.stateDir)",
+      "evidence": "runFit checks `options.signal?.aborted` only once, at run.ts:209, before `await resolveStateDir(...)` (run.ts:218). When no stateDir is passed, which is the production path through fit-load.ts:48-51, that await runs a dynamic `import('@/utils/cache/paths')` plus `getCacheDir`, so it yields to the event loop. If the signal aborts in that window, its one 'abort' event fires while nothing is listening. After the await, runFit does not check `signal.aborted` again. It writes the `.running` marker, starts the fitter through settle() (run.ts:255), and then bounded() calls `signal.addEventListener('abort', onAbort, {once:true})` at run.ts:180 on a signal that is already aborted. That event never fires again, and bounded() never checks `signal.aborted` itself. The call therefore resolves only when the fitter returns, or after FIT_TIMEOUT_MS (30 s) with reason 'timeout'. If it times out, run.ts:177 also adds the key to `hung`, so every later fit of that request answers 'timeout' until the fitter returns. The doc comment (run.ts:196-198) says an aborted signal answers 'cancelled' at once, and the test 'an aborted caller never reaches the fitter' says a cancelled caller never reaches the fitter. Both are broken in this window.",
+      "impact": "A user who cancels a model load right as it starts can still have the native fitter run and can wait up to 30 s before the load call returns. The result comes back as 'timeout' or 'completed' instead of 'cancelled'. A hung fitter can also put the request into the process-wide `hung` set, so later loads of that model get 'timeout' answers.",
+      "reproduction": "In a brittle test, call `runFit(PROBE, { signal: controller.signal, callFit, timeoutMs: 200 })` with no stateDir, so the dynamic import runs, and call `controller.abort()` straight after, in the same tick and before the returned promise settles. Use a callFit that counts calls and waits on a promise that never resolves. Expected: status 'unknown' with reason 'cancelled' and calls === 0. Actual: calls === 1 and, after 200 ms, reason 'timeout'. You can also inject the delay by passing a stateDir and wrapping resolveStateDir in a setImmediate-delayed promise.",
+      "fix": "After the await, re-check `if (options.signal?.aborted === true) return unknown('cancelled', 'Fit was cancelled')` before any markers are written or inFlight is changed. As a second guard, have bounded() check `signal?.aborted` right after registering its listener and call onAbort() if the signal is already aborted."
+    }
+  ]
+}

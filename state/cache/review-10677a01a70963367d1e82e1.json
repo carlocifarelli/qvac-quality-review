@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "title": "port 0 (ephemeral) is silently replaced by fixed port 9210",
+      "category": "correctness",
+      "severity": "low",
+      "confidence": "high",
+      "line": 14,
+      "anchor": "this._port = opts.port || DEFAULT_PORT",
+      "evidence": "`opts.port || DEFAULT_PORT` treats 0 as falsy. tests/integration/metrics.integration.test.js:46-53 passes `port: opts.port || 0` to get an OS-assigned port and then reads `metricsServer._server.address().port`. Because of the `||`, every one of those servers actually binds 127.0.0.1:9210. bin.js only works because it handles 0 itself (0 disables the server) and never passes it in.",
+      "impact": "Integration tests (and any embedder) that ask for an ephemeral port get 9210 instead. Running the tests while a local registry-server is up with default metrics, or running test files in parallel, fails with EADDRINUSE in `ready()`. The tests also scrape whatever process owns 9210.",
+      "reproduction": "Start a registry-server with default metrics on 9210 (or `nc -l 127.0.0.1 9210`), then run `new MetricsServer(promClient.register, { port: 0 }).ready()`. It rejects with EADDRINUSE instead of binding a random port.",
+      "fix": "Use `this._port = opts.port ?? DEFAULT_PORT` (and the same for host if an empty string should be allowed)."
+    },
+    {
+      "title": "Server 'error' listener left as a stale promise reject, so runtime server errors are swallowed",
+      "category": "error-handling",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 50,
+      "anchor": "this._server.on('error', reject)",
+      "evidence": "The `error` handler only exists to reject the listen promise, but it is never removed after `listen` succeeds. Any later 'error' event on the http.Server (for example EMFILE/ENFILE while accepting connections) calls `reject` on a promise that has already resolved. That call does nothing: nothing is logged and the error is not re-thrown. Because a listener is attached, Node also does not treat it as an unhandled 'error' event.",
+      "impact": "After startup, server-level failures of the metrics endpoint disappear without a trace. Prometheus scrapes start failing and operators get no log line explaining why.",
+      "reproduction": "After `await ms.ready()`, run `ms._server.emit('error', new Error('boom'))`. Nothing is logged and nothing throws.",
+      "fix": "In the listen callback, swap the handler: `this._server.off('error', reject); this._server.on('error', (err) => this._logger.error({ err }, 'MetricsServer: server error'))`. Alternatively, use `once('error', ...)` and remove it on success."
+    }
+  ]
+}

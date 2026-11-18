@@ -1,0 +1,52 @@
+{
+  "findings": [
+    {
+      "title": "addModel can hang forever in reseedTracker.waitForComplete when two ingests overlap, or when the tracker is destroyed",
+      "category": "concurrency",
+      "severity": "high",
+      "confidence": "high",
+      "line": 866,
+      "anchor": "await this.reseedTracker.waitForComplete()",
+      "evidence": "registry-service.js:866 awaits the shared ReseedTracker instance on every addModel. In reseed-tracker.js:38-136, waitForComplete makes a new Promise whose resolve/reject live only inside that call's `check` closure. It runs `check()` once, then does `if (this._pollInterval) return` (line 135). So a second concurrent caller never gets an interval, and its promise settles only if that single synchronous check finds every core complete. Separately, `destroy()` (reseed-tracker.js:140) clears the interval without settling the pending promise. destroy() is called from `_close()` (registry-service.js:365) and from `reseed()` (registry-service.js:490) while addModel may be awaiting at line 866. Nothing in registry-service serializes add-model RPCs (registry-service.js:563): every connection gets its own responder.",
+      "impact": "With blind peers configured, the second of two overlapping add-model RPCs (two clients, or a client retry) never returns. The same happens to any ingest in flight during reseed() or service close. The RPC stays pending forever, the `finally` at line 901 never runs, so the model-sized download in TEMP_STORAGE/<hash> is never deleted, and clearAfterReseed never runs for that core.",
+      "reproduction": "Build a RegistryService with blindPeerKeys and a blind peer that replicates slowly (not finished within one 2.5s poll). Stub _downloadArtifact. Call `Promise.all([svc.addModel(a), svc.addModel(b)])`: the first resolves once replication finishes, the second never does. Or start one addModel, call `svc.reseed()` while it waits at line 866, and watch it never resolve or reject.",
+      "fix": "Make waitForComplete give each caller its own interval/timer, or keep one shared in-flight promise and return it to concurrent callers. In destroy(), reject any pending waiters, e.g. with an 'ReseedTracker destroyed' error."
+    },
+    {
+      "title": "fillFitBlobs writes back a stale model snapshot, overwriting concurrent metadata updates and re-ingests",
+      "category": "concurrency",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 1432,
+      "anchor": "await this._appendOperation(DISPATCH_PUT_MODEL, {",
+      "evidence": "fillFitBlobs reads every record once at the start (`const models = await this.listModels()`, line 1380). It then walks them one at a time, and each step may download a multi-GB artifact from source (lines 1413, 1340-1349). For each record it appends `{ ...model, fitBlobBinding }` (lines 1432-1442), which is the full record as it was when the run began, and the put-model apply handler replaces the whole record (line 107). Any update-model-metadata RPC (lines 646-680) or addModel re-ingest (new blobBinding, line 861) committed for that path after the listModels snapshot is silently undone.",
+      "impact": "A deprecation, licence or description edit made while a fill-fit-blobs job runs is lost. A model re-ingested during the job is reverted to its old blobBinding/sha256, so clients are pointed back at the previous weights, which may already have been cleared locally. Nothing reports this: the fill report counts it as 'filled'/'replaced'.",
+      "reproduction": "Seed two GGUF models without fit blobs. Start `svc.fillFitBlobs()` with the first model's download stubbed to block. While it is blocked, call update-model-metadata on the second model with `deprecated: true`. Release the stub. Afterwards getModelByKey for the second model shows `deprecated` back at its old value.",
+      "fix": "Right before the append, re-read the record with getModelByKey. Skip it (reason 'record changed') if its blobBinding.sha256 differs from the snapshot. Otherwise append `{ ...fresh, fitBlobBinding }` instead of the stale `model`."
+    },
+    {
+      "title": "Blind-peering setup and reseed mirror the legacy 'models' core instead of the active generation's core",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 451,
+      "anchor": "const { core } = await this._getOrCreateBlobsCore(BLOB_CORE_NAME)",
+      "evidence": "Since blob-core rotation, new ingests write to `this.activeBlobCoreLabel` ('models-<generation>', lines 69-72, 845, 1427). _setupBlindPeering, which runs at startup (line 278) and from reseed() (line 494), still opens and mirrors the hard-coded BLOB_CORE_NAME 'models' (line 451). It does not mirror the active core, and _mirroredCoreIds is cleared just before (line 441). The core that holds every post-rotation model is mirrored and tracked again only when the next addModel/fillFitBlobs calls _mirrorBlobCore. On a node configured with a generation from day one, line 451 also creates an empty writable 'blobs-models' core that is never used.",
+      "impact": "After setting QVAC_BLOB_CORE_GENERATION and restarting, or after running reseed(), the blind peers are not asked to mirror the core that holds the post-rotation models. _waitForInitialSeeding reports 'blind peers finished initial sync' without having checked it. With --clear-after-reseed, the local blocks of those models are already gone, so their availability depends on mirroring that this setup no longer re-establishes.",
+      "reproduction": "Start a service with blobCoreGeneration '2026-09-10' and blindPeerKeys, add a model, then restart it or call `svc.reseed()`. Inspect `svc._mirroredCoreIds` / `reseedTracker._cores`: they contain only the 'blobs-models' discovery key, not that of 'blobs-models-2026-09-10'.",
+      "fix": "In _setupBlindPeering, mirror the active core (`this.activeBlobCoreLabel`), and ideally every distinct blobBinding.coreKey this node owns among existing models, instead of only BLOB_CORE_NAME."
+    },
+    {
+      "title": "addModel reports failure after the model is already committed when blind-peer replication stalls",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 861,
+      "anchor": "await this._appendOperation(DISPATCH_PUT_MODEL, modelData)",
+      "evidence": "The put-model op is appended at line 861. Only after that does addModel await `this.reseedTracker.waitForComplete()` (line 866), which rejects after 30s without replication progress (reseed-tracker.js:95-121). The rejection propagates out of addModel and the add-model RPC (lines 575, 592-595), so the client receives an error even though the registry record and blob already exist.",
+      "impact": "A slow or unreachable blind peer turns every ingest into a reported failure that actually succeeded. The natural client response is a retry without skipExisting. That re-downloads the artifact and appends a second full copy to the blob core (lines 846-861), leaving the first copy orphaned: multi-GB storage growth per retry. clearAfterReseed is also skipped for that ingest.",
+      "reproduction": "Configure blindPeerKeys with a peer that is offline. Call add-model over RPC: after about 30s the client gets 'ReseedTracker: stalled…', yet getModelByKey returns the model. Retry the same request and the active blob core length grows again.",
+      "fix": "Treat replication wait failure after a successful append as non-fatal: log it, return the model with a `replicated: false` flag, and skip clearing. Or wait for replication before appending the record."
+    }
+  ]
+}

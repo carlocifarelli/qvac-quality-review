@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "Electron consumer killed by a signal (crash/OOM/timeout kill) exits the runner with code 0",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 205,
+      "anchor": "process.exit(code || 0)",
+      "evidence": "run-consumer-electron.ts:204-206 registers `child.on('exit', (code) => process.exit(code || 0))`. Node passes `code === null` and a non-null `signal` when a child dies from a signal, so `null || 0` gives 0. The sibling run-consumer-snap.ts:110-114 handles this as `process.exit(signal ? 1 : (code ?? 1))`, and utils/external-consumer.ts:105 maps a signal to 1. The Electron runner drops the signal argument entirely.",
+      "impact": "If the Electron consumer segfaults in a native addon, is OOM-killed (SIGKILL), or is killed by a CI timeout (SIGTERM), `run-consumer-electron` exits 0. CI and orchestrators then count a crashed consumer run as a success, which hides real native crashes in the QVAC SDK under Electron.",
+      "reproduction": "Point the electron consumer config at an app whose main process runs `process.kill(process.pid, 'SIGSEGV')` (or run `kill -9` on the Electron PID while it runs). Run the run-consumer-electron command with --skip-build and check `echo $?`: it prints 0.",
+      "fix": "Use `child.on('exit', (code, signal) => { if (signal) console.error(`❌ Electron consumer terminated by signal ${signal}`); process.exit(signal ? 1 : (code ?? 1)) })`, matching run-consumer-snap.ts."
+    }
+  ]
+}

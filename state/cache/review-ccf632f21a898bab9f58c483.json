@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "A mismatch in the inner addon is blamed on the platform package, which leads to a wrong message and a pin that cannot fix it",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 105,
+      "anchor": "location.mismatchedVersion = nestedVersion",
+      "evidence": "In resolvePrebuildLocations (prebuilds.ts:97-106), when the platform package wraps an inner `addon/` directory, the inner addon's version is stored in the same `mismatchedVersion` field used for the platform package's own version. This happens even when the platform package's own version (installedVersion, line 89) equals addon.version. Two things follow. (1) missingPlatformPackageHint (lines 203-207) prints `${platformPackage} ${mismatchedVersion} is installed, but it must be the same version as ${addon.name}. Pin it ...: \"pkg\": \"<addon.version>\"`. That names the inner addon's version as the platform package's version, and tells the user to pin a version that is already installed. (2) checkPrebuilds treats any mismatchedVersion as needsPin (lines 151-155), so it sets issue.platformPackage = {name, version: addon.version}. host-prebuilds/index.ts:161-196 collects that pin, installs the same version again (line 124), then runs the check again (line 135). The inner addon is still mismatched, so the same pin comes back and the command throws HostPrebuildsInstallFailedError(\"... succeeded, but <pkg> is still not installed under node_modules\"). The test at commands-verify.test.ts:1052-1057 sets up exactly this state (wrapper 0.8.1, inner addon 0.8.0) but checks only the issue count, not the message or the pin.",
+      "impact": "The user is told that `@qvac/asr-ggml-linux-x64 0.8.0 is installed` when 0.8.1 is installed, and is told to pin 0.8.1, which they already have. For mobile hosts, the automatic host-prebuilds install runs a useless reinstall, then fails with a false 'still not installed under node_modules' error.",
+      "reproduction": "Use the fixture from commands-verify.test.ts:1020-1052: meta @qvac/asr-ggml@0.8.1, platform package @qvac/asr-ggml-linux-x64@0.8.1 (not an addon), and addon/package.json at version 0.8.0 with prebuilds/linux-x64/*.bare. Then call checkPrebuilds({addon, hosts:['linux-x64']}). issues[0].message contains '@qvac/asr-ggml-linux-x64 0.8.0 is installed', and issues[0].platformPackage is {name:'@qvac/asr-ggml-linux-x64', version:'0.8.1'}, which is the version already installed.",
+      "fix": "Store the inner-addon mismatch in its own field (for example `nestedMismatchedVersion`), or record which manifest it came from. In checkPrebuilds, emit a platformPackage pin only when the platform package's own version differs from the addon's. For an inner-addon mismatch, describe it as a broken or inconsistent platform package (report the inner addon's version and path) and do not ask the user to pin."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The JSDoc on the public `deviceDefaults` config field (config.ts:222-226) says user patterns are \"checked before the built-in patterns\" and \"First matching pattern wins.\" The implementation does something else. In resolveModelConfigWithContext (model-config-utils.ts:151-174), findAllMatchingPatterns uses `patterns.filter`, so it returns every match. The function then spreads the built-in matches and after them the user matches into mergedDefaults with `mergedDefaults = { ...mergedDefaults, ...defaults }`. For each shared key, the last matching pattern wins. The code's own comments state that this is intended: line 62 says \"Ordered general → specific (later patterns override earlier)\" and lines 155-156 say \"Later values override earlier (more specific wins)\". The test names agree: \"user patterns override builtin patterns\". So the implementation is deliberate and the doc comment is the stale part.\n\nThe path is reachable from public input. state.ts:219 passes `getConfig().deviceDefaults` unchanged (not reversed) as userPatterns, from qvac.config. Nothing reorders the patterns or warns about overlap. The reviewer's scenario holds. With [specific samsung → gpu, general android → cpu], both patterns match on a Samsung device, and the general one comes last, so llm.device is 'cpu'. The configuration is silently wrong.\n\nOn impact: this is a documentation/contract mismatch, not a logic bug. Anyone who orders patterns general → specific gets the right result, and loadModel() userInput still overrides everything. The fix is to correct the JSDoc. The \"checked before\" half is also misleading, though user patterns do still override built-in ones in effect. I'm rating it low-medium; I put low because nothing crashes and the existing semantics are coherent and tested. The impact is still a silently wrong device setting for users who follow the docs.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "deviceDefaults first matching pattern wins",
+    "deviceDefaults pattern order last match overrides",
+    "deviceDefaults JSDoc merge order incorrect"
+  ]
+}

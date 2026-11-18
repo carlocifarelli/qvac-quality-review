@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The core claim holds, but the impact is overstated.\n\nWhat holds:\n- `runFfmpeg` (ffmpeg.ts:38-113) accepts no AbortSignal. Its only kill path is the `timeoutMs` SIGKILL (61-68, default 5 minutes).\n- Neither HTTP caller listens for client disconnect. These are videos.ts:379, which calls `transcodeAviToMp4(aviRecord.data)`, and audio.ts:534 plus music.ts:583, which call `transcodeWav`. The server does have a disconnect helper, `disconnectSignal` in require-model.ts:134, but it is not used here.\n- A client that disconnects mid-transcode leaves ffmpeg running until it finishes, and the output buffer is then thrown away.\n- videos.ts:370-379 has no in-flight dedup. Only a completed MP4 is cached (`mp4FileId`, set at line 414). So concurrent or retried GETs on `/v1/videos/{id}/content` while a transcode is running each spawn their own ffmpeg.\n\nWhat is overstated or wrong:\n1. The \"cancelled job\" path does not exist. Both music.ts:583 and videos.ts:379 run only in the content-GET handler, after `job.status === 'completed'` (music.ts:557, videos.ts:~327). The job's generation work is already finished by then, so `job.controller.signal` has nothing to cancel during a transcode.\n2. Each ffmpeg normally exits once it finishes the input. The inputs are bounded buffers already in memory: a model-generated WAV or a short AVI. A typical transcode takes seconds, so \"up to 5 minutes at full CPU\" is the worst case, not the usual one.\n3. After one transcode succeeds, the MP4 is cached and later retries skip ffmpeg. For audio, each request re-encodes, but the cost is small.\n4. This is the local `qvac serve` model server. Piling up processes needs a client that keeps re-requesting while a transcode is still running.\n\nThe cleanup gap is real but the impact is modest. I rate it low, not medium.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "ffmpeg not killed on client disconnect",
+    "runFfmpeg AbortSignal support",
+    "concurrent video content requests spawn multiple ffmpeg",
+    "transcode cancellation"
+  ]
+}

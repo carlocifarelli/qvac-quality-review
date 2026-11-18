@@ -1,0 +1,10 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "metrics-server.js:39-51 attaches `this._server.on('error', reject)` inside the listen promise and never removes it or replaces it with a logging handler. Nothing else attaches one: grep finds no other `_server.on(` in the package, and bin.js:137-142 just constructs the server and awaits `ready()`. Once listen resolves, any later server-level 'error' goes to an already-settled promise's `reject`, which does nothing. The path is reachable: in Node, net.Server's onconnection emits 'error' on the server when accept fails (for example EMFILE/ENFILE under fd exhaustion), and this is a long-running daemon. Only per-request collection errors are logged (line 28). No test or comment shows the behaviour is intentional. The impact is somewhat overstated, though. The leftover listener also stops Node from crashing the whole registry process on an unhandled 'error', which is arguably better than the alternative. The lost data is only a log line for a secondary metrics endpoint, and the accept errors are usually transient. The defect is real (diagnostics are silently lost) and the severity stays low. Fix: after listen succeeds, swap `reject` for a handler that logs the error, e.g. `this._server.off('error', reject); this._server.on('error', err => this._logger.error({ err }, 'MetricsServer: server error'))`.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "metrics server error listener swallows errors",
+    "MetricsServer error event not logged after listen",
+    "registry-server metrics EMFILE silent"
+  ]
+}

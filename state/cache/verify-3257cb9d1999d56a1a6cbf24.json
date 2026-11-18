@@ -1,0 +1,11 @@
+{
+  "verdict": "uncertain",
+  "reasoning": "The code matches the claim. In profiler.js lines 184-190, cleanupResources runs `await swarm.destroy()` and then `await store.close()` with no guard. Only `fs.rmSync(tmpdir)` sits inside try/catch. The function is awaited in the outer `finally` at line 296. If either teardown call rejects, the temp-dir removal never runs, and under JS semantics that rejection replaces any error thrown in the try block (for example a pipeline timeout at line 266). The path is reachable through the public `profileDownload` export, which bin/cli.js and examples/profile-download.js both call.\n\nI could not show the trigger happens in practice. Hyperswarm and Corestore are not installed in this checkout, so I could not check whether `swarm.destroy()` or `store.close()` actually reject. Both are teardown methods built to be idempotent, and they rarely reject. Without a rejection the defect never shows. That is runtime behaviour I can't see, so the verdict is uncertain rather than confirmed.\n\nThe impact is also smaller than claimed. This is a diagnostic profiler, not a production download path. The leftover file sits in os.tmpdir() under a uniquely named qvac-profile-* folder, and the OS eventually clears it.\n\nSeparately, the code has a related gap the reviewer didn't mention. If `store.ready()` or `HypercoreStats.fromCorestore()` throws (lines 170-173), that happens before the try block, so the tmpdir leaks anyway. Low severity at most.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "profiler temp dir not cleaned up",
+    "cleanupResources masks original error",
+    "profileDownload swarm.destroy rejection",
+    "qvac-profile tmpdir leak"
+  ]
+}

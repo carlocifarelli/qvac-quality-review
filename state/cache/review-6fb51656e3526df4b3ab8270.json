@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "ModelNotFoundError message is missing its opening quote around the model name",
+      "category": "api-contract",
+      "severity": "low",
+      "confidence": "high",
+      "line": 41,
+      "anchor": "`${name}\" not found in catalog. Use model names from the catalog (e.g., \"WHISPER_TINY\", \"EMBEDDINGGEMMA_300M_Q4_0\")`",
+      "evidence": "get-model-info.ts:40-42 builds the message from the template `${name}\" not found in catalog...`. It has a closing `\"` after the interpolated name but no opening one, unlike the quoted examples in the same string.",
+      "impact": "Anyone calling getModelInfo with an unknown name gets a malformed error such as `FOO\" not found in catalog. ...`. Tests or callers that match on the message text see the wrong string.",
+      "reproduction": "Call handleGetModelInfo({ type: 'getModelInfo', name: 'FOO' }) and read error.message. It starts with `FOO\" not found` instead of `\"FOO\" not found`.",
+      "fix": "Change the template to `\"${name}\" not found in catalog. ...`."
+    }
+  ]
+}

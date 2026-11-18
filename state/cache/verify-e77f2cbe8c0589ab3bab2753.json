@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "I could not disprove the mechanism. In run-consumer-external.ts:33-36 the runner is spawned with no `detached` and with stdio 'inherit', so it stays in the terminal's foreground process group. Ctrl+C therefore sends SIGINT straight to the runner, and line 43 (`process.on('SIGINT', () => child.kill('SIGINT'))`) then sends it a second one.\n\nThe runner listens only with `process.once('SIGINT', ...)` (run-consumer-external-inplace.ts:134; in mqtt mode also external-consumer.ts:103). The first SIGINT removes that listener. When the last SIGINT listener goes, Node closes its signal watcher and SIGINT goes back to the default action. The forwarded signal arrives after the parent's event loop has handled its own SIGINT, which is usually milliseconds later and not close enough to merge with the first. So it most likely kills the runner while `await consumer.forceShutdown()` / `await executor.stop()` (lines 119-133) are still running.\n\nThe child then exits by signal with code null, and the parent runs `process.exit(code || 0)` (line 47), so it exits 0. Nothing guards against this: there is no `detached`, no check that the signal was already received, and no persistent handler. The same pattern is copied in run-consumer-desktop.ts:47 and the desktop runner's `once`, which suggests copy-paste rather than a deliberate choice.\n\nThe impact is somewhat overstated. Grandchildren with inherited stdio (the bridge interpreter and the mqtt-mode client) are in the same process group, so they get the terminal's SIGINT directly, and orphaning is less likely than the claim says. What is really lost is the consumer's MQTT forceShutdown/cleanup, plus a misleading exit code 0. This only affects interactive Ctrl+C in a dev/test CLI, so the severity stays low. One detail depends on runtime timing (whether the two signals merge), but in practice they usually don't.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "Ctrl+C double SIGINT external consumer",
+    "SIGINT forwarded twice kills runner during shutdown",
+    "process.once SIGINT graceful shutdown cut off",
+    "external consumer exits 0 on Ctrl+C"
+  ]
+}

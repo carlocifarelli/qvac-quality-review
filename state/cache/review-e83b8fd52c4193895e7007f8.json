@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "Scratch folder is visible before its owner.pid is written, so a concurrent removeStaleScratch can delete a live bundle's scratch",
+      "category": "concurrency",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 27,
+      "anchor": "await fsp.mkdir(owned, { recursive: true })",
+      "evidence": "scratchFolderFor (scratch.ts:26-28) creates `.<name>-<uuid>` with mkdir, and only afterwards writes owner.pid with writeFile, which truncates the file and then writes it. removeStaleScratch (scratch.ts:58-63) matches every `.<name>-<uuid>` entry. ownerRunning (scratch.ts:69-74) returns false when owner.pid is missing (readFile ENOENT) or empty (parseInt('') is NaN). In that case the folder is rm'd recursively, unless `<name>.previous` exists, which it never does for a fresh folder. Callers run removeStaleScratch on the same dir right before scratchFolderFor (index.ts:544-545 and 587, link.ts:117-118). Two `qvac bundle` runs on the same project (for example a watch or IDE task plus a manual run, or two CI steps sharing a workspace) can therefore interleave like this: A mkdir, then B readdir/readFile with no owner.pid, then B rm, then A writeFile. The same happens if B reads while A's writeFile has truncated the file but not yet written the pid.",
+      "impact": "Run A's scratch folder is deleted while A is still running. A's writeFile of owner.pid fails with ENOENT, or bare-stow/bare-link write into a folder that was just removed. The bundle fails with a confusing ENOENT. If the rm overlaps A's stow (rm -r racing with recreated subdirectories), A can also replace the working output with a partially deleted tree.",
+      "reproduction": "In one process, loop `scratchFolderFor(dir)` and in another loop `removeStaleScratch(dir)` against the same dir. After enough iterations the first process gets ENOENT from writeFile(owner.pid), or finds its returned scratch parent missing. To make it deterministic, stub fsp.writeFile to await a promise that resolves only after removeStaleScratch(dir) has run, then assert that `path.dirname(scratch)` still exists. It does not.",
+      "fix": "Make the folder appear to removeStaleScratch only once it is owned. Create it under a name the pattern does not match (e.g. `.<name>-<uuid>.tmp`), write owner.pid there, then rename it to `.<name>-<uuid>`. Alternatively, have removeStaleScratch skip folders whose owner.pid is missing or unparsable and that are younger than a grace period (check the folder's mtime)."
+    }
+  ]
+}

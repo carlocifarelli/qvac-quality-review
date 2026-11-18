@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "totalBytesDownloaded/downloadSpeedBps count bytes that were already on disk (resumed partials, cached shards)",
+      "category": "correctness",
+      "severity": "low",
+      "confidence": "high",
+      "line": 61,
+      "anchor": "progress.fileSetInfo?.overallDownloaded ??",
+      "evidence": "wrapProgressCallback (download-stats.ts:57-67) takes the max of absolute progress counters (`fileSetInfo.overallDownloaded ?? shardInfo.overallDownloaded ?? downloaded`) as 'bytes downloaded', and computeStats (102-108) reports it as totalBytesDownloaded and divides it by elapsed time for downloadSpeedBps. Those counters are not network-transfer counts: (1) HTTP single-file resume sets `downloadedBytes = startOffset` (http.ts:230) and emits `downloaded: downloadedBytes` (http.ts:393-397), so the partial already on disk is included; (2) HTTP sharded download marks cached shards `downloadedBytes = expectedSize` (http.ts:780-784) and calls markCacheMiss when any shard is missing (http.ts:793), and overallDownloaded sums every shard (http.ts:1010); (3) Hyperdrive sharded download calls markCacheMiss (hyperdrive.ts:585) and then reports skipped, already-valid files with overallDownloaded including their size (hyperdrive.ts:618-638). Because cacheHit is false in all three cases, the collector accepts these values. No baseline is captured and subtracted.",
+      "impact": "Profiling metrics for loadModel/downloadAsset (the totalBytesDownloaded and downloadSpeedBps gauges, types.ts:86-90) overstate network transfer. With a 10-shard model where 9 shards are cached, the stats report the full model size as downloaded in the time it took to fetch one shard, so the speed is off by roughly 10x. A resumed 5 GB download that only fetched the last 100 MB reports 5 GB. These numbers feed operation metrics and are misleading for bandwidth and benchmarking analysis.",
+      "reproduction": "Unit test: call downloadModelFromHttpWithStats with downloadModelFromHttp mocked to call hooks.markCacheMiss() and then progressCallback({downloaded: 900, total: 1000}) followed by ({downloaded: 1000, total: 1000}), which mimics a resume from offset 900. The result has stats.totalBytesDownloaded === 1000, but only 100 bytes were transferred. Real repro: load a sharded HF model with profiling on, delete one shard file from the cache, load again, and compare totalBytesDownloaded with that shard's size.",
+      "fix": "Record a baseline from the first progress event received after markCacheMiss (or have producers report a transferred-bytes field) and store maxBytesDownloaded - baseline. Better still, add a `transferred` counter to the progress/hook contract (e.g. hooks.addBytesTransferred(n) called per chunk) and sum it instead of inferring transfer from absolute progress counters."
+    }
+  ]
+}

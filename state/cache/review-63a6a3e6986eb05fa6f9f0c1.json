@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "title": "Live spec fetch fails outright when the cache directory isn't writable, even though the download succeeded",
+      "category": "error-handling",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 129,
+      "anchor": "mkdirSync(dependencies.cacheDir, { recursive: true })",
+      "evidence": "fetchSpecLive calls mkdirSync(cacheDir) at parse-spec.ts:129 before fetching, and calls writeFileAtomically at :168-:172 after parsing. Neither call is wrapped. The cache is only an optimisation for the ETag and --offline paths, but any EACCES/EROFS/ENOSPC from these calls rejects parseSpecWithDependencies, so build-report.ts:100 never gets the entries it needed. The default CACHE_DIR is join(homedir(), '.cache', 'qvac') (:18).",
+      "impact": "`qvac openai coverage` without --offline crashes with EACCES/EROFS in sandboxed CI, read-only HOME containers, or non-root Docker images with HOME=/. The spec was downloadable and parseable, and the cache isn't needed for a live run.",
+      "reproduction": "Call parseSpecWithDependencies({}, { cacheDir: '/proc/qvac-cache', fetch: () => Promise.resolve(new Response(fixtureYaml, { status: 200 })), timeoutMs: 100 }). It rejects with an mkdir error instead of returning entries with sourceMode 'live'.",
+      "fix": "Make cache I/O best-effort in live mode: wrap the mkdirSync and the three writeFileAtomically/rmSync calls in try/catch (optionally logging a warning) and still return { yaml, entries, source, sourceMode: 'live' }."
+    },
+    {
+      "title": "Spec, SHA and ETag cache files are updated separately, so an interrupted or concurrent run leaves a hash-mismatched cache",
+      "category": "concurrency",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 169,
+      "anchor": "writeFileAtomically(paths.sha256, sha256(yaml))",
+      "evidence": "parse-spec.ts:168-175 renames openai-spec.yaml, then openai-spec.sha256, then openai-spec.etag, each in its own atomic step. Each file is atomic on its own, but the set is not. If the process dies or the write throws (e.g. ENOSPC) between :168 and :169, the new spec sits next to the old SHA. If two CLI runs overlap across an upstream spec change, the writes can interleave (A.spec, B.spec, B.sha, A.sha). After that, validateCachedSpecHash (:56) throws 'cached OpenAI specification hash mismatch' for the --offline path (:200), and the ETag/304 path silently does a full re-download.",
+      "impact": "After a Ctrl-C during the cache write, or two coverage runs at once (e.g. parallel CI jobs sharing HOME), `--offline` refuses a cache that holds a perfectly valid spec until someone runs online again.",
+      "reproduction": "Stub writeFileSync so the second writeFileAtomically call throws, run parseSpecWithDependencies({}, deps-with-200), then run parseSpecWithDependencies({ offline: true }, deps). It rejects with 'hash mismatch' even though openai-spec.yaml holds the newly fetched, valid spec.",
+      "fix": "Store spec, sha256 and etag together in one file (e.g. a JSON envelope or a header line), or write the SHA file first and the spec last so a partial update always fails toward a refetch. A per-cacheDir lock would cover concurrent runs."
+    }
+  ]
+}

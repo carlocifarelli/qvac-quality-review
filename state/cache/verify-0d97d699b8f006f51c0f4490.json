@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The headline claim, that the call resolves as success and the load continues, is false. It is true that downloadSingleFileFromRegistry (registry-download-utils.ts:105-176) checks the signal only at entry and in the registry client. measureChecksum (utils/checksum.ts:91) takes no signal. But callers never see the inner task's return value directly. downloadModelFromRegistry wraps the work in startOrJoinDownload (registry.ts:325, binding hooks?.requestBinding at :584). The public handlers pass that binding (handler.ts:101, download-asset.ts:48). In download-manager.ts:185-197, attachRequestBinding adds an abort listener. When the user cancels, that listener immediately settles the subscriber with InferenceCancelledError and removes it. Removing the last subscriber aborts the transfer controller (maybeCancelTransfer, :173). The user's load therefore rejects at once. When the background task later returns modelPath (registry.ts:581), downloadPromise.then (:276-281) loops over transfer.subscribers, which is now empty, so nobody receives a success. The 100% progress event goes to no subscribers for the same reason. The shard part is also wrong. After a shard publishes, the loop checks signal.aborted at registry.ts:199 and throws DownloadCancelledError. The catch at :395-408 then removes the whole shard dir when clearCache is set, so earlier shards do not stay published. Companion sets work the same way, per the claim's own note about registry-companion-set.ts:164-170. What remains is minor. On the plain single-file path, a cancel that lands during hashing does not stop the hash (wasted CPU/IO). The fully verified file is still renamed into the cache, so cancel with clearCache=true leaves a valid complete model on disk instead of deleting the .part file. That is a cache-hygiene and wasted-work issue, not a correctness or concurrency failure. The file is complete and checksum-verified, and no caller is misled.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "cancel during checksum verification not honored",
+    "clearCache cancel leaves model file in cache",
+    "measureChecksum ignores abort signal",
+    "download publishes file after cancel"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "findings": [
+    {
+      "title": "Stale .pid files are never removed, so killTracked can SIGTERM unrelated processes that reused those PIDs",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 106,
+      "anchor": "process.kill(pid, 'SIGTERM')",
+      "evidence": "spawnTracked writes `<name>.pid` (process-manager.ts:68), and nothing deletes it when the child exits: the 'close' handler at :80 only ends the log stream. killTracked (:90-115) signals every `*.pid` it finds in the directory and never checks that the PID still belongs to a child of this run. createReportDir (:187) reuses `opts.reportDir` exactly as given, and setupCleanup (run-local.ts:225) calls killTracked whenever the producer exits, on SIGINT or on SIGTERM. Even within one run, cleanup fires from the producer's 'exit' event, after Node has already reaped that PID, so the PID is signalled after it has been released.",
+      "impact": "Rerun with the same `--reportDir` (for example a fixed CI path) and the earlier run's producer.pid and consumer-*.pid files are still there. When the new run cleans up, it sends SIGTERM to whatever processes now hold those PIDs, which can kill unrelated user processes. On Windows the call is `taskkill /F /T`, which also force-kills their child processes.",
+      "reproduction": "Run `run:local:desktop --reportDir=/tmp/r` and let it finish. Start a long-running process and give it the PID recorded in /tmp/r/consumer-desktop.pid (or wait for PID wraparound). Run `run:local:desktop --reportDir=/tmp/r` again and press Ctrl+C. The unrelated process receives SIGTERM.",
+      "fix": "Delete the pid file in the child's 'exit' handler inside spawnTracked, and have killTracked signal only the PIDs of processes tracked in this run (or use child.kill() on the tracked ChildProcess objects), not every *.pid in the directory."
+    },
+    {
+      "title": "spawnTracked has no 'error' listener, so a failed spawn crashes the CLI and skips cleanup",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 67,
+      "anchor": "const pid = child.pid!",
+      "evidence": "If spawn cannot start the process (ENOENT, EACCES, EMFILE or EAGAIN), Node sets `child.pid` to undefined and emits 'error' asynchronously. spawnTracked registers no 'error' handler (:61-82), so the event becomes an uncaught exception. Before that happens, :67-68 write the string \"undefined\" into the .pid file and the function returns a TrackedProcess whose `pid` is undefined, which goes against its `pid: number` type. Callers in run-local.ts (e.g. :268, :279) wrap the call in try/catch, but the error is emitted after the call returns, so the catch never sees it and setupCleanup's brokerHandle.cleanup() never runs.",
+      "impact": "Under fd or process exhaustion, or when `node` is not on the PATH of the env passed in, the CLI dies with an unhandled 'error' event stack trace. A local broker it started, and any sibling process it already spawned (for example the producer when the consumer spawn fails), keep running.",
+      "reproduction": "Call spawnTracked('does-not-exist', [], {reportDir: tmp, name: 'x'}). The .pid file contains \"undefined\", and the process crashes on the next tick with `Error: spawn does-not-exist ENOENT` (unhandled 'error' event).",
+      "fix": "Add `child.on('error', err => { logStream.end(); /* log the error and surface it to the caller */ })`, and write the pid file only when `child.pid !== undefined` (throw synchronously otherwise, so callers' try/catch and cleanup run)."
+    },
+    {
+      "title": "Shell command built by interpolating the device serial and package name into execSync",
+      "category": "security",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 231,
+      "anchor": "const pid = execSync(`adb -s ${opts.serial} shell pidof ${opts.packageName}`, {",
+      "evidence": "`opts.serial` comes from the `--device` CLI flag (run-local.ts:560) and `packageName` from the QVAC_ANDROID_PACKAGE environment variable (run-local.ts:578). Both are inserted unquoted into a string that execSync runs through /bin/sh. The spawn call a few lines below (:237) correctly passes arguments as an array.",
+      "impact": "A serial or package value containing shell metacharacters (e.g. `x; rm -rf ~`), for instance one set in a CI environment variable, runs arbitrary commands on the host. Values containing spaces simply break the command, and the --pid filter is silently dropped.",
+      "reproduction": "Run `QVAC_ANDROID_PACKAGE='foo; touch /tmp/pwned' qvac-test run:local:android`. /tmp/pwned is created.",
+      "fix": "Use execFileSync('adb', ['-s', opts.serial, 'shell', 'pidof', opts.packageName], { encoding: 'utf-8' })."
+    },
+    {
+      "title": "Parent never closes the device.log fd after handing it to the spawned logger",
+      "category": "resource-leak",
+      "severity": "low",
+      "confidence": "high",
+      "line": 212,
+      "anchor": "const logFd = fs.openSync(logPath, 'w')",
+      "evidence": "On both success paths (:222 and :240), logFd is passed as the child's stdout and stderr and the function returns without calling fs.closeSync(logFd). The child receives its own duplicate of the descriptor, so the parent's copy stays open for the life of the CLI. The only closeSync (:244) runs on the 'tool unavailable' path. Also, if spawn's 'error' fires (adb or idevicesyslog unavailable at spawn time), there is no listener, so the CLI crashes.",
+      "impact": "Each call leaks one file descriptor in the parent. The log file also stays open after cleanup's `deviceLog.child.kill()`, which on Windows blocks deleting or rotating the report directory until the CLI exits.",
+      "reproduction": "Call startDeviceLogCapture for android, kill the child, then inspect the parent's open fds (`ls -l /proc/<pid>/fd`). device.log is still open.",
+      "fix": "Call fs.closeSync(logFd) right after spawn() returns on each success path (the child keeps its own copy), and attach a child.on('error', ...) handler."
+    }
+  ]
+}

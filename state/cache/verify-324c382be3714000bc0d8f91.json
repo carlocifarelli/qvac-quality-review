@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The code does what the claim says. At run-consumer-electron.ts:204-206 the handler is `child.on('exit', (code) => process.exit(code || 0))`. It ignores the signal argument, and when Node reports a signal death (`code === null`), `null || 0` makes the runner exit 0. The sibling runners handle this correctly: run-consumer-snap.ts:114 uses `signal ? 1 : (code ?? 1)` and utils/external-consumer.ts:105 uses `code ?? (signal ? 1 : 0)`. That makes it an oversight, not a choice. The same pattern is in run-consumer-desktop.ts:51 and run-consumer-external.ts:47.\n\nThe path is reachable from the public CLI command `run:consumer:electron`, which sdk-e2e and sdk/ci/e2e.mjs use. On macOS, and on Linux with a DISPLAY or the headless-Ozone fallback, the Electron binary is the direct child, so a native-addon segfault or an OOM SIGKILL arrives as a signal. On Windows there are no signals. When the xvfb-run wrapper is used, xvfb-run itself exits with a non-zero code, so that case is already covered.\n\nThe SIGTERM forwarding at line 202 also sends signal deaths down this path. If the runner gets SIGTERM, it kills the child, the child dies from the signal, and the runner exits 0.\n\nThe impact is overstated. In CI (sdk/ci/e2e.mjs:394) the producer's exit status decides the result first: `producer.status === 0 ? consumerExit : producer.status || 1`. The consumer's exit code only counts when the producer succeeded. The producer's BatchOrchestrator has consumer-registration and inactivity timeouts and an allConsumersDead check. So a crash during the tests should still fail the producer, and with it the CI job.\n\nThe masking is real in these cases:\n- a crash after all results were reported, such as a teardown or shutdown segfault in a native addon;\n- run:local (run-local.ts:247), which treats `signal === null && code === 0` as a clean consumer exit and so never sees the crash;\n- anyone who runs the consumer on its own and looks at its exit code.\n\nThis is a real but secondary error-handling bug, so I rate it low, not medium.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "electron consumer exit code signal",
+    "run:consumer:electron exits 0 on crash",
+    "consumer killed by signal exit code 0",
+    "code || 0 ignores signal"
+  ]
+}

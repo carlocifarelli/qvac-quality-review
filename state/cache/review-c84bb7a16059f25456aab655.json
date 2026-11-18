@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "title": "A cached Core ML set that is missing a bundle is reused forever, so bundles ingested later are never staged",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 207,
+      "anchor": "const set =",
+      "evidence": "findCoremlCompanionSet (lines 280-283) skips any .mlmodelc that is only partly ingested and returns a set with only the complete bundles. registry.ts:461 then saves that subset with writeCachedCoremlCompanionSet. isValidCachedSet (lines 145-149) accepts a bundle with 0 files, so the subset still validates. On every later load, findLocallyCachedCoremlCompanionSet (line 207-209) uses readCachedCoremlCompanionSet first, which beats both the catalog set (findCatalogCoremlCompanionSet) and the registry. registry.ts:430-439 returns as soon as it gets a cached set, and findCoremlCompanionSet is never called again.",
+      "impact": "Take Sortformer's batch/AOSC pair. If the first load ran while only one bundle was ingested, the second bundle is never downloaded, even after the registry or the bundled catalog has it. The only way out is a manual cache clear.",
+      "reproduction": "Stub client.findModels so it returns every component for bundle A and only some for bundle B. Load once, which writes the metadata. Then make findModels return everything for both bundles, or add both to the catalog, and load again. findLocallyCachedCoremlCompanionSet returns the set with bundle A only.",
+      "fix": "Treat a cached or catalog set that lacks some of spec.bundles as incomplete. Re-query the registry or fall back to the catalog when that one has more bundles, or require every bundle in isValidCachedSet and only write metadata for complete sets."
+    },
+    {
+      "title": "Deleting a model leaves its Core ML sidecar blobs in storage when any staged sidecar file is missing or partial",
+      "category": "resource-leak",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 216,
+      "anchor": "if (!stat.isFile() || stat.size !== file.expectedSize) return undefined",
+      "evidence": "registry-delete.ts:179 builds the list of blob bindings to clear (clearBlob at :80) from findLocallyCachedCoremlCompanionSet. That function returns undefined as soon as one file in sets/<key>/ is missing or has the wrong size (lines 212-219). Delete then pushes no sidecar bindings. The sets directory is still removed (:176-178), but the hypercore blob ranges for the .mlmodelc components are never cleared.",
+      "impact": "After a sidecar download is interrupted or cancelled, or one staged file is removed, deleting the model frees the files on disk but leaves the sidecar blob data in the registry blob store. That can be hundreds of MB that no later delete reclaims, because the sets dir and its metadata are gone.",
+      "reproduction": "Download a Core ML model and cancel partway through the sidecars, or delete one file under sets/<key>/. Then run the delete handler. The clearBlob calls cover the GGUF binding only.",
+      "fix": "For deletion, get the set from readCachedCoremlCompanionSet ?? findCatalogCoremlCompanionSet without the per-file stat check. For example, export a metadata-only lookup and use it in registry-delete.ts."
+    }
+  ]
+}

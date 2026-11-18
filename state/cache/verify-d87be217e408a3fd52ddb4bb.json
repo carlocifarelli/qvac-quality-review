@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The structural defect holds up. In setupHyperdrive (hyperdrive.ts:81-85) the Corestore is created and `await corestore.ready()` runs before `new Hyperdrive(...)` / `await drive.ready()`. Nothing wraps these lines in a try/catch or finally. registerCorestore only runs at line 109, after the swarm setup. Both callers do `const setup = await setupHyperdrive(...)` (lines 304 and 589) before their own try/finally starts, and cleanupHyperdrive(setup) needs the returned object, so if drive.ready() throws, nothing closes or unregisters the opened corestore. The lifecycle registry (runtime-lifecycle.ts:78) only tracks stores that were registered explicitly, so the shutdown sweep never sees this one.\n\nMitigation that lowers the impact: the \"invalid key length\" trigger the reviewer gives is mostly blocked on the public path. resolve.ts:246 parses pear:// sources with hyperdriveUrlSchema (schemas/load-model.ts:884), which requires exactly 64 hex characters. What is left as a trigger is an I/O or corruption failure inside drive.ready() (its Hyperbee/core open) that happens after corestore.ready() has succeeded. That is rare, but it is realistic on a persistent on-disk store that survives crashes. Callers that pass a raw hyperdriveKey (download-asset schema `hyperdriveKey: z.string()`) are a second, less-guarded way in. The claim that \"every retry fails\" depends on how Corestore locks its storage, which I can't see from here. It is plausible, given the comment at line 372 about the Windows EBUSY on LOCK. No test or comment suggests the leak is intentional. The fix is easy: wrap the lines after corestore.ready() in try/catch and close the corestore (and the drive) on failure. Severity stays low because the trigger is rare and needs local storage corruption.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "setupHyperdrive corestore leak",
+    "corestore not closed when drive.ready fails",
+    "hyperdrive download retry storage lock",
+    "corestore LOCK held after failed download"
+  ]
+}

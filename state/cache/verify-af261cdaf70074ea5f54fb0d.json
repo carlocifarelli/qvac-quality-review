@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The code matches the claim. In tryLock (index.ts:88-111), when the 'wx' open fails with EEXIST, the function reads the owner pid (readLockOwner, line 97). If that process is dead (line 99), it does an unconditional `rm(lockPath(key))` (line 100) and calls itself again. Nothing checks that the file being removed is the one whose pid was read: there is no inode or content compare, no rename-to-claim and no atomic link-based steal. Two waiters can both read the dead pid. A removes the lock and re-creates it with 'wx', then B's rm deletes A's fresh lock and B's 'wx' open succeeds. Both return true and both reach the spawn branch (lines 230-256). The mtime fallback (lines 105-107) has the same problem. Nothing downstream stops a second runner. The winner's re-check `findReusableServe` (line 233) runs before either side has written a record, so it can't see the other. runner.ts only uses 'wx' at line 45, for its own file, and writes the record with writeRecordSync, so the last writer wins and one serve becomes orphaned. In the finally block, `releaseLock` (line 273) also does an unconditional rm, so it can delete another client's lock. The path is reachable through the public startManagedQvac whenever reuse is true. Waiters loop back to tryLock every 5s slice (lines 279-281), so after a spawner crashes every waiter on that fleet key contends for the lock. The comment at lines 80-86 shows that preventing a duplicate serve is the lock's stated purpose, so this is not intended behaviour. On impact: the race window is small, from the readFile to the rm, a few ms of async fs work. The waiters' 5s slices are also not synchronized, since each starts when that client's previous tryLock returned. And the trigger needs a spawner to crash mid-start while two or more clients wait. The cost is a wasted duplicate model load, plus one serve that only gets reaped by its idle timeout or the sweep. Data stays intact. So the defect is real but rare; I rate it low rather than medium.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "stale spawn lock steal race duplicate serve",
+    "tryLock rm dead owner lock race",
+    "managed qvac serve spawned twice",
+    "releaseLock deletes another client's lock"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "getModelByName returns Object.prototype members for names like \"constructor\", \"toString\" or \"__proto__\" instead of undefined",
+      "category": "correctness",
+      "severity": "low",
+      "confidence": "high",
+      "line": 233,
+      "anchor": "return models.find((model) => model.name === name) ?? modelNameCompatibilityAliases[name];",
+      "evidence": "The template (codegen.ts:222-224) emits `modelNameCompatibilityAliases` as a plain object literal, so it inherits from Object.prototype. When no catalog entry matches, `getModelByName` (codegen.ts:233, generated at models.ts:29617) falls back to `modelNameCompatibilityAliases[name]` with no own-property check. `name` is an arbitrary string, so 'constructor' returns the `Object` function, 'toString'/'hasOwnProperty' return functions, and '__proto__' returns Object.prototype. All of these are typed as `RegistryItem`. The JSDoc says the function returns `undefined` when no catalog entry has that name.",
+      "impact": "A caller that looks up a user-supplied or config-supplied model name, such as the documented `getModelByName(\"WHISPER_TINY_Q8_0\")` usage, gets a truthy non-RegistryItem back for these keys. Code then reads `.registryPath`, `.blobCoreKey` and similar fields as undefined and fails later with confusing errors, or builds a source like `registry://undefined/undefined`, instead of taking the not-found branch.",
+      "reproduction": "`import { getModelByName } from '@qvac/sdk/models/registry'; console.log(getModelByName('constructor'))` prints `[Function: Object]`, not `undefined`. `getModelByName('__proto__')` returns `{}` (Object.prototype).",
+      "fix": "Emit the lookup table with a null prototype, e.g. `Object.assign(Object.create(null), { ... })`, or a `Map`, or guard it with `Object.hasOwn(modelNameCompatibilityAliases, name) ? modelNameCompatibilityAliases[name] : undefined`. Then regenerate models.ts."
+    }
+  ]
+}

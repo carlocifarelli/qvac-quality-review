@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "I read hyperdrive.ts and the defect holds. In downloadSingleFileToFilesystem (finally block, lines 367-391) and downloadShardedFilesToFilesystem (lines 711-726), cleanupHyperdrive(setup) runs only inside `if (!seed)`, and no other branch closes the setup. When seed is true, keeping things open is intended after a successful download (that is what seeding means). It is not intended after an error or an abort. downloadAndValidateFile can throw FileNotFoundError, NoBlobFoundError, ChecksumValidationFailedError, size mismatch or stream errors. Abort throws DownloadCancelledError, and the abort `cleanup` listener has already suspended the swarm. In all of those cases the Corestore, Hyperdrive and Hyperswarm are left open and registered, and nothing in the caller (startOrJoinDownload or the download lock) closes them.\n\nThe path is reachable from public APIs: loadModel and downloadAsset both pass `seed` through handler.ts, download-asset.ts and resolve.ts. resolve.ts only checks that the source is a hyperdrive.\n\nA retry uses the same getCorestoreDir(hyperdriveKey) and setupHyperdrive always builds `new Corestore(corestoreDir)`. No cached instance is reused. corestore ^7.11 is backed by hypercore-storage/RocksDB, which holds an exclusive LOCK on the directory, so a second open in the same process should fail. That is likely, but I could not run it. Even if the reopen worked, the old handles and swarm would still leak.\n\nThe clearCache branch runs regardless of `seed`, so with seed=true it calls deleteCorestoreDirectory while the store is still open. The comment on line 372 names that ordering as the Windows EBUSY hazard. deleteCorestoreDirectory swallows the error, so the result is a silently failed or partial delete, not a thrown error.\n\nThere is no test or comment saying the failure path is meant to leave things open. I am rating it medium, not high, because it only affects the opt-in seed=true path and only after a failure or cancel. Restarting the process clears it.",
+  "severity": "medium",
+  "duplicateSearchTerms": [
+    "seed corestore not closed on failed download",
+    "hyperdrive seed retry fails corestore lock",
+    "clearCache EBUSY seeding corestore",
+    "cleanupHyperdrive skipped when seed true"
+  ]
+}

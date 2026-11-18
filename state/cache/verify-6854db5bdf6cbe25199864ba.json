@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The code matches the claim. extractTarStream (archive.ts:159-172) writes each .gguf entry to path.resolve(path.join(extractDir, header.name)) and runs mkdirSync on its parent directory, so the entry `model/x-00001-of-00002.gguf` lands in extractDir/model/. It does not strip leading path components and does not flatten. Both the cache check (265-266) and the post-extraction validation (292-293) then call a non-recursive fsPromises.readdir(extractDir) and look for a top-level name where detectShardedModel(...).isSharded is true. They only see 'model', so validation throws ModelLoadFailedError('No sharded model files found in archive'). The shard-existence loop (311-317) and the marker write (320) both assume the shards sit directly in extractDir, so the marker is never written, and the cache check would fail the same way anyway.\n\nReachability: this is a public path. extractAndValidateShardedArchive is called from load-model/http.ts:937 and resolve.ts:81/97/377 for any modelSrc ending in .tar/.tar.gz/.tgz. The SDK docs (sdk changelog 0.6.0 api.md) advertise 'Archive-based shards' through a URL or a local path and never say the shards must sit at the archive root.\n\nGuards: nothing upstream or downstream normalises the paths. The zip-slip check only rejects paths that escape extractDir.\n\nTests: every test in test/sharded-disk-load.test.ts builds a flat archive, so none of them covers this case, and no comment says a flat layout is required.\n\nImpact: an archive made the usual way with `tar czf m.tar.gz dir/` cannot be loaded, and the error message misleads, because the shards were extracted. The extra re-download on retry is plausible because the marker is never written, but that part is secondary. A user can work around the bug by re-packing the archive flat. Medium severity is fair.",
+  "severity": "medium",
+  "duplicateSearchTerms": [
+    "sharded archive nested folder not found",
+    "No sharded model files found in archive",
+    "tar.gz shards in subdirectory",
+    "archive extraction readdir not recursive"
+  ]
+}

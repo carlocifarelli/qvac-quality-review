@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The code matches the claim. collectStats (profiler.js:29-30) reads swarmStats.dhtStats.udxBytesReceived/Transmitted. These are cumulative UDX counters for the Hyperswarm created at line 172, and the code never subtracts a baseline. emitStats (line 244) computes elapsed from tDownloadStart, which is set at line 241. That happens only after DHT bootstrap, the viewCore.update() metadata sync (line 203), the db reads, and blobCore.update() (line 236). So rxPerSec/txPerSec at line 46 divide all bytes since the swarm started by the blob-transfer seconds only. No baseline snapshot is taken, so nothing guards against this. The unit tests (tests/unit/profiler.test.js:84-126) only check the division on synthetic inputs, so they don't show the mixed time bases are intended. The path is the main code path of profileDownload, so every run hits it. The impact is limited, which keeps severity low. It is a diagnostic tool. The final summary's 'Avg speed' (line 274) is computed correctly as blob.byteLength/transferSec, so the headline number is not affected. Pre-download DHT and metadata traffic is usually small (KB to low MB) next to model blobs (hundreds of MB to GB). The inflation is therefore large mainly in the first interval and on small or fast blobs, and fades on long downloads. The 'Bytes received' total also counts non-blob traffic, but the label says 'Network (UDX)', which partly signals that. Fix: take a baseline of the UDX byte counters at tDownloadStart and report deltas, or divide by time since swarm creation.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "profiler rxPerSec inflated",
+    "profiler throughput includes metadata bytes",
+    "udxBytesReceived baseline download start",
+    "registry profiler wrong bytes per second"
+  ]
+}

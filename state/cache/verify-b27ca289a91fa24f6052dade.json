@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "I read the code and the mechanism holds. In process-manager.ts:61-82, spawnTracked calls spawn() and attaches only stdout/stderr 'data' listeners and a 'close' listener. It never adds an 'error' listener. When Node hits ENOENT, EACCES, EAGAIN, EMFILE or ENFILE at spawn time, it does not throw synchronously. It leaves child.pid undefined and emits 'error' on nextTick, and it emits no 'exit' event. Line 67 uses a non-null assertion (`child.pid!`), so line 68 writes \"undefined\" to the .pid file, and the returned TrackedProcess has pid undefined even though the type says number. killTracked parses that value to NaN and skips it, so that part does no harm.\n\nCaller check: in run-local.ts:260-294 (and the other run:local:* variants) the try/catch around spawnTracked only catches synchronous throws. setupCleanup (:214-254) registers SIGINT/SIGTERM and 'exit' listeners only. There is no process.on('uncaughtException') anywhere in packages/test-suite/src (I grepped). So the asynchronous 'error' crashes the CLI with an unhandled-error stack trace. setupCleanup's cleanup(), which runs killTracked and brokerHandle.cleanup(), never runs. A producer that was already spawned, or a local broker started by ensureBroker, can be left running. I found no tests or comments that make this intentional.\n\nImpact is overstated in one respect: the trigger is unlikely. The command is 'node', which the user is already running the CLI with. cwd is configDir, which loadConfig has just read successfully. The env is inherited unless a caller overrides it. That leaves fd or process exhaustion (EMFILE/EAGAIN) or an unusual PATH or runtime (for example the CLI running under bun without a node binary on PATH). It is a real but rare robustness gap in a dev/test CLI that leaves orphaned processes, so I rate it low rather than medium.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "spawnTracked missing error handler",
+    "run:local crash unhandled error event spawn",
+    "orphaned producer broker when spawn fails",
+    "child.pid undefined pid file"
+  ]
+}

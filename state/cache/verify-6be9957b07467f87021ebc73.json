@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The claim treats the string at get-model-info.ts:41 as the complete error message, but it is not. ModelNotFoundError (errors/index.ts:118-121) passes its argument as `modelId` to createErrorOptions(ERROR_CODES.MODEL_NOT_FOUND, [modelId]). That error is defined in schemas/errors.ts:245-247 as (modelId) => `Model with ID \"${modelId}\" not found`, and that template supplies the opening quote. For an unknown name FOO the message is therefore `Model with ID \"FOO\" not found in catalog. Use model names from the catalog (e.g., \"WHISPER_TINY\", \"EMBEDDINGGEMMA_300M_Q4_0\")\" not found`. The quote around FOO is balanced, so the claimed output `FOO\" not found in catalog...` never happens. The path is reachable through any getModelInfo call with an unknown name, but the defect as described does not exist. There is a separate cosmetic problem the reviewer did not report: the caller passes a whole sentence where the template expects an ID, so the message ends with a stray `\")\" not found` and says \"not found\" twice. No test matches this text (grep for \"not found in catalog\" finds only the source line). If the misuse is reported on its own it is low severity, since only the message wording is affected; the error code and class are correct.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "getModelInfo ModelNotFoundError message",
+    "model not found in catalog duplicated not found",
+    "ModelNotFoundError passes sentence instead of model id",
+    "get-model-info error message garbled"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "client.js:753-769 adds an anonymous 'abort' listener with { once: true } to options.signal, and nothing ever removes it. The finally block (:771-778) destroys both streams, awaits the writer closing, destroys rangeDownload and turns off the core 'download' handler, but it never calls removeEventListener, and no AbortController is kept to remove the listener later. options.signal is the caller's signal passed straight through. The public download paths call _streamBlobToFile inside withRetry (:380, :490), so each attempt adds one more listener. Nothing wraps or derives the signal per download (a grep for AbortController in the file finds none). The path is reachable and nothing guards it: a caller that reuses one signal across downloads keeps one closure per attempt, holding stream, writeStream and reject. On Node, an AbortSignal with more than 10 listeners triggers the MaxListenersExceededWarning. The impact is overstated in one way. On a later abort, the stale listeners call destroy() on streams that are already destroyed, which does nothing, and reject() on promises that already settled, which also does nothing. So there is no wrong behaviour, only memory held until the signal is collected, plus the warning. This only happens when a long-lived signal is reused; with one signal per download it is garbage-collected together with the listeners. Severity stays low.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "abort listener leak _streamBlobToFile",
+    "MaxListenersExceededWarning AbortSignal download",
+    "removeEventListener abort signal registry client",
+    "signal listeners accumulate on retry"
+  ]
+}

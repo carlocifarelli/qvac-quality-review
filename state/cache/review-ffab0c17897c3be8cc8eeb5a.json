@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "title": "An IPv6 serveHost builds an invalid health URL, so every start times out",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 361,
+      "anchor": "baseURL = `http://${host}:${port}/v1`",
+      "evidence": "`host` comes straight from the user option `serveHost` (managed/index.ts:162, types.ts:60) and is put into the URL without brackets. With `serveHost: '::1'`, the serve binds correctly (it gets `--host ::1`) and reports its port on fd 3. But `baseURL` becomes `http://::1:PORT/v1`, which is not a valid URL. In waitForHealth (lines 203-213), `fetchImpl(healthUrl)` throws `TypeError: Invalid URL` on every attempt. The bare `catch {}` treats that as 'not listening yet' and keeps polling until the deadline, then throws `ServeStartTimeoutError` (line 216). registry.ts:121-122 strips `[`/`]` from hostnames, so IPv6 hosts are meant to be supported. Passing `[::1]` instead does not help, because that string also goes to `--host` and the serve cannot bind it.",
+      "impact": "With an IPv6 loopback host, managed mode never starts. It waits the full start timeout and then shows a misleading 'serve did not become healthy' error, even though the serve is up and listening.",
+      "reproduction": "Call spawnServe({ apiKey, configPath, host: '::1' }) with the fake-serve helper from test/helpers/fake-serve.ts. It rejects with ServeStartTimeoutError after startTimeoutMs. `new URL('http://::1:1234/v1')` throws.",
+      "fix": "Format the URL host separately from the bind host: `const urlHost = host.includes(':') && !host.startsWith('[') ? `[${host}]` : host` and use urlHost in baseURL (lines 359 and 361). Also stop swallowing non-network errors such as TypeError in the waitForHealth catch."
+    },
+    {
+      "title": "stopServe returns early when the serve already exited, leaving the worker in its process group running",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 417,
+      "anchor": "if (child.exitCode !== null || child.signalCode !== null) return",
+      "evidence": "The serve is spawned `detached` so it leads its own process group, and the `bare` worker it starts is in that group (comments at lines 333-338 and 404-412). Only `signalServeTree(child, 'SIGKILL')` (process.kill(-pid)) reaches the worker, and stopServe sends it only on the grace-timeout path. If the serve process is already dead, line 417 returns immediately and nothing signals the group. That happens on spawnServe's error path: the serve crashes or is OOM-killed after starting the worker but before /v1/models answers, so waitForHealth throws ServeExitedError (line 196) and the catch at line 371 calls stopServe(child), which returns at line 417. The group still exists while the worker is alive, so process.kill(-pid) would still reach it.",
+      "impact": "The bare inference worker is left orphaned and keeps holding the model memory and the global worker lock. The file's own comment (lines 408-409) says a stale lock blocks the next start, so later managed starts fail until the user kills the stray process by hand.",
+      "reproduction": "Change test/helpers/fake-serve.ts so it spawns a long-lived grandchild (as the existing process-group test does) and then exits with code 1 before it answers health. spawnServe rejects with ServeExitedError, and the grandchild pid is still alive afterwards (process.kill(pid, 0) succeeds).",
+      "fix": "In the early-return branch, still try a best-effort group kill on POSIX: `if (child.pid !== undefined && process.platform !== 'win32') { try { process.kill(-child.pid, 'SIGKILL') } catch {} } return`. The pgid can't be reused while a group member is alive, so this is safe."
+    }
+  ]
+}

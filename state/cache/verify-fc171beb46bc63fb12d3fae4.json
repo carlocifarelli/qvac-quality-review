@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The code matches the claim: process-manager.ts:231 runs `execSync(`adb -s ${opts.serial} shell pidof ${opts.packageName}`)` through /bin/sh with neither value quoted. The security claim does not hold up, though.\n\n1. **No trust boundary is crossed.** `serial` comes from the operator's own `--device` flag (index.ts:300, run-local.ts:560) or from parsed `adb devices` output. `packageName` comes from the operator's own `QVAC_ANDROID_PACKAGE` env var or a hard-coded default (run-local.ts:578). Anyone who can set the CLI arguments or env of this local test-suite tool can already run any command on that host. No network, file or other untrusted input reaches this line, so nothing is escalated.\n\n2. **This line is not the first or only place the values hit a shell.** In run-local.ts the same `serial` is first passed to `installAndroidApk` (line 576 → device-utils.ts:41, `adb -s ${serial} install ...`). `serial` and `androidPackage` then go to `launchAndroidApp` (line 579 → device-utils.ts:50, `adb -s ${serial} shell am start -n ${packageName}/...`). Both calls happen before `startDeviceLogCapture` (line 584) and use the same unquoted interpolation. The same pattern appears again in `getAndroidAppPid` (device-utils.ts:62, called at run-local.ts:603). A malicious value would run earlier, and an install failure would stop the flow before line 231. Fixing only :231 changes nothing.\n\n3. **The \"silently dropped --pid filter\" part is a minor robustness issue, not a security one.** The try/catch at :235 drops the filter on purpose (best effort). A serial with spaces would already have broken the install step at device-utils.ts:41.\n\nWhat remains is a hygiene and robustness point that applies across the file: use `execFileSync`/`spawnSync` with an argument array, as the `spawn` at :237 already does. It is not an exploitable injection. If kept at all, the severity is low and it is a code-quality issue, not security.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "execSync adb serial interpolation",
+    "use execFileSync for adb commands",
+    "shell injection device-utils adb",
+    "QVAC_ANDROID_PACKAGE quoting"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "I couldn't disprove the claim. fillFitBlobs (registry-service.js:1379) reads every record once at the start with `this.listModels()` (line 1380). It then works through the records one at a time. Each one may come from `_loadArtifactForFill`, which falls back to a full source download (lines 1352-1364, 1340-1349), and each runs writeFitBlob and a blob upload/mirror (lines 1427-1430). After that it appends `{ ...model, fitBlobBinding }` (lines 1432-1442), and `model` is still the record as it was at the start of the run. The DISPATCH_PUT_MODEL apply handler calls `view.putModel(model)` (line 107). In shared/db.js:35-40 that is a plain `tx.insert` of the whole record, so the stale copy replaces the newer one with no check on version or sha. Nothing guards it: the server has no mutex or lock (grep finds none), and fill-fit-blobs is exposed as an RPC (lines 598-618) that awaits the whole loop. update-model-metadata (646-680), add-model (563, which appends at 861) and delete-model RPCs from any authorised writer, or from a second indexer, can commit during the run. A metadata edit made after the snapshot is reverted. A re-ingest is rolled back to the old blobBinding/sha256, the old fit blob replaces the new one, and the model counts as 'filled'/'replaced'. A delete-model committed during the run is also undone, because the put re-creates the deleted record. The integrity check at line 1345 only compares the download against the stale snapshot's sha, so it doesn't catch any of this. Tests only cover runs where nothing else writes at the same time, and no comment says the behaviour is intentional. Mitigating factors: the job is an operator-run maintenance RPC, it only touches selected candidates (by default those without a fitBlobBinding), and the window per record is the time to stage and process that model. Medium severity still fits: the corruption is silent and can point clients back at old weights.",
+  "severity": "medium",
+  "duplicateSearchTerms": [
+    "fillFitBlobs overwrites concurrent model updates",
+    "fill-fit-blobs stale snapshot put-model",
+    "fit blob backfill reverts metadata or re-ingest",
+    "lost update during fill-fit-blobs"
+  ]
+}

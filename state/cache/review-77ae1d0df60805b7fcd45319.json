@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "Cancelling with clearCache during a registry transfer leaves the partial file or shard directory on disk",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 567,
+      "anchor": "if (error instanceof DownloadCancelledError && ctx.shouldClearCache()) {",
+      "evidence": "The cleanup at registry.ts:567 (single file: unlink partialDownloadPath(modelPath)) and registry.ts:396 (sharded: rm getShardedModelCacheDir(cacheKey)) only runs when `error instanceof DownloadCancelledError`. When the abort fires during the transfer, the error comes from `lease.client.downloadBlob`/`downloadModel` (registry-download-utils.ts:139/142), and the registry client rejects with a plain `new Error('Download cancelled')` (packages/registry-server/client/lib/client.js:256, 277, 301, 757, 765). Nothing in registry-download-utils.ts or runtime/registry-client.ts maps that error to DownloadCancelledError; the lease wrapper only maps cancels that happen while waiting for the lease (runtime/registry-client.ts:236-245). So for the usual case, a cancel mid-download, the instanceof check is false and the cleanup is skipped. The same file already guards against this at line 468 (`ctx.signal.aborted || error instanceof DownloadCancelledError`), which shows the client error is known not to be a DownloadCancelledError.",
+      "impact": "`cancel({ requestId, clearCache: true })` sets transfer.clearCache (download-manager.ts:333-343), which the docs there say deletes the partial download. Here it leaves the `.partial` file (for a single file) or every downloaded shard (for a sharded model) on disk. The client still clears the hypercore blocks because of clearBlocksOnCancel, so the user gets neither a resumable download nor the freed disk space. Multi-GB partial files stay in the cache until the user deletes them by hand. The caller also gets a plain Error instead of a DownloadCancelledError when the subscriber is settled by the transfer rejection.",
+      "reproduction": "Start a registry model download through loadModel/downloadAsset, wait for progress > 0, then call cancel({ requestId, clearCache: true }). The blob stream rejects with Error('Download cancelled'). Check the cache directory: `<model>.partial` (or the shard dir from getShardedModelCacheDir) is still there. In a unit test, mock lease.client.downloadBlob to reject with new Error('Download cancelled') after setting clearCache, and assert that fsPromises.unlink/rm is not called.",
+      "fix": "Treat an aborted signal as a cancel in both catch blocks, as line 468 already does: `if ((ctx.signal.aborted || error instanceof DownloadCancelledError) && ctx.shouldClearCache())`. Also rethrow `new DownloadCancelledError()` when `ctx.signal.aborted`. A cleaner option is to wrap the client call in downloadSingleFileFromRegistry so that any rejection while `signal.aborted` is true becomes a DownloadCancelledError. registry-companion-set.ts:165 has the same check and needs the same fix."
+    }
+  ]
+}

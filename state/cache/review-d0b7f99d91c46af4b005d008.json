@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "title": "Shards inside a top-level folder are extracted but never found, so the load fails",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 292,
+      "anchor": "const files = await fsPromises.readdir(extractDir)",
+      "evidence": "extractTarStream keeps each entry's directory path: `path.resolve(path.join(extractDir, header.name))` (line 159) followed by `fs.mkdirSync(dir, { recursive: true })` (line 170). Validation then calls a non-recursive `fsPromises.readdir(extractDir)` (line 292) and looks for a top-level name matching the shard pattern (line 293). The cache check at lines 265-266 does the same. An archive made with `tar czf m.tar.gz model/` has entries such as `model/model-00001-of-00002.gguf`. They are written to extractDir/model/, readdir returns only `model`, and `detectShardedModel('model').isSharded` is false.",
+      "impact": "An ordinary archive that wraps its shards in a folder always fails with ModelLoadFailedError 'No sharded model files found in archive', even though all the shards were just written to disk. On the HTTP path, every retry downloads the archive again and extracts it again, because no completion marker is ever written.",
+      "reproduction": "In sharded-disk-load.test.ts, call writeTar(archivePath, {'model/model-00001-of-00002.gguf':'a','model/model-00002-of-00002.gguf':'b'}) and then extractAndValidateShardedArchive(archivePath, extractDir). It rejects with ModelLoadFailedError, and extractDir/model/ holds both shards.",
+      "fix": "Write model entries flat, at path.join(extractDir, path.basename(header.name)), since only basenames are used later. Otherwise, search extractDir recursively and return the nested path. Flattening also keeps the existing zip-slip check simple."
+    },
+    {
+      "title": "Synchronous mkdirSync throw inside tar-stream 'entry' listener escapes the promise as an uncaught exception",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 170,
+      "anchor": "fs.mkdirSync(dir, { recursive: true })",
+      "evidence": "tar-stream 3.2.0 extract.js calls `this.emit('entry', ...)` directly from `_consumeHeader`, which runs from `_update`/`_write` (lines 178/185, 296-299) and has no try/catch around the emit. The listener at archive.ts:144 calls `fs.mkdirSync` (line 170) without a guard. The throw goes up through the streamx write path started from the readStream pipe, outside the `new Promise` executor, so `settle` never runs. Triggers include an archive holding `a.gguf` and then `a.gguf/b.gguf` (the dirname is now a file, so ENOTDIR/EEXIST), a non-directory already sitting at that path in extractDir, or EACCES/ENOSPC on the cache directory.",
+      "impact": "The extraction promise neither resolves nor rejects, and the exception reaches the process as uncaught, which can crash a Bare/Node host. The inFlightExtractions entry is never removed, so later loads of the same archive join a promise that will never settle and hang.",
+      "reproduction": "writeTar(archivePath, {'a.gguf':'x','a.gguf/b.gguf':'y'}), then await extractTarStream(archivePath, extractDir, false). Expect an uncaught ENOTDIR/EEXIST from mkdirSync instead of a rejection.",
+      "fix": "Wrap the mkdirSync/createWriteStream block in try/catch and call `settle(err)` (and `stream.resume()`) on failure. Or make the listener async-safe by calling mkdir via the promise API with `.catch(settle)` before piping."
+    }
+  ]
+}

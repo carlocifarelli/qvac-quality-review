@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The code matches the claim. runFit (run.ts:209) checks `signal.aborted` once, before `await resolveStateDir(...)` (run.ts:218). fitLoad (fit-load.ts:48-51) never passes a stateDir, so production always takes the `await import('@/utils/cache/paths')` path. tsconfig uses module esnext, so the dynamic import is kept and the function yields there. After the await, nothing checks the signal again before settle() starts the fitter (run.ts:255). bounded() then only calls `signal.addEventListener('abort', ...)` (run.ts:180). bare-abort-controller@1.1.2 `_abort()` returns early when the signal is already aborted and dispatches 'abort' only once (index.js:39-44). A listener added later never fires, and bounded() never checks `signal.aborted`. So an abort that lands in that window cannot answer 'cancelled'. The fitter runs, and the call resolves only when the fitter returns or after 30 s with 'timeout' (which also adds the key to `hung`, run.ts:177). This breaks the doc comment at run.ts:196-198.\n\nThe path is reachable from a public entry point: load-model.ts:136-146 passes `request.signal` to runLoadFitCheck, then fitLoad, then runFit.\n\nThe impact is overstated:\n1. The window is narrow. It lasts as long as the dynamic import of an already-cached module takes to resolve, maybe only a few microtasks. An abort delivered as an I/O or timer macrotask may rarely or never land in it. The exact timing depends on Bare's import() scheduling, which I can't observe.\n2. The caller's final result is still correct. load-model.ts:150-152 re-checks `request.signal.aborted` after the fit check and throws InferenceCancelledError, so the user does get a cancellation, only late (up to 30 s).\n3. The fit is advisory. A 'timeout' or `hung` entry maps to an 'unknown' verdict, and the load goes ahead, so later loads are not blocked.\n\nThe real costs are a delayed cancel, a wasted native fitter run, and possible `hung` pollution. Severity: low.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "runFit abort lost during resolveStateDir",
+    "model fit cancel ignored signal already aborted",
+    "fit check delays cancelled load 30s",
+    "bounded addEventListener aborted signal never fires"
+  ]
+}

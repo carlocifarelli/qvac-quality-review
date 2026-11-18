@@ -1,0 +1,16 @@
+{
+  "findings": [
+    {
+      "title": "A consumer killed by a signal makes the CLI exit with code 0",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 51,
+      "anchor": "process.exit(code || 0)",
+      "evidence": "run-consumer-desktop.ts:50-52 handles `child.on('exit', (code) => process.exit(code || 0))`. Node's 'exit' event passes `code === null` and a non-null `signal` when the child ends because of a signal. That covers the OOM killer's SIGKILL, a SIGSEGV or SIGABRT crash in a native addon (common for the llama.cpp/whisper bindings this suite tests), and the SIGINT/SIGTERM that lines 47-48 forward to it. `null || 0` gives 0, so the parent reports success. The signal argument is never read.",
+      "impact": "A consumer test run that crashes natively or is OOM-killed in CI reports exit code 0. The pipeline counts it as passed, which hides real failures. A run cancelled with SIGTERM also looks like a success.",
+      "reproduction": "Point the config at a consumer whose entry runs `process.kill(process.pid, 'SIGKILL')` (or segfaults). Run `qvac-test run consumer desktop ...` and then `echo $?`, which prints 0.",
+      "fix": "Use `child.on('exit', (code, signal) => { if (signal) { process.exit(128 + (os.constants.signals[signal] ?? 1)) } process.exit(code ?? 1) })`, or call `process.kill(process.pid, signal)` after removing the forwarding listeners."
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The control flow the reviewer describes is accurate. stopServe (serve-process.ts:417) returns as soon as exitCode or signalCode is set. On spawnServe's error path (catch at :371, after a ServeExitedError from waitForHealth at :196 or from waitForReady at :254), nothing sends process.kill(-pid). The runner's post-start 'exit' handler (runner.ts:148) also never signals the group.\n\nThe impact claim fails, though, because the bare worker does not outlive its parent. The SDK runs the worker through bare-stow-runtime (sdk/src/worker/shim.ts calls attach(Bare.IPC) from 'bare-stow-runtime/process'). In node_modules/bare-stow-runtime/index.js:19 the Runtime constructor registers `stream.on('end', ondisconnect).on('close', ondisconnect)`. _ondisconnect calls _shutdown(0). That runs the stop hook (closeEngine from sdk/src/worker/start.ts) to release the engine and the worker lock, then calls Bare.exit. It also arms `setTimeout(() => Bare.exit(code), grace)` as a hard backstop. When the serve dies for any reason (crash, OOM SIGKILL), the kernel closes its end of the IPC pipe, the worker sees end/close, runs its normal cleanup and exits. This is the graceful path, so the lock is released. The serve-process.ts comments (lines 333-338, 404-412) explain why the group SIGKILL exists: the serve may be wedged while still alive and holding the IPC open. A serve that has already exited is not that case.\n\nSo the triggering path is reachable, but no orphan holding the model memory or a stale lock results, and later managed starts do not fail. The only residual risk is a worker whose native thread blocks Bare.exit, an edge case that is not shown here. Sending a best-effort group SIGKILL on the early-return path would be a cheap hardening step, but it does not fix a real leak.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "stopServe orphan bare worker",
+    "serve exits before health worker left running",
+    "managed serve process group not killed",
+    "stale worker lock after serve crash"
+  ]
+}

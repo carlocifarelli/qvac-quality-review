@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The window the reviewer describes is real in the code. scratchFolderFor (scratch.ts:26-28) runs mkdir on `.<name>-<uuid>` first and writes owner.pid afterwards with a separate, non-atomic writeFile. removeStaleScratch (scratch.ts:58-63) matches every `.<name>-<uuid>` entry and calls ownerRunning. ownerRunning (67-74) returns false when readFile throws (ENOENT) or when parseInt gives NaN (an empty file). The `.previous` guard does not protect a fresh folder, so `rm -r` deletes it. Nothing else guards this. There is no lock anywhere in commands/bundle; I grepped for \"lock\" and found none. Callers run removeStaleScratch on the same dir just before scratchFolderFor (index.ts:544-545, 587; link.ts:117-118). The worker-scan scratch at index.ts:567 also runs after another run may be sweeping scanOutputDir. The ownerRunning/EPERM logic and the doc comment (\"A folder whose process is still running belongs to a bundle in progress ... stay\") show the authors meant to protect concurrent live bundles, so this is a hole in that intended guarantee, not something they accepted on purpose. The impact is overstated, though: (1) The window is tiny, a single mkdir→writeFile gap of microseconds to milliseconds. The other run's readdir→readFile has to land exactly inside it. (2) Two concurrent `qvac bundle` runs on the same project already clobber each other regardless. Both write entryPath (index.ts:598) and both replaceAll the same outputDir. So the scenario is not well supported to begin with. (3) The likely result is a loud ENOENT failure in run A, not silent corruption. A partial-tree output would need the rm to race the stow and then the rename to succeed, which is unlikely. Fix: write owner.pid atomically before the folder becomes visible. One way is to mkdir a temp name without the uuid pattern, write the pid, then rename it. Another is to treat a missing or empty owner.pid as live when the folder's mtime is recent.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "removeStaleScratch deletes live scratch folder",
+    "owner.pid race scratchFolderFor",
+    "concurrent qvac bundle ENOENT scratch",
+    "stale scratch cleanup race"
+  ]
+}

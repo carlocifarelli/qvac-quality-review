@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The claim holds. In serve-process.ts:305, `host` is `options.host ?? DEFAULT_SERVE_HOST`. It is passed unchanged to `--host` (line 327) and placed into `baseURL = \\`http://${host}:${port}/v1\\`` (line 361) without IPv6 brackets. Nothing validates or normalizes it on the way in: types.ts:60 and README:204 declare `serveHost?: string` with no constraint, and managed/index.ts:162 passes it straight through. With `serveHost: '::1'`, `http://::1:PORT/v1` is not a valid WHATWG URL, so `fetchImpl(healthUrl)` throws TypeError on every attempt. The bare `catch {}` at lines 211-213 swallows that as 'not listening yet', and the loop ends in ServeStartTimeoutError at line 216 even though the serve is up. The bracketed form is no workaround: the CLI hands `options.host` straight to fastify `app.listen({ host })` (cli/src/serve/index.ts:180). Node cannot resolve '[::1]' as a bind address, so the serve exits (ServeExitedError). The CLI clearly means to support IPv6 binds: server.ts:244-245 adds brackets itself when building origins, and cors.ts and host-check.ts strip them. The provider's registry.ts:121-122 also strips brackets. No test covers an IPv6 serveHost (no '::1' hits in ai-sdk-provider). I rate it below medium. The default is 127.0.0.1, and IPv6 loopback or '::' is an uncommon explicit opt-in. A user who sets it does get a total failure after the full 180s default timeout with a misleading error, but there are easy workarounds (an IPv4 host or 'localhost'). Fix: bracket the host when it contains ':' while building the URL (lines 359 and 361, plus index.ts:270/283), and/or stop the catch from hiding non-network TypeErrors.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "IPv6 serveHost health check timeout",
+    "serveHost ::1 invalid URL",
+    "managed serve IPv6 baseURL brackets",
+    "ServeStartTimeoutError IPv6 host"
+  ]
+}

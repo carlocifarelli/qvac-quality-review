@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "I read the code and the claim is correct. The live path is reached from a public command: `qvac openai coverage` without `--offline` goes from openai/command.ts to runOpenAiCoverage (coverage.ts:16), then buildCoverageReport (build-report.ts:100), then parseSpec, then fetchSpecLive.\n\nIn fetchSpecLive (parse-spec.ts:123-177), the call `mkdirSync(dependencies.cacheDir, { recursive: true })` at :129 runs before the fetch and is not wrapped in try/catch. The etag read at :132-137 is guarded, but this mkdir is not. After a successful 200 and a successful parseSpecYaml at :167, the code calls writeFileAtomically for the spec, sha256 and etag files (:168-172). Each of those calls mkdirSync, mkdtempSync, writeFileSync and renameSync (:110-121), and none of them is guarded. If any of them throws EACCES, EROFS or ENOSPC, the whole promise rejects and the entries that were already parsed are thrown away. The 304 fallback path (:144-158) also hits the same unguarded writes after its refetch.\n\nNothing upstream catches this. buildCoverageReport awaits parseSpec directly, and runOpenAiCoverage awaits buildCoverageReport directly.\n\nThere is no way around it from the CLI. CACHE_DIR is hardcoded to `join(homedir(), '.cache', 'qvac')` (:18), with no XDG_CACHE_HOME or environment override. The command offers only `--offline`, and that needs a cache which is already populated, so it doesn't help. buildCoverageReport does accept `specPath`, but the CLI never sets it: coverage.ts passes only `offline`.\n\nNone of the tests in openai-spec-fetch.test.ts cover an unwritable cache directory. Every test uses a writable mkdtemp directory, and nothing suggests the hard failure is intentional.\n\nThe impact is real but narrow. It needs a read-only or unwritable HOME, for example a container running with HOME=/ as non-root, a read-only rootfs, or a full disk. It affects one diagnostic or developer-facing command, it fails loudly instead of corrupting anything, and it doesn't touch the main runtime. Severity stays low.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "openai coverage EACCES cache",
+    "openai-spec cache read-only HOME",
+    "coverage spec cache write failure",
+    "qvac openai coverage EROFS"
+  ]
+}

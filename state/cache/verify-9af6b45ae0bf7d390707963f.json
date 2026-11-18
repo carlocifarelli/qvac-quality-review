@@ -1,0 +1,11 @@
+{
+  "verdict": "confirmed",
+  "reasoning": "The defect is real. Line 47 of run-consumer-external.ts is `child.on('exit', (code) => process.exit(code || 0))`. It never reads `signal`, so a runner killed by SIGKILL, OOM, SIGSEGV or SIGABRT (code=null) makes the CLI exit 0. Two sibling files handle the signal case: utils/external-consumer.ts:105 (`code ?? (signal ? 1 : 0)`) and run-consumer-snap.ts:110-114. Two other commands copy the same bug: run-consumer-desktop.ts:50-51 and run-consumer-electron.ts:204-205.\n\nThe path is reachable. index.ts:121 registers the command as `run:consumer:external`, and CI calls it: sdk/ci/e2e.mjs:351 uses it for the python family. Nothing upstream catches the masked code. e2e.mjs:363-365 takes the CLI's close code as `consumerExit = code ?? 0`, so a 0 from this CLI passes through unchanged.\n\nThe impact is overstated. In CI the producer runs in the foreground with `--consumer-timeout=60`, and e2e.mjs:394 returns the producer's non-zero status first. A consumer that dies mid-run leaves tests without results, so the producer should fail the job anyway. The masking only decides the outcome when the runner crashes after the producer has finished (for example, a native-addon abort during teardown), or when the command is used on its own outside the e2e wrapper. run-local.ts:246 checks consumer signals itself, but it watches the CLI process, so it sees the same 0.\n\nSeverity is re-rated to low: the bug is real but mostly covered by the producer's own pass/fail.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "run:consumer:external exits 0 when killed by signal",
+    "consumer exit code ignores signal",
+    "code || 0 masks SIGKILL OOM consumer",
+    "external consumer crash reported as success"
+  ]
+}

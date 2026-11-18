@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The code is as described. process-manager.ts:212 opens logFd, and the two success returns (:222, :240) never close the parent's copy. Only the fall-through path closes it (:244). But the claimed impact does not hold up.\n\n1. It is called once per process. startDeviceLogCapture has exactly two callers, run-local.ts:583 (Android) and run-local.ts:745 (iOS). Each runs once per CLI invocation, so at most one descriptor stays open for the life of a short-lived CLI. That does not grow. It is not a leak that adds up.\n\n2. The process exits right after the kill. The fd is held exactly as long as the log file is meant to be written. Cleanup in setupCleanup (run-local.ts:221-230) runs `deviceLog?.child.kill()` through extraCleanup, then brokerHandle.cleanup() and printLogPaths(), then calls process.exit(exitCode) straight away. The OS releases the fd at that point. No code between the kill and the exit deletes or rotates the report directory, so the Windows file-lock scenario has nothing to block. Also, the iOS path depends on idevicesyslog and `which`, so it is not a Windows path.\n\n3. The spawn 'error' crash is not reachable in practice. On iOS, `which idevicesyslog` must succeed before the spawn. On Android, the caller already has a working adb (it found the device serial and the app pid through adb), so an ENOENT at spawn time is not a realistic input.\n\nClosing logFd after spawn would be slightly tidier, but there is no real defect here. If kept at all, it is a cosmetic code-quality note.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "device.log file descriptor not closed",
+    "startDeviceLogCapture fd leak",
+    "close logFd after spawn",
+    "device log capture spawn error handler"
+  ]
+}

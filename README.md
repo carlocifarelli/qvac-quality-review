@@ -156,7 +156,19 @@ Why this split:
 - The agent and the verifier independently flagged the same helper (4 calls, $0.88, 63 s).
 - #8 was reported as probably fixed, and the known open findings in the touched files were listed.
 
-The gate on a fix and on a regression is in [`demo/rules/`](demo/rules/). The workflow files are written. The QVAC PR workflow is proposed only, because the exercise forbids changes upstream.
+The gate on a fix and on a regression is in [`demo/rules/`](demo/rules/).
+
+**Running in GitHub Actions** (this repo, 2026-11-18): `ci` is green. `scheduled-scan` ran on today's QVAC main, `ad66549a2775`, one commit after the analysed one.
+- Rules: 1,013 files in 13 s, 22 hits, 0 untriaged.
+- No agent stage, because no API key is configured.
+- Presence: all 47 findings are still present.
+- Result: "nothing to triage", [run 44277366964](https://github.com/carlocifarelli/qvac-quality-review/actions/runs/44277366964).
+
+The first run had shown two problems, both fixed:
+- It treated a `lastSeenCommit` bump as something to triage. Now only new leads, disappeared or reappeared findings, or untriaged rule hits open a triage PR (`scripts/triage-needed.mjs`).
+- The repository does not allow Actions to create pull requests. The workflow now falls back to an issue.
+
+The QVAC PR workflow is proposed only, because the exercise forbids changes upstream.
 
 ## Scope and verification for this submission
 
@@ -227,7 +239,7 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 ## Demonstrated vs proposed
 
 - **Demonstrated** (ran, outputs committed): selection, review, verify, report, presence tracking across commits, cache reuse, dedupe with logged searches, idempotent publish to this repo's issues, the fingerprint migration, all reproductions in `verification/`, the `qvac-quality` rules with their baseline gate on a fix and on a regression, including the PR-scoped `--changed` mode for the rules, and `qr pr` on a simulated pull request (rules + agent + presence, PR comment in `demo/pr/`).
-- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), the GitHub Actions workflows running in Actions (they are written and the commands they call are demonstrated locally; the QVAC PR workflow cannot be installed upstream), a non-Claude backend. Everything under "Next priorities" is proposed only.
+- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), the agent stage inside Actions (needs an `ANTHROPIC_API_KEY` secret), `publish.yml` in Actions (no triage PR has been merged yet), the QVAC PR workflow (cannot be installed upstream), a non-Claude backend. Everything under "Next priorities" is proposed only.
 
 ## AI use
 

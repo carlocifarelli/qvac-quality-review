@@ -66,7 +66,8 @@ jobs:
           RULES_NEW: ${{ steps.rules.outputs.new }}
         run: |
           sha=$(git -C target rev-parse --short=12 HEAD)
-          if git diff --quiet -- state results; then echo "nothing changed at $sha"; exit 0; fi
+          # Nothing to triage: no state change (new leads, presence) and no untriaged rule hit.
+          if git diff --quiet -- state && [ "${RULES_NEW:-0}" = 0 ]; then echo "nothing to triage at $sha"; exit 0; fi
           branch="scan/$(date -u +%F)-$sha"
           git config user.name "qvac-quality-review[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

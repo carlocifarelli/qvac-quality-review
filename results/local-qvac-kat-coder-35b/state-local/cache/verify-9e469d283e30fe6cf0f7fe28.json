@@ -1,0 +1,10 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The claim is that when replaceAll fails and putBack also fails, the kept property may not be properly propagated, leading to leaked scratch folders. However, examining the code carefully:\n\n1. In putBack (line 153-167), if renaming entry.dir back to entry.next fails, it checks if previous content exists and sets entry.kept = previous (line 159).\n\n2. In restorePrevious (line 177-191), if renaming previous back to entry.dir fails, it sets entry.kept = previous (line 183).\n\n3. The key point is that discardStaged (line 94-98) checks entry.kept === undefined to decide whether to discard. If kept is set, the scratch folder is preserved.\n\n4. Both callers (index.ts line 679 and withMobileBundle.ts line 126) call discardStaged in a finally block, which means it runs regardless of whether replaceAll throws.\n\n5. The claim suggests kept properties may not be properly propagated, but the code explicitly sets entry.kept in both failure paths within putBack and restorePrevious. The error aggregation at lines 120-126 throws a new error, but the staged array entries have already had their kept properties set.\n\n6. The only scenario where kept wouldn't be set is if putBack throws before reaching line 159 or 183, but both paths that could leave content behind explicitly set entry.kept.\n\nThe defect claim appears to be based on a misunderstanding of the code flow. The kept property is set in the catch blocks before the error is re-thrown, so discardStaged will see it in the finally block.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "scratch folder leak replaceAll failure",
+    "putBack kept property not set",
+    "discardStaged finally block scratch cleanup"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The claim is that handlers leak and override process signals, but this is a CLI tool that calls process.exit() in all code paths (lines 40, 47, 52). The function is registered as a Commander.js action handler (line 129 of index.ts) and is invoked once per CLI invocation. There is no realistic scenario where runConsumerExternal is called multiple times in the same process, nor is it called in a context where process signals are already handled by other code. The process exits before any accumulation could occur. The claim about child process leaking is also moot because process.exit() terminates the process. The severity is overstated.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "runConsumerExternal signal handler leak",
+    "CLI process.exit signal handlers",
+    "Commander action process signals"
+  ]
+}

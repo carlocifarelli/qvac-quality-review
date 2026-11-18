@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The claim is technically correct that Node.js server.close() is asynchronous and the callbacks are ignored, but the impact is overstated and the defect is not reachable in a problematic way. First, all three close() calls are wrapped in try/catch blocks, so any errors are silently swallowed. Second, broker.close() in aedes does not depend on the underlying net/http servers being fully closed before it runs — it cleans up its own internal state (subscriptions, connections, etc.) independently. Third, even if there were a timing issue, the process exits immediately after cleanup() is called (via process.exit in the caller), so any in-flight close callbacks would be terminated anyway. The cleanup is best-effort and the pattern is intentional for a test harness that needs to shut down quickly. The 'race' described would not cause resource leaks or errors in practice.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "broker cleanup race condition",
+    "server.close callback ignored",
+    "aedes broker close timing",
+    "embedded broker cleanup order"
+  ]
+}

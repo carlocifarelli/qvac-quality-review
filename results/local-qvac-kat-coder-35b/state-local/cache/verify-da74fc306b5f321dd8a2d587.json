@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The claim is internally contradictory and mischaracterizes the code. The reviewer states 'the error handler is attached but the server may have already started listening' and then concedes 'This is actually correct behavior.' The code at lines 168-174 correctly attaches error handlers to both servers and rejects the promise on error. If httpServer emits an error after tcpServer.listen() succeeds but before httpServer.listen() is called, the error handler (attached at line 173) will reject the promise, which is the correct behavior. The empty catch blocks in cleanup (lines 183, 186, 189) are intentional and appropriate for cleanup code where errors during shutdown should not propagate. The claim conflates two separate concerns and admits the described behavior is correct. There is no defect here.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "ensureBroker error handling",
+    "local-broker cleanup catch",
+    "embedded broker startup error",
+    "aedes broker promise rejection"
+  ]
+}

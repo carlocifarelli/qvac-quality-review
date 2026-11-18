@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The claim is that EPERM from process.kill(pid, 0) can be thrown when the process does not exist, causing ownerRunning to incorrectly return true and skip cleanup. However, this is incorrect: on all POSIX systems and in Node.js, process.kill(pid, 0) throws ENOENT (not EPERM) when the process does not exist. EPERM is specifically thrown when the process exists but the caller lacks permission to signal it (i.e., it belongs to another user). The comment on line 79 is accurate. Therefore, the triggering path described by the reviewer (EPERM for a non-existent process) is not reachable in practice. The code correctly handles the non-existent process case via the ENOENT path (which falls through to the catch block and returns false, allowing cleanup). The impact is not overstated because the scenario described cannot occur.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "EPERM process.kill scratch cleanup",
+    "ownerRunning EPERM ENOENT",
+    "removeStaleScratch process check",
+    "scratch folder leak EPERM"
+  ]
+}

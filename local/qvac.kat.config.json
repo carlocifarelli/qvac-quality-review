@@ -1,0 +1,12 @@
+{
+  "serve": {
+    "models": {
+      "reviewer": {
+        "type": "llamacpp-completion",
+        "src": "/Users/carlo.cifarelli/.qvac/models/hf/Kwaipilot_KAT-Coder-V2.5-Dev-Q4_K_M.gguf",
+        "preload": true,
+        "config": { "tools": true, "ctx_size": 32768 }
+      }
+    }
+  }
+}

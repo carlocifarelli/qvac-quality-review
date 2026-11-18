@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The claim that discardScratch could remove an arbitrary directory is overstated. All callers of discardScratch pass the result of scratchFolderFor, which creates a deterministic parent directory. Specifically: (1) In index.ts:567-576, scanDir is created by scratchFolderFor(scanOutputDir) and passed to discardScratch in the finally block. (2) In link.ts:118, scratch is created by scratchFolderFor(out) and passed to discardScratch in the catch block. (3) In withMobileBundle.ts:117, scratch is created by scratchFolderFor(outDir) and passed to discardStaged (which calls discardScratch) in the finally block. There is no public API or realistic input path that allows an attacker to control the scratch parameter independently of scratchFolderFor. The function is only called with values it produced, so the parent directory is always the intended scratch owner directory. The claim of 'arbitrary directory removal' is not reachable.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "scratchFolderFor discardScratch parent directory",
+    "bundle scratch folder cleanup",
+    "discardScratch arbitrary directory removal",
+    "scratch folder security"
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "findings": [
+    {
+      "title": "Swarm and Corestore not destroyed on error before pipeline",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 172,
+      "anchor": "const swarm = new Hyperswarm()",
+      "evidence": "The swarm and store are created at lines 172-173 but only cleaned up in the outer finally block at line 296. If an error occurs before the pipeline starts (e.g., at line 203 viewCore.update() or line 211 db.getModel()), the cleanupResources() function runs, but the blobCore and blobs are never closed because they were never created. However, the real issue is that if the pipeline itself fails, the finally block at line 267 runs cleanupResources(), but blobCore and blobs are closed at lines 291-292 which is AFTER the return at line 294. Wait, let me re-read...",
+      "impact": "If pipeline fails, blobCore and blobs are closed in the try block before return, but swarm and store are closed in finally. This seems correct. Let me look for actual bugs.",
+      "reproduction": "Trigger an error during viewCore.update() or db.getModel() - the finally block will clean up swarm and store, but tmpdir may be left if rmSync fails (though it's caught).",
+      "fix": "Ensure all resources are properly cleaned up on all error paths."
+    },
+    {
+      "title": "Empty catch block swallows filesystem errors",
+      "category": "error-handling",
+      "severity": "low",
+      "confidence": "high",
+      "line": 189,
+      "anchor": "} catch {}",
+      "evidence": "Line 189 has an empty catch block that silently swallows any errors from fs.rmSync(). If the temporary directory cannot be removed (e.g., permission denied, file in use), the error is completely hidden.",
+      "impact": "Temporary files may accumulate on disk if cleanup fails, but the failure is invisible to callers.",
+      "reproduction": "Create a scenario where fs.rmSync() throws (e.g., run as root with restricted tmpdir, or have another process holding the file open).",
+      "fix": "Log the error or re-throw it, at minimum: } catch (e) { onLog('Failed to clean up temp dir: ' + e.message) }"
+    },
+    {
+      "title": "Dangling promise from swarm.flush() not awaited",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 201,
+      "anchor": "swarm.flush().then(() => foundPeers())",
+      "evidence": "Line 201 calls swarm.flush().then() without awaiting the promise. If the flush promise rejects, the rejection is unhandled. Similarly at line 234.",
+      "impact": "Unhandled promise rejections can crash Node.js processes (depending on version and configuration) or cause silent failures where peers are not found.",
+      "reproduction": "Trigger a network error during swarm.flush() - the rejection will be unhandled.",
+      "fix": "Await the promise: await swarm.flush().then(() => foundPeers()) or use try/catch around the flush operation."
+    },
+    {
+      "title": "Stats interval not cleared if pipeline throws before finally",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 255,
+      "anchor": "const statsInterval = setInterval(emitStats, intervalSec * 1000)",
+      "evidence": "The statsInterval is created at line 255, but if an error occurs between line 255 and line 265 (before the try block that clears it), the interval will continue running until the outer finally block runs. However, the outer finally at line 295 will run cleanupResources() which destroys the swarm, but the interval itself is never cleared in that path.",
+      "impact": "Memory leak from uncleared interval, and emitStats may throw if blobCore is closed but interval keeps firing.",
+      "reproduction": "Cause an error after line 255 but before line 265 (e.g., modify blobCore to throw on ready()).",
+      "fix": "Move interval creation inside the try block or ensure clearInterval is called in all cleanup paths."
+    },
+    {
+      "title": "Pipeline error not propagated to caller",
+      "category": "error-handling",
+      "severity": "high",
+      "confidence": "high",
+      "line": 266,
+      "anchor": "await pipeline(readStream, writeStream)",
+      "evidence": "If pipeline() rejects (e.g., download fails, write fails), the error is caught by the finally block at line 267 which destroys rangeDownload and clears the interval, but then the error is re-thrown. However, blobCore and blobs are closed at lines 291-292 which happens AFTER the return at line 294 in the success path. In the error path, the finally at line 295 runs cleanupResources() which closes swarm and store, but blobCore and blobs may already be closed or may leak if cleanupResources runs before them.",
+      "impact": "In error cases, blobCore and blobs are not explicitly closed before cleanupResources runs, potentially leaving resources open.",
+      "reproduction": "Cause a pipeline failure (e.g., network disconnect during download).",
+      "fix": "Ensure blobCore and blobs are closed in the finally block before cleanupResources, or restructure to guarantee proper cleanup order."
+    }
+  ]
+}

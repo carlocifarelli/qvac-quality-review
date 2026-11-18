@@ -1,0 +1,40 @@
+{
+  "findings": [
+    {
+      "title": "Leaked scratch folder when replaceAll fails and putBack also fails",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 111,
+      "anchor": "  } catch (error) {",
+      "evidence": "In replaceAll (line 104-128), when a replace fails, the code attempts to put back each already-replaced entry. If putBack also fails (line 116-118), the failure is collected but the entry's `kept` property may not be set correctly. Specifically, in putBack (line 153-167), if renaming `entry.dir` back to `entry.next` fails, it checks if the previous content exists and sets `entry.kept = previous`. However, if the rename succeeds but `restorePrevious` fails (line 166), the `kept` property is set in restorePrevious (line 183). The issue is that when multiple failures occur, the error aggregation at lines 120-126 throws a new error, but the `staged` array's `kept` properties may not be properly propagated back to the caller, leaving scratch folders that should have been kept but aren't tracked.",
+      "impact": "Scratch folders containing previous content may be leaked (not cleaned up) when replaceAll fails and putBack also fails, consuming disk space and potentially causing confusion about where old content is stored.",
+      "reproduction": "1. Create a directory with content. 2. Create a scratch folder with new content. 3. Call replaceAll with staged entries. 4. Make the rename in replaceWith fail after the first entry is moved. 5. Make the putBack also fail. The scratch folder with kept content may not be properly tracked.",
+      "fix": "Ensure that when putBack fails, the `kept` property is always set on the entry before the failure is collected, and that the error thrown from replaceAll includes information about which entries have kept content."
+    },
+    {
+      "title": "ownerRunning returns true for EPERM but process may not exist",
+      "category": "correctness",
+      "severity": "low",
+      "confidence": "high",
+      "line": 80,
+      "anchor": "    return (error as NodeJS.ErrnoException).code === 'EPERM'",
+      "evidence": "In ownerRunning (line 67-82), when process.kill(pid, 0) throws EPERM, the code assumes the process exists but belongs to another user. However, EPERM can also be thrown when the process does not exist (depending on the OS and Node.js version). This causes removeStaleScratch to incorrectly skip deleting scratch folders owned by non-existent processes, leading to leaked scratch folders.",
+      "impact": "Scratch folders owned by processes that no longer exist may not be cleaned up by removeStaleScratch, leaving stale directories on disk.",
+      "reproduction": "1. Create a scratch folder with an owner.pid file containing a non-existent PID. 2. Call removeStaleScratch. 3. If process.kill throws EPERM for the non-existent PID, the scratch folder will not be deleted.",
+      "fix": "Check for both EPERM and ESRCH errors in ownerRunning, or use a more robust process existence check."
+    },
+    {
+      "title": "discardScratch removes parent directory unconditionally",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 33,
+      "anchor": "  await fsp.rm(path.dirname(scratch), { recursive: true, force: true })",
+      "evidence": "discardScratch (line 32-34) removes the parent directory of the scratch folder. The scratch folder is created as `path.join(owned, path.basename(dir))` where `owned` is `path.join(path.dirname(dir), `.${path.basename(dir)}-${randomUUID()}`)`. So `path.dirname(scratch)` is `owned`. This is correct for the normal case. However, if `scratch` is malformed or points to an unexpected location, this could remove the wrong directory. The function does not validate that `path.dirname(scratch)` is actually a scratch folder created by scratchFolderFor.",
+      "impact": "If discardScratch is called with a malformed path, it could remove an arbitrary directory.",
+      "reproduction": "Call discardScratch with a path where path.dirname points to an important directory. This is unlikely in normal usage but possible if the caller constructs the path incorrectly.",
+      "fix": "Add validation to ensure the directory being removed matches the expected scratch folder pattern, or document that the caller must ensure the path is correct."
+    }
+  ]
+}

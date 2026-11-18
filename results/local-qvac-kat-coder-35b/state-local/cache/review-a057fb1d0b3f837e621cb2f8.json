@@ -1,0 +1,64 @@
+{
+  "findings": [
+    {
+      "title": "Stale error reject: broker close errors are swallowed, hiding cleanup failures",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 188,
+      "anchor": "    } catch {}",
+      "evidence": "Lines 180-190: cleanup function swallows all errors from tcpServer.close(), httpServer.close(), and broker.close(). If broker.close() throws (e.g., due to active connections or internal state issues), the error is silently discarded. The caller (run-local.ts) has no way to know cleanup failed.",
+      "impact": "Silent failure of broker cleanup can leave the broker in an inconsistent state, potentially causing port conflicts or resource leaks on subsequent runs. The caller cannot detect or respond to cleanup failures.",
+      "reproduction": "Trigger by starting the embedded broker, then calling cleanup() while the broker has active connections or is in a state where close() throws. The error will be swallowed silently.",
+      "fix": "Re-throw or log errors from broker.close() (and potentially the server closes) so callers can be aware of cleanup failures. At minimum, log the error."
+    },
+    {
+      "title": "Stale error reject: HTTP server error during startup is swallowed by empty catch",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 173,
+      "anchor": "    httpServer.on('error', reject)",
+      "evidence": "Lines 168-174: The Promise rejects on 'error' events from tcpServer or httpServer. However, if the httpServer emits an error after tcpServer.listen() succeeds but before httpServer.listen() is called (race condition), the error handler is attached but the server may have already started listening. More critically, if httpServer.listen() throws synchronously, it would propagate uncaught. But the main issue is that the error handlers reject the promise, which is correct, but the empty catch blocks at lines 183, 186, 189 in cleanup suggest a pattern of swallowing errors that could also apply here.",
+      "impact": "If httpServer emits an error after being attached to the reject handler but before listen() is called, the promise rejects. This is actually correct behavior. However, the pattern of empty catch blocks throughout suggests a systemic issue with error handling.",
+      "reproduction": "Trigger by having a port conflict or network error during httpServer.listen(). The promise will reject, which is correct. This finding is weaker than the broker.close() one.",
+      "fix": "This is actually correct behavior. The error is properly propagated via reject. The issue is more about the cleanup function swallowing errors."
+    },
+    {
+      "title": "Resource leak: broker.pid file written but never cleaned up",
+      "category": "resource-leak",
+      "severity": "low",
+      "confidence": "high",
+      "line": 178,
+      "anchor": "  fs.writeFileSync(path.join(reportDir, 'broker.pid'), String(process.pid))",
+      "evidence": "Line 178 writes the broker PID to a file, but the cleanup function (lines 180-190) does not delete this file. The process-manager.ts killTracked() function reads .pid files to kill processes, but there's no corresponding cleanup of the .pid file itself after the broker is stopped.",
+      "impact": "Stale .pid files can confuse killTracked() on subsequent runs, potentially attempting to kill a process that no longer exists or has a different purpose. This could lead to incorrect process management.",
+      "reproduction": "Start the embedded broker, let it run, then call cleanup(). The broker.pid file remains in the report directory. On the next run, killTracked() will read this stale PID and attempt to kill that process.",
+      "fix": "Add fs.unlinkSync() or similar to delete the broker.pid file in the cleanup function."
+    },
+    {
+      "title": "Potential race: broker.close() called while servers are still closing",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 188,
+      "anchor": "      broker.close()",
+      "evidence": "Lines 180-190: cleanup() calls tcpServer.close(), then httpServer.close(), then broker.close() sequentially. However, Node.js server.close() is asynchronous and accepts a callback. The current code ignores the callback and proceeds immediately to the next close() call. If broker.close() depends on the servers being fully closed, this could cause issues.",
+      "impact": "If broker.close() requires the underlying servers to be fully closed, calling it while they're still in the process of closing could result in errors or incomplete cleanup.",
+      "reproduction": "Trigger by calling cleanup() and observing if broker.close() throws or behaves unexpectedly when servers are still closing.",
+      "fix": "Use async/await or promise-based wrappers for server.close() to ensure proper sequencing, or use a library like async.series to coordinate the cleanup."
+    },
+    {
+      "title": "Security: execSync with user-controlled input for global npm install",
+      "category": "security",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 125,
+      "anchor": "      execSync('npm install -g aedes websocket-stream', { stdio: 'inherit' })",
+      "evidence": "Line 125: execSync runs 'npm install -g aedes websocket-stream' with stdio: 'inherit'. While the package names are hardcoded, this is still a shell command execution. If the command string were ever constructed from user input, it would be a command injection vulnerability. Currently, the packages are hardcoded, so this is not an immediate vulnerability, but it's a pattern worth noting.",
+      "impact": "Currently safe because package names are hardcoded, but establishes a pattern of using execSync for npm operations. If this code is refactored to accept package names as parameters, it could become a command injection vulnerability.",
+      "reproduction": "Not directly reproducible as a vulnerability since package names are hardcoded. However, the use of execSync for npm operations is a security concern if the command string is ever made dynamic.",
+      "fix": "Consider using a proper npm API or ensuring that any dynamic parts of the command are properly sanitized. For now, this is a latent security concern rather than an active vulnerability."
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+(node:73873) [FSTDEP023] FastifyDeprecation: disableRequestLogging option is deprecated. Use the logController option with disableRequestLogging or isLogDisabled override instead. The disableRequestLogging top-level option will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Preloading 1 model(s): reviewer
+Loading model "reviewer" from registry://hf/bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF/resolve/d8f684f08d2950ea9d2db6a35ef7dada0707858b/Kwaipilot_KAT-Coder-V2.5-Dev-Q4_K_M.gguf...
+[QVACRegistryClient] [INFO] Downloading blob directly {
+  coreKey: 'd90c02630333...',
+  blockOffset: 4141510,
+  blockLength: 326408,
+  byteLength: 21391448480
+}
+[QVACRegistryClient] [INFO] Keeping blob blocks for resume { start: 4141510, end: 4467918 }

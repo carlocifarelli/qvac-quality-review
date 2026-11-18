@@ -1,0 +1,3257 @@
+{
+  "commit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+  "scopeFiles": 1013,
+  "candidates": 681,
+  "top": [
+    {
+      "file": "packages/ai-sdk-provider/src/managed/index.ts",
+      "loc": 338,
+      "churn": 5,
+      "signals": {
+        "child-process": 2,
+        "fs-path": 7,
+        "untrusted-parse": 1,
+        "crypto": 4,
+        "timers": 2,
+        "listeners": 3,
+        "promise-ctor": 1,
+        "catch-block": 7
+      },
+      "lint": {
+        "no-promise-executor-return": [
+          43
+        ]
+      },
+      "priority": 96.65,
+      "contentHash": "64390a444a43e0a857e4a67692d0db17a7819f4c810a1cfb5095c76fa446683b"
+    }
+  ],
+  "rest": [
+    {
+      "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
+      "priority": 120.39
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "priority": 120.1
+    },
+    {
+      "file": "packages/inference/src/utils/archive.ts",
+      "priority": 118.77
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/prebuilds.ts",
+      "priority": 111.66
+    },
+    {
+      "file": "packages/registry-server/lib/registry-service.js",
+      "priority": 108.64
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/run-consumer-desktop.ts",
+      "priority": 103.52
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/run-consumer-external.ts",
+      "priority": 103.06
+    },
+    {
+      "file": "packages/inference/src/models/update-models/companions.ts",
+      "priority": 102.71
+    },
+    {
+      "file": "packages/sdk/src/commands/bundle/scratch.ts",
+      "priority": 100.13
+    },
+    {
+      "file": "packages/inference/src/models/update-models/processing.ts",
+      "priority": 98.85
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/managed/serve-process.ts",
+      "priority": 97.29
+    },
+    {
+      "file": "packages/inference/src/handlers/get-model-info.ts",
+      "priority": 96.98
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/managed/index.ts",
+      "priority": 96.65
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/bare-kit-runtime.ts",
+      "priority": 94.87
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/coreml-sidecars.ts",
+      "priority": 92.9
+    },
+    {
+      "file": "packages/sdk/src/commands/bundle/index.ts",
+      "priority": 91.31
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/run-consumer-electron.ts",
+      "priority": 88.07
+    },
+    {
+      "file": "packages/inference/src/rpc/network.ts",
+      "priority": 87.94
+    },
+    {
+      "file": "packages/inference/src/model-fit/run/run.ts",
+      "priority": 86.96
+    },
+    {
+      "file": "packages/registry-server/lib/fit-blob.js",
+      "priority": 86.2
+    },
+    {
+      "file": "packages/cli/src/serve/lib/ffmpeg.ts",
+      "priority": 78.44
+    },
+    {
+      "file": "packages/sdk/src/expo/plugins/withMobileBundle.ts",
+      "priority": 78.3
+    },
+    {
+      "file": "packages/sdk/src/client/rpc/node-rpc-client.ts",
+      "priority": 78.01
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/registry.ts",
+      "priority": 78
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/build-consumer-snap.ts",
+      "priority": 75.73
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/download-stats.ts",
+      "priority": 74.37
+    },
+    {
+      "file": "packages/inference/src/models/update-models/codegen.ts",
+      "priority": 73.71
+    },
+    {
+      "file": "packages/sdk/src/commands/bundle/link.ts",
+      "priority": 71.37
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/http.ts",
+      "priority": 71.09
+    },
+    {
+      "file": "packages/inference/src/model-fit/description/fetch.ts",
+      "priority": 70.02
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/registry-companion-set.ts",
+      "priority": 69.76
+    },
+    {
+      "file": "packages/registry-server/lib/metrics-server.js",
+      "priority": 69.71
+    },
+    {
+      "file": "packages/sdk/src/electron-forge/index.cjs",
+      "priority": 69.36
+    },
+    {
+      "file": "packages/registry-server/client/lib/profiler.js",
+      "priority": 69.26
+    },
+    {
+      "file": "packages/inference/src/plugins/ops/kv-cache-retention.ts",
+      "priority": 68.28
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/sidecar-runtime.ts",
+      "priority": 68.08
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/build-consumer-mobile.ts",
+      "priority": 67.73
+    },
+    {
+      "file": "packages/rag/src/vector-index/snapshots.ts",
+      "priority": 67.48
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/managed/registry.ts",
+      "priority": 66.44
+    },
+    {
+      "file": "packages/inference/src/rpc/inventory.ts",
+      "priority": 66.31
+    },
+    {
+      "file": "packages/sdk/src/client/rpc/bundle-stamp.ts",
+      "priority": 65.82
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/external-consumer.ts",
+      "priority": 63.94
+    },
+    {
+      "file": "packages/sdk/src/commands/bundle/resolve-sdk-import.ts",
+      "priority": 62.93
+    },
+    {
+      "file": "packages/test-suite/src/utils/test-loader.ts",
+      "priority": 61.88
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/types.ts",
+      "priority": 61.74
+    },
+    {
+      "file": "packages/inference/src/utils/url-security.ts",
+      "priority": 61.54
+    },
+    {
+      "file": "packages/inference/src/utils/path-security.ts",
+      "priority": 61.47
+    },
+    {
+      "file": "packages/infer-base/src/QvacResponse.js",
+      "priority": 60.61
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/run-producer.ts",
+      "priority": 60.48
+    },
+    {
+      "file": "packages/test-suite/src/cli/runners/run-consumer-external-inplace.ts",
+      "priority": 59.34
+    },
+    {
+      "file": "packages/cli/src/doctor/checks/project.ts",
+      "priority": 58.53
+    },
+    {
+      "file": "packages/inference/src/utils/cache/layout.ts",
+      "priority": 58.38
+    },
+    {
+      "file": "packages/sdk/src/worker/handle-request.ts",
+      "priority": 57.32
+    },
+    {
+      "file": "packages/sdk/src/commands/host-prebuilds/package-manager.ts",
+      "priority": 56.39
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/resolve.ts",
+      "priority": 56.35
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/run-local.ts",
+      "priority": 55.71
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/schemas/chat.ts",
+      "priority": 53.94
+    },
+    {
+      "file": "packages/inference/src/runtime/registry-client.ts",
+      "priority": 53.43
+    },
+    {
+      "file": "packages/registry-server/utils/env.js",
+      "priority": 52.72
+    },
+    {
+      "file": "packages/inference/src/utils/tools/parsers/qwen35.ts",
+      "priority": 52.71
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engines/chatterbox.ts",
+      "priority": 52.15
+    },
+    {
+      "file": "packages/inference/src/model-fit/description/resolve-load.ts",
+      "priority": 52.03
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/managed/runner.ts",
+      "priority": 51.68
+    },
+    {
+      "file": "packages/inference/src/schemas/model-info.ts",
+      "priority": 51.26
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/node-modules-source.ts",
+      "priority": 51.23
+    },
+    {
+      "file": "packages/inference/src/handlers/registry.ts",
+      "priority": 50.99
+    },
+    {
+      "file": "packages/registry-server/shared/spec/hyperdispatch/messages.js",
+      "priority": 50.74
+    },
+    {
+      "file": "packages/registry-server/shared/spec/hyperschema/index.js",
+      "priority": 50.74
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/env-writer.ts",
+      "priority": 50.68
+    },
+    {
+      "file": "packages/test-suite/src/core/bridge-executor.ts",
+      "priority": 49.97
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/build-consumer-electron.ts",
+      "priority": 49.8
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/run-consumer-snap.ts",
+      "priority": 49.06
+    },
+    {
+      "file": "packages/registry-server/lib/hf-downloader.js",
+      "priority": 48.92
+    },
+    {
+      "file": "packages/inference/src/utils/audio/decoder.ts",
+      "priority": 48.8
+    },
+    {
+      "file": "packages/inference/src/utils/tools/parsers/dsml.ts",
+      "priority": 48.24
+    },
+    {
+      "file": "packages/sdk/src/expo/plugins/withDeviceInfo.ts",
+      "priority": 47.07
+    },
+    {
+      "file": "packages/sdk/src/client/config-loader/resolve-config.node.ts",
+      "priority": 46.36
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/download-lock.ts",
+      "priority": 45.84
+    },
+    {
+      "file": "packages/translation-nmtcpp/src/lib/bergamot-model-fetcher.ts",
+      "priority": 45.61
+    },
+    {
+      "file": "packages/inference/src/rpc/discovery.ts",
+      "priority": 45.45
+    },
+    {
+      "file": "packages/cli/src/doctor/deep.ts",
+      "priority": 44.34
+    },
+    {
+      "file": "packages/rag/src/db/hyperspec/hyperschema/index.js",
+      "priority": 43.66
+    },
+    {
+      "file": "packages/registry-server/lib/config.js",
+      "priority": 42.79
+    },
+    {
+      "file": "packages/test-suite/src/core/windows-rss-collector.ts",
+      "priority": 42.5
+    },
+    {
+      "file": "packages/sdk/src/commands/host-prebuilds/index.ts",
+      "priority": 42.2
+    },
+    {
+      "file": "packages/inference/src/runtime/state.ts",
+      "priority": 40.43
+    },
+    {
+      "file": "packages/cli/src/serve/core/cancel-bridge.ts",
+      "priority": 40.4
+    },
+    {
+      "file": "packages/inference/src/runtime/cache-lock.ts",
+      "priority": 40.32
+    },
+    {
+      "file": "packages/cli/src/config.ts",
+      "priority": 40.1
+    },
+    {
+      "file": "packages/inference/src/rag/rag-workspace-manager.ts",
+      "priority": 38.59
+    },
+    {
+      "file": "packages/inference/src/models/update-models/shards.ts",
+      "priority": 37.91
+    },
+    {
+      "file": "packages/registry-server/shared/spec/hyperdb/messages.js",
+      "priority": 37.18
+    },
+    {
+      "file": "packages/vla-ggml/src/index.ts",
+      "priority": 36.65
+    },
+    {
+      "file": "packages/llm-llamacpp/src/index.ts",
+      "priority": 36.39
+    },
+    {
+      "file": "packages/asr-ggml/src/engines/parakeet/parakeet.ts",
+      "priority": 35.89
+    },
+    {
+      "file": "packages/cli/src/serve/lib/responses-kv-cache.ts",
+      "priority": 35.52
+    },
+    {
+      "file": "packages/infer-base/src/QvacResponse.ts",
+      "priority": 35.41
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/safe-fetch.ts",
+      "priority": 35.31
+    },
+    {
+      "file": "packages/cli/src/serve/lib/remote-image-fetch.ts",
+      "priority": 35.29
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/sdcpp-generation/ops/diffusion.ts",
+      "priority": 34.88
+    },
+    {
+      "file": "packages/sdk/src/schemas/sdk-errors-server.ts",
+      "priority": 34.53
+    },
+    {
+      "file": "packages/classification-ggml/src/index.ts",
+      "priority": 34.49
+    },
+    {
+      "file": "packages/ggml-rpc-server/src/index.ts",
+      "priority": 34.07
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/schemas/videos.ts",
+      "priority": 33.97
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engines/supertonic.ts",
+      "priority": 33.77
+    },
+    {
+      "file": "packages/inference/src/models/update-models/index.ts",
+      "priority": 32.7
+    },
+    {
+      "file": "packages/sdk/src/client/api/diffusion.ts",
+      "priority": 31.79
+    },
+    {
+      "file": "packages/test-suite/src/core/batch-orchestrator.ts",
+      "priority": 31.7
+    },
+    {
+      "file": "packages/tts-ggml/src/index.ts",
+      "priority": 31.32
+    },
+    {
+      "file": "packages/test-suite/src/cli/runners/run-consumer-desktop-inplace.ts",
+      "priority": 31.3
+    },
+    {
+      "file": "packages/inference/src/schemas/registry.ts",
+      "priority": 30.87
+    },
+    {
+      "file": "packages/cli/src/doctor/check.ts",
+      "priority": 30.72
+    },
+    {
+      "file": "packages/inference/src/schemas/errors.ts",
+      "priority": 30.37
+    },
+    {
+      "file": "packages/registry-server/client/bin/cli.js",
+      "priority": 30.34
+    },
+    {
+      "file": "packages/embed-llamacpp/src/index.ts",
+      "priority": 29.83
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/report-compare.ts",
+      "priority": 29.79
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/provider.ts",
+      "priority": 29.7
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/device-utils.ts",
+      "priority": 29.52
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-completion/ops/kv-cache-session.ts",
+      "priority": 29.33
+    },
+    {
+      "file": "packages/cli/src/doctor/checks/hardware.ts",
+      "priority": 28.94
+    },
+    {
+      "file": "packages/inference/src/api/diffusion.ts",
+      "priority": 28.56
+    },
+    {
+      "file": "packages/audiogen-ggml/src/index.ts",
+      "priority": 28.39
+    },
+    {
+      "file": "packages/inference/src/handlers/completion-orchestrate.ts",
+      "priority": 28.27
+    },
+    {
+      "file": "packages/rag/src/db/hyperspec/hyperdb/messages.js",
+      "priority": 28.09
+    },
+    {
+      "file": "packages/cli/src/doctor/deep-probe-child.ts",
+      "priority": 28.05
+    },
+    {
+      "file": "packages/inference/src/utils/tools/parsers/harmony.ts",
+      "priority": 28.05
+    },
+    {
+      "file": "packages/inference/src/plugins/ops/unload-model.ts",
+      "priority": 27.73
+    },
+    {
+      "file": "packages/test-suite/src/core/consumer-base.ts",
+      "priority": 27.66
+    },
+    {
+      "file": "packages/inference/src/models/update-models/history.ts",
+      "priority": 27.63
+    },
+    {
+      "file": "packages/inference/src/utils/formatting.ts",
+      "priority": 27.46
+    },
+    {
+      "file": "packages/diffusion-cpp/src/index.ts",
+      "priority": 27.17
+    },
+    {
+      "file": "packages/inference/src/utils/tools/parsers/json.ts",
+      "priority": 26.97
+    },
+    {
+      "file": "packages/embed-llamacpp/src/modelRunner.ts",
+      "priority": 26.51
+    },
+    {
+      "file": "packages/inference/src/schemas/model-src-utils.ts",
+      "priority": 26.32
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/sdcpp-generation/ops/video.ts",
+      "priority": 25.98
+    },
+    {
+      "file": "packages/sdk/src/commands/bundle/addons.ts",
+      "priority": 25.96
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/managed/errors.ts",
+      "priority": 25.89
+    },
+    {
+      "file": "packages/inference/src/dispatch.ts",
+      "priority": 25.5
+    },
+    {
+      "file": "packages/cli/src/verify/deps/lockfile.ts",
+      "priority": 25.31
+    },
+    {
+      "file": "packages/rag/src/db/hyperspec/hyperdb/index.js",
+      "priority": 25.08
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/ggml-ocr/ops/ocr-stream.ts",
+      "priority": 24.73
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/schemas/images.ts",
+      "priority": 24.66
+    },
+    {
+      "file": "packages/inference/src/utils/tools/parsers/hermes.ts",
+      "priority": 24.39
+    },
+    {
+      "file": "packages/translation-nmtcpp/src/index.ts",
+      "priority": 24.38
+    },
+    {
+      "file": "packages/sdk/src/client/api/load-model.ts",
+      "priority": 24.01
+    },
+    {
+      "file": "packages/cli/src/doctor/checks/engines.ts",
+      "priority": 23.87
+    },
+    {
+      "file": "packages/translation-nmtcpp/src/lib/indictrans-model-fetcher.ts",
+      "priority": 23.77
+    },
+    {
+      "file": "packages/sdk/src/client/api/video.ts",
+      "priority": 23.72
+    },
+    {
+      "file": "packages/cli/src/serve/command.ts",
+      "priority": 22.88
+    },
+    {
+      "file": "packages/test-suite/src/core/process-tree-rss.ts",
+      "priority": 22.75
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/nmtcpp-translation/load-files.ts",
+      "priority": 22.67
+    },
+    {
+      "file": "packages/inference/src/utils/shard-utils.ts",
+      "priority": 22.57
+    },
+    {
+      "file": "packages/diffusion-cpp/src/world.ts",
+      "priority": 22.56
+    },
+    {
+      "file": "packages/asr-ggml/src/index.ts",
+      "priority": 22.42
+    },
+    {
+      "file": "packages/registry-server/lib/fit-description/file-cursor.js",
+      "priority": 22.25
+    },
+    {
+      "file": "packages/test-suite/src/utils/mqtt-connection.ts",
+      "priority": 22.02
+    },
+    {
+      "file": "packages/cli/src/serve/core/load-manager.ts",
+      "priority": 21.95
+    },
+    {
+      "file": "packages/tts-ggml/src/tts.ts",
+      "priority": 21.53
+    },
+    {
+      "file": "packages/test-suite/src/core/node-memory-poller.ts",
+      "priority": 21.47
+    },
+    {
+      "file": "packages/inference/src/errors/index.ts",
+      "priority": 21.23
+    },
+    {
+      "file": "packages/translation-nmtcpp/src/marian.ts",
+      "priority": 20.94
+    },
+    {
+      "file": "packages/ocr-ggml/src/index.ts",
+      "priority": 20.87
+    },
+    {
+      "file": "packages/sdk/src/client/rpc/worker-failure.ts",
+      "priority": 20.85
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/report-matrix.ts",
+      "priority": 20.74
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/catalog-validate.ts",
+      "priority": 20.34
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/sdcpp-generation/ops/world.ts",
+      "priority": 19.66
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/pocketLifecycle.ts",
+      "priority": 19.56
+    },
+    {
+      "file": "packages/diffusion-cpp/src/video.ts",
+      "priority": 19.34
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/managed/config-synthesizer.ts",
+      "priority": 19.13
+    },
+    {
+      "file": "packages/inference/src/config/resolve-config.ts",
+      "priority": 19.03
+    },
+    {
+      "file": "packages/registry-server/shared/spec/hyperdispatch/index.js",
+      "priority": 18.82
+    },
+    {
+      "file": "packages/registry-server/client/lib/config.js",
+      "priority": 18.81
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/sdcpp-generation/ops/upscale.ts",
+      "priority": 18.7
+    },
+    {
+      "file": "packages/registry-server/lib/reseed-tracker.js",
+      "priority": 18.57
+    },
+    {
+      "file": "packages/bci-whispercpp/src/bci.ts",
+      "priority": 18.55
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/video-jobs-store.ts",
+      "priority": 18.46
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/ocr.ts",
+      "priority": 18.33
+    },
+    {
+      "file": "packages/registry-server/lib/fit-description/gguf-writer.js",
+      "priority": 18.19
+    },
+    {
+      "file": "packages/cli/src/verify/deps/native-packages.ts",
+      "priority": 18.04
+    },
+    {
+      "file": "packages/sdk/src/utils/errors-client.ts",
+      "priority": 17.98
+    },
+    {
+      "file": "packages/sdk/src/client/rpc/rpc-client.ts",
+      "priority": 17.97
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/snap-utils.ts",
+      "priority": 17.75
+    },
+    {
+      "file": "packages/sdk/src/client/rpc/expo-rpc-client.ts",
+      "priority": 17.31
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/translate.ts",
+      "priority": 17.07
+    },
+    {
+      "file": "packages/cli/src/openai/coverage/build-report.ts",
+      "priority": 17.06
+    },
+    {
+      "file": "packages/decoder-audio/src/index.ts",
+      "priority": 16.81
+    },
+    {
+      "file": "packages/inference/src/models/update-models/types.ts",
+      "priority": 16.5
+    },
+    {
+      "file": "packages/inference/src/profiling/index.ts",
+      "priority": 16.5
+    },
+    {
+      "file": "packages/sdk/src/utils/withTimeout.ts",
+      "priority": 16.48
+    },
+    {
+      "file": "packages/cli/src/serve/core/stores/ephemeral-files.ts",
+      "priority": 16.46
+    },
+    {
+      "file": "packages/ocr-ggml/src/ocr-ggml.ts",
+      "priority": 16.45
+    },
+    {
+      "file": "packages/test-suite/src/utils/mobile-env-baker.ts",
+      "priority": 16.31
+    },
+    {
+      "file": "packages/asr-ggml/src/engines/whisper/whisper.ts",
+      "priority": 16.25
+    },
+    {
+      "file": "packages/registry-server/lib/swarm-connection-logger.js",
+      "priority": 16.15
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/registry-delete.ts",
+      "priority": 15.98
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/music-jobs-store.ts",
+      "priority": 15.95
+    },
+    {
+      "file": "packages/inference/src/utils/tools/parsers/gemma4native.ts",
+      "priority": 15.8
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/resource-collectors.ts",
+      "priority": 15.24
+    },
+    {
+      "file": "packages/classification-ggml/src/addon.ts",
+      "priority": 15.12
+    },
+    {
+      "file": "packages/cli/src/serve/core/cors.ts",
+      "priority": 15.08
+    },
+    {
+      "file": "packages/inference/src/runtime/vector-index-registry.ts",
+      "priority": 14.95
+    },
+    {
+      "file": "packages/registry-server/lib/generate-schema.js",
+      "priority": 14.91
+    },
+    {
+      "file": "packages/sdk/src/utils/errors-server.ts",
+      "priority": 14.62
+    },
+    {
+      "file": "packages/error/src/code-ranges.ts",
+      "priority": 14.56
+    },
+    {
+      "file": "packages/sdk/src/client/rpc/rpc-error.ts",
+      "priority": 14.06
+    },
+    {
+      "file": "packages/cli/src/serve/lib/image-response.ts",
+      "priority": 14.05
+    },
+    {
+      "file": "packages/sdk/src/commands/bundle/targets.ts",
+      "priority": 14.05
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/bundle-source.ts",
+      "priority": 13.73
+    },
+    {
+      "file": "packages/inference/src/api/video.ts",
+      "priority": 13.45
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/images.ts",
+      "priority": 13.32
+    },
+    {
+      "file": "packages/cli/src/serve/index.ts",
+      "priority": 13.28
+    },
+    {
+      "file": "packages/test-suite/src/utils/memory-aggregator.ts",
+      "priority": 13.25
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/download-manager.ts",
+      "priority": 13.24
+    },
+    {
+      "file": "packages/sdk/src/client/init-hooks.ts",
+      "priority": 13.14
+    },
+    {
+      "file": "packages/bci-whispercpp/src/index.ts",
+      "priority": 13.13
+    },
+    {
+      "file": "packages/cli/src/configure/param-schemas.ts",
+      "priority": 12.94
+    },
+    {
+      "file": "packages/sdk/src/client/api/upscale.ts",
+      "priority": 12.89
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-completion/transform.ts",
+      "priority": 12.7
+    },
+    {
+      "file": "packages/inference/src/schemas/tts-pcm.ts",
+      "priority": 12.64
+    },
+    {
+      "file": "packages/cli/src/serve/core/stores/vector-stores.ts",
+      "priority": 12.63
+    },
+    {
+      "file": "packages/sdk/src/server/rpc/profiling/profiler.ts",
+      "priority": 12.55
+    },
+    {
+      "file": "packages/inference/src/api/text-to-speech.ts",
+      "priority": 12.35
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/addon-source.ts",
+      "priority": 12.3
+    },
+    {
+      "file": "packages/inference/src/api/load-model.ts",
+      "priority": 12.23
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/nativeParams.ts",
+      "priority": 12.14
+    },
+    {
+      "file": "packages/asr-ggml/src/engines/moss/driver.ts",
+      "priority": 11.9
+    },
+    {
+      "file": "packages/model-fit/src/process-runner.ts",
+      "priority": 11.84
+    },
+    {
+      "file": "packages/cli/src/errors.ts",
+      "priority": 11.81
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/chat.ts",
+      "priority": 11.64
+    },
+    {
+      "file": "packages/asr-ggml/src/engines/whisper/driver.ts",
+      "priority": 11.49
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/audiogen-ggml/ops/audio-gen-encode.ts",
+      "priority": 11.4
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/schemas/responses.ts",
+      "priority": 11.32
+    },
+    {
+      "file": "packages/test-suite/src/core/step-interpreter.ts",
+      "priority": 11.21
+    },
+    {
+      "file": "packages/cli/src/serve/core/lifecycle.ts",
+      "priority": 11.18
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/schemas/registry.ts",
+      "priority": 11
+    },
+    {
+      "file": "packages/cli/src/serve/core/server.ts",
+      "priority": 10.64
+    },
+    {
+      "file": "packages/inference/src/api/upscale.ts",
+      "priority": 10.63
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/report-format.ts",
+      "priority": 10.6
+    },
+    {
+      "file": "packages/sdk/src/expo/plugins/resolve-sdk-package-dir.ts",
+      "priority": 10.5
+    },
+    {
+      "file": "packages/test-suite/src/utils/report-generator.ts",
+      "priority": 10.47
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/schemas/audio.ts",
+      "priority": 10.39
+    },
+    {
+      "file": "packages/audiogen-ggml/src/audiogen.ts",
+      "priority": 10.31
+    },
+    {
+      "file": "packages/rag/src/rag.ts",
+      "priority": 10.05
+    },
+    {
+      "file": "packages/error/src/index.ts",
+      "priority": 9.96
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/audiogen-ggml/ops/audio-gen-run.ts",
+      "priority": 9.96
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/textChunker.ts",
+      "priority": 9.96
+    },
+    {
+      "file": "packages/sdk/src/client/api/download-asset.ts",
+      "priority": 9.89
+    },
+    {
+      "file": "packages/rag/src/vector-index/registry.ts",
+      "priority": 9.88
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-decision/ops/decide.ts",
+      "priority": 9.87
+    },
+    {
+      "file": "packages/model-fit/src/process-internal.ts",
+      "priority": 9.78
+    },
+    {
+      "file": "packages/classification-ggml/src/ggml-model.ts",
+      "priority": 9.73
+    },
+    {
+      "file": "packages/sdk/src/client/api/text-to-speech.ts",
+      "priority": 9.7
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/schemas/common.ts",
+      "priority": 9.67
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/tts-ggml/ops/text-to-speech-stream.ts",
+      "priority": 9.65
+    },
+    {
+      "file": "packages/registry-server/shared/spec/hyperdb/index.js",
+      "priority": 9.59
+    },
+    {
+      "file": "packages/cli/src/verify/deps/npm-lockfile.ts",
+      "priority": 9.5
+    },
+    {
+      "file": "packages/embed-llamacpp/src/addon.ts",
+      "priority": 9.49
+    },
+    {
+      "file": "packages/inference/src/plugins/ops/embed.ts",
+      "priority": 9.41
+    },
+    {
+      "file": "packages/inference/src/api/download-asset.ts",
+      "priority": 9.05
+    },
+    {
+      "file": "packages/inference/src/runtime/lifecycle.ts",
+      "priority": 9.05
+    },
+    {
+      "file": "packages/inference/src/utils/tools/parsers/pythonic.ts",
+      "priority": 8.96
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/tts-ggml/ops/text-to-speech.ts",
+      "priority": 8.92
+    },
+    {
+      "file": "packages/cli/src/verify/deps/index.ts",
+      "priority": 8.85
+    },
+    {
+      "file": "packages/embed-llamacpp/src/laya.ts",
+      "priority": 8.81
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/videos.ts",
+      "priority": 8.72
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/engines-advice.ts",
+      "priority": 8.47
+    },
+    {
+      "file": "packages/registry-server/lib/gguf-helpers.js",
+      "priority": 8.37
+    },
+    {
+      "file": "packages/inference/src/schemas/load-model.ts",
+      "priority": 8.24
+    },
+    {
+      "file": "packages/test-suite/src/utils/test-selection.ts",
+      "priority": 8.22
+    },
+    {
+      "file": "packages/inference/src/model-fit/load-check.ts",
+      "priority": 8.18
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-rerank/ops/rerank.ts",
+      "priority": 8.06
+    },
+    {
+      "file": "packages/inference/src/profiling/profiler.ts",
+      "priority": 8.04
+    },
+    {
+      "file": "packages/llm-llamacpp/src/batchHandler.ts",
+      "priority": 8.03
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/vector-stores.ts",
+      "priority": 8.02
+    },
+    {
+      "file": "packages/inference/src/schemas/llamacpp-config.ts",
+      "priority": 7.96
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/modelFiles.ts",
+      "priority": 7.83
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/textStreamAccumulator.ts",
+      "priority": 7.6
+    },
+    {
+      "file": "packages/inference/src/utils/gguf-tensor-extractor.ts",
+      "priority": 7.52
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/files.ts",
+      "priority": 7.48
+    },
+    {
+      "file": "packages/inference/src/api/logging-stream-registry.ts",
+      "priority": 7.46
+    },
+    {
+      "file": "packages/diffusion-cpp/src/addon.ts",
+      "priority": 7.43
+    },
+    {
+      "file": "packages/inference/src/resources/collector.ts",
+      "priority": 7.4
+    },
+    {
+      "file": "packages/inference/src/runtime/logging-stream-registry.ts",
+      "priority": 7.36
+    },
+    {
+      "file": "packages/sdk/src/logging/logging-stream-registry.ts",
+      "priority": 7.36
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/tts-ggml/fit.ts",
+      "priority": 7.32
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/audio.ts",
+      "priority": 7.2
+    },
+    {
+      "file": "packages/sdk/src/client/logging-stream-registry.ts",
+      "priority": 7.18
+    },
+    {
+      "file": "packages/inference/src/api/vector-index.ts",
+      "priority": 7.12
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/chat-batch.ts",
+      "priority": 6.95
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/nmtcpp-translation/resolve-vocab.ts",
+      "priority": 6.95
+    },
+    {
+      "file": "packages/sdk/src/client/config-loader/resolve-config.expo.ts",
+      "priority": 6.93
+    },
+    {
+      "file": "packages/inference/src/api/bci-transcribe.ts",
+      "priority": 6.91
+    },
+    {
+      "file": "packages/inference/src/utils/tools/defer.ts",
+      "priority": 6.85
+    },
+    {
+      "file": "packages/sdk/src/client/api/bci-transcribe.ts",
+      "priority": 6.84
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/ggml-classification/ops/classify.ts",
+      "priority": 6.83
+    },
+    {
+      "file": "packages/inference/src/runtime/disposable-scope.ts",
+      "priority": 6.69
+    },
+    {
+      "file": "packages/sdk/src/client/api/vector-index.ts",
+      "priority": 6.58
+    },
+    {
+      "file": "packages/inference/src/plugins/ops/translate.ts",
+      "priority": 6.44
+    },
+    {
+      "file": "packages/sdk/src/server/rpc/progress-throttle.ts",
+      "priority": 6.41
+    },
+    {
+      "file": "packages/cli/src/configure/index.ts",
+      "priority": 6.35
+    },
+    {
+      "file": "packages/cli/src/serve/core/host-check.ts",
+      "priority": 6.35
+    },
+    {
+      "file": "packages/inference/src/plugins/ops/bci-transcribe.ts",
+      "priority": 6.25
+    },
+    {
+      "file": "packages/cli/src/serve/core/plugins/require-model.ts",
+      "priority": 5.93
+    },
+    {
+      "file": "packages/inference/src/utils/gguf-architecture.ts",
+      "priority": 5.89
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/world.ts",
+      "priority": 5.87
+    },
+    {
+      "file": "packages/logging/src/index.ts",
+      "priority": 5.84
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/handler.ts",
+      "priority": 5.78
+    },
+    {
+      "file": "packages/inference/src/api/transcribe.ts",
+      "priority": 5.74
+    },
+    {
+      "file": "packages/inference/src/utils/tool-helpers.ts",
+      "priority": 5.65
+    },
+    {
+      "file": "packages/cli/src/configure/write-config.ts",
+      "priority": 5.64
+    },
+    {
+      "file": "packages/test-suite/src/types/config.ts",
+      "priority": 5.61
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/music.ts",
+      "priority": 5.58
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/pocketConfig.ts",
+      "priority": 5.57
+    },
+    {
+      "file": "packages/cli/src/serve/lib/multipart.ts",
+      "priority": 5.56
+    },
+    {
+      "file": "packages/sdk/src/client/api/transcribe.ts",
+      "priority": 5.51
+    },
+    {
+      "file": "packages/sdk/src/client/api/ocr.ts",
+      "priority": 5.45
+    },
+    {
+      "file": "packages/sdk/src/utils/tool-helpers.ts",
+      "priority": 5.42
+    },
+    {
+      "file": "packages/cli/src/configure/prompts.ts",
+      "priority": 5.33
+    },
+    {
+      "file": "packages/registry-server/lib/fit-description/sentencepiece.js",
+      "priority": 5.32
+    },
+    {
+      "file": "packages/cli/src/serve/core/startup.ts",
+      "priority": 5.3
+    },
+    {
+      "file": "packages/asr-ggml/src/engines/parakeet/driver.ts",
+      "priority": 5.26
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/index.ts",
+      "priority": 5.15
+    },
+    {
+      "file": "packages/inference/src/handlers/rpc-server.ts",
+      "priority": 5.11
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/audiogen-ggml/ops/audio-gen-input.ts",
+      "priority": 5.08
+    },
+    {
+      "file": "packages/cli/src/serve/lib/binary-input.ts",
+      "priority": 4.84
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engineDetection.ts",
+      "priority": 4.83
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-completion/ops/completion-stream.ts",
+      "priority": 4.76
+    },
+    {
+      "file": "packages/bci-whispercpp/src/configChecker.ts",
+      "priority": 4.75
+    },
+    {
+      "file": "packages/cli/src/openai/coverage/categorize.ts",
+      "priority": 4.66
+    },
+    {
+      "file": "packages/sdk/src/schemas/sdk-errors-client.ts",
+      "priority": 4.6
+    },
+    {
+      "file": "packages/registry-server/lib/metrics.js",
+      "priority": 4.56
+    },
+    {
+      "file": "packages/inference/src/schemas/rerank.ts",
+      "priority": 4.55
+    },
+    {
+      "file": "packages/inference/src/logging/addon.ts",
+      "priority": 4.53
+    },
+    {
+      "file": "packages/sdk/src/logging/addon.ts",
+      "priority": 4.53
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/tts-ggml/ops/cancel-binding.ts",
+      "priority": 4.46
+    },
+    {
+      "file": "packages/registry-server/lib/fit-description/nmt.js",
+      "priority": 4.46
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/sentenceStream.ts",
+      "priority": 4.46
+    },
+    {
+      "file": "packages/inference/src/handlers/logging-stream.ts",
+      "priority": 4.44
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-completion/ops/finetune.ts",
+      "priority": 4.38
+    },
+    {
+      "file": "packages/inference/src/rpc/manager.ts",
+      "priority": 4.37
+    },
+    {
+      "file": "packages/llm-llamacpp/src/addon.ts",
+      "priority": 4.37
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-completion/plugin.ts",
+      "priority": 4.31
+    },
+    {
+      "file": "packages/asr-ggml/src/lib/error.ts",
+      "priority": 4.3
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/models/constants.ts",
+      "priority": 4.28
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/ggml-image-embedding/ops/embed.ts",
+      "priority": 4.27
+    },
+    {
+      "file": "packages/asr-ggml/src/engines/whisper/configChecker.ts",
+      "priority": 4.2
+    },
+    {
+      "file": "packages/inference/src/runtime/runtime-lifecycle.ts",
+      "priority": 4.09
+    },
+    {
+      "file": "packages/rag/src/scope.ts",
+      "priority": 4.07
+    },
+    {
+      "file": "packages/inference/src/rag/embedding-scope.ts",
+      "priority": 4.03
+    },
+    {
+      "file": "packages/rag/src/vector-index/search.ts",
+      "priority": 3.98
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/kv-cache.ts",
+      "priority": 3.97
+    },
+    {
+      "file": "packages/cli/src/serve/core/config/index.ts",
+      "priority": 3.92
+    },
+    {
+      "file": "packages/rag/src/input.ts",
+      "priority": 3.92
+    },
+    {
+      "file": "packages/rag/src/search.ts",
+      "priority": 3.89
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/reload.ts",
+      "priority": 3.8
+    },
+    {
+      "file": "packages/turbovec-ggml/src/index.ts",
+      "priority": 3.76
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/registry.ts",
+      "priority": 3.74
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engines/parler.ts",
+      "priority": 3.71
+    },
+    {
+      "file": "packages/inference/src/runtime/model-registry.ts",
+      "priority": 3.69
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-embedding/plugin.ts",
+      "priority": 3.65
+    },
+    {
+      "file": "packages/inference/src/runtime/session-registry.ts",
+      "priority": 3.65
+    },
+    {
+      "file": "packages/embed-llamacpp/src/rerank.ts",
+      "priority": 3.55
+    },
+    {
+      "file": "packages/inference/src/models/registry/models.ts",
+      "priority": 3.53
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/addonEvents.ts",
+      "priority": 3.53
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/system.ts",
+      "priority": 3.51
+    },
+    {
+      "file": "packages/inference/src/runtime/request-registry.ts",
+      "priority": 3.51
+    },
+    {
+      "file": "packages/inference/src/utils/tools/shared.ts",
+      "priority": 3.5
+    },
+    {
+      "file": "packages/registry-server/lib/fit-description/index.js",
+      "priority": 3.5
+    },
+    {
+      "file": "packages/inference/src/runtime/model-work-lock.ts",
+      "priority": 3.48
+    },
+    {
+      "file": "packages/test-suite/src/cli/index.ts",
+      "priority": 3.33
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/schemas/vector-stores.ts",
+      "priority": 3.27
+    },
+    {
+      "file": "packages/inference/src/api/completion-stream.ts",
+      "priority": 3.21
+    },
+    {
+      "file": "packages/sdk/src/client/api/completion-stream.ts",
+      "priority": 3.2
+    },
+    {
+      "file": "packages/inference/src/plugins/ops/load-model.ts",
+      "priority": 3.18
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/audio-models.ts",
+      "priority": 3.12
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/runtime.ts",
+      "priority": 3.12
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/responses.ts",
+      "priority": 3.09
+    },
+    {
+      "file": "packages/inference/src/schemas/decision.ts",
+      "priority": 3.06
+    },
+    {
+      "file": "packages/inference/src/profiling/operation-wrappers.ts",
+      "priority": 3.02
+    },
+    {
+      "file": "packages/inference/src/runtime/request-context.ts",
+      "priority": 3.02
+    },
+    {
+      "file": "packages/inference/src/api/batch-completion.ts",
+      "priority": 2.97
+    },
+    {
+      "file": "packages/sdk/src/client/api/batch-completion.ts",
+      "priority": 2.97
+    },
+    {
+      "file": "packages/inference/src/logging/utils.ts",
+      "priority": 2.94
+    },
+    {
+      "file": "packages/sdk/src/logging/utils.ts",
+      "priority": 2.94
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-completion/ops/batch-completion-stream.ts",
+      "priority": 2.82
+    },
+    {
+      "file": "packages/test-suite/src/core/test-executor.ts",
+      "priority": 2.82
+    },
+    {
+      "file": "packages/inference/src/schemas/batch-completion-stream.ts",
+      "priority": 2.74
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/tts-ggml/ops/voice-options.ts",
+      "priority": 2.72
+    },
+    {
+      "file": "packages/inference/src/schemas/rag.ts",
+      "priority": 2.69
+    },
+    {
+      "file": "packages/test-suite/src/utils/validation-helpers.ts",
+      "priority": 2.69
+    },
+    {
+      "file": "packages/inference/src/plugins/registry.ts",
+      "priority": 2.64
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/ggml-vla/ops/vla-run.ts",
+      "priority": 2.48
+    },
+    {
+      "file": "packages/sdk/src/commands/bundle/plugins.ts",
+      "priority": 2.45
+    },
+    {
+      "file": "packages/inference/src/schemas/transcription-config.ts",
+      "priority": 2.44
+    },
+    {
+      "file": "packages/cli/src/serve/core/config/models.ts",
+      "priority": 2.41
+    },
+    {
+      "file": "packages/inference/src/schemas/engine-addon-map.ts",
+      "priority": 2.4
+    },
+    {
+      "file": "packages/sdk/src/client/api/world-result.ts",
+      "priority": 2.2
+    },
+    {
+      "file": "packages/sdk/src/client/session-registry.ts",
+      "priority": 2.17
+    },
+    {
+      "file": "packages/inference/src/schemas/session.ts",
+      "priority": 2.1
+    },
+    {
+      "file": "packages/inference/src/schemas/request-base.ts",
+      "priority": 2.08
+    },
+    {
+      "file": "packages/sdk/src/expo/plugins/withBareKit.ts",
+      "priority": 2.08
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/model-fit.ts",
+      "priority": 2.01
+    },
+    {
+      "file": "packages/inference/src/profiling/controller.ts",
+      "priority": 1.95
+    },
+    {
+      "file": "packages/registry-server/lib/fit-description/ggml-types.js",
+      "priority": 1.82
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/schemas/completions.ts",
+      "priority": 1.8
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/fabricOptions.ts",
+      "priority": 1.78
+    },
+    {
+      "file": "packages/rag/src/embeddings.ts",
+      "priority": 1.77
+    },
+    {
+      "file": "packages/inference/src/api/world-result.ts",
+      "priority": 1.72
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/audio.ts",
+      "priority": 1.62
+    },
+    {
+      "file": "packages/inference/src/utils/mcp-adapter.ts",
+      "priority": 1.61
+    },
+    {
+      "file": "packages/sdk/src/utils/mcp-adapter.ts",
+      "priority": 1.61
+    },
+    {
+      "file": "packages/inference/src/api/audio-gen.ts",
+      "priority": 1.56
+    },
+    {
+      "file": "packages/inference/src/schemas/audio-gen.ts",
+      "priority": 1.46
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/completions.ts",
+      "priority": 1.44
+    },
+    {
+      "file": "packages/cli/src/serve/core/completion.ts",
+      "priority": 1.42
+    },
+    {
+      "file": "packages/inference/src/plugins/ops/transcribe.ts",
+      "priority": 1.38
+    },
+    {
+      "file": "packages/inference/src/schemas/ocr.ts",
+      "priority": 1.35
+    },
+    {
+      "file": "packages/inference/src/api/finetune.ts",
+      "priority": 1.33
+    },
+    {
+      "file": "packages/cli/src/serve/lib/transcription-response.ts",
+      "priority": 1.32
+    },
+    {
+      "file": "packages/inference/src/rag/handler.ts",
+      "priority": 1.32
+    },
+    {
+      "file": "packages/sdk/src/client/api/finetune.ts",
+      "priority": 1.3
+    },
+    {
+      "file": "packages/sdk/src/client/api/audio-gen-result.ts",
+      "priority": 1.21
+    },
+    {
+      "file": "packages/inference/src/profiling/aggregator.ts",
+      "priority": 1.11
+    },
+    {
+      "file": "packages/registry-server/shared/db.js",
+      "priority": 1.07
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/adapters/decisions.ts",
+      "priority": 1.03
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engines/cosyvoice.ts",
+      "priority": 0.99
+    },
+    {
+      "file": "packages/inference/src/schemas/sdcpp-config.ts",
+      "priority": 0.96
+    },
+    {
+      "file": "packages/inference/src/schemas/translation-config.ts",
+      "priority": 0.91
+    },
+    {
+      "file": "packages/inference/src/schemas/completion-stream.ts",
+      "priority": 0.88
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/sdcpp-generation/plugin.ts",
+      "priority": 0.86
+    },
+    {
+      "file": "packages/model-fit/src/process.ts",
+      "priority": 0.84
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/schemas/decisions.ts",
+      "priority": 0.73
+    },
+    {
+      "file": "packages/inference/src/logging/logger.ts",
+      "priority": 0.7
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/file-reference-model.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/types.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/asr-ggml/src/engines/parakeet/options.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/asr-ggml/src/engines/types.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/asr-ggml/src/lib/audio.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/asr-ggml/src/lib/fit.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/asr-ggml/src/lib/types.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/audiogen-ggml/src/error.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/audiogen-ggml/src/models.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/bci-whispercpp/src/lib/error.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/bci-whispercpp/src/lib/stream.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/classification-ggml/src/bridgedepth.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/classification-ggml/src/fit.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/bundle-sdk/command.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/configure/command.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/configure/presets.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/doctor/checks/index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/doctor/checks/runtime.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/doctor/checks/targets.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/doctor/checks/tools.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/doctor/deep-protocol.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/doctor/format.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/logger.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/openai/command.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/openai/coverage/format.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/openai/coverage/parse-router.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/openai/coverage/types.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/core/api-key.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/core/config/endpoint-category.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/core/config/nested-model-src.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/core/extensions.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/core/model-catalog.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/core/model-registry.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/core/plugins/error-handler.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/core/stores/jobs.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/classifications.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/routes/upscale.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/schemas/chat-batch.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/schemas/model-fit.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/schemas/music.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/schemas/system.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/schemas/translate.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/schemas/world.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/state.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/default/world-scenes-store.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/adapters/chat-shapes.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/adapters/response-writers.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/adapters/responses-shape.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/adapters/responses-store.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/adapters/vector-stores-shape.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/config.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/decisions.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/embeddings.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/files.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/models-catalog.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/routes/models.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/extensions/openai/state.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/lib/image-input.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/serve/lib/tool-search.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/cli/src/verify/command.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/decoder-audio/src/utils/createStreamAccumulator.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/decoder-audio/src/utils/error.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/diffusion-cpp/src/file-paths.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/diffusion-cpp/src/fit.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/infer-base/src/utils/createJobHandler.js",
+      "priority": 0
+    },
+    {
+      "file": "packages/infer-base/src/utils/createJobHandler.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/cancel.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/decide.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/delete-cache.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/embed.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/invoke-plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/ocr.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/rag.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/registry.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/rpc-server.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/translate.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/vla-helpers.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/api/vla.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/handlers/download-asset.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/handlers/get-loaded-model-info.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/handlers/get-system-resources.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/resolve-session.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/handlers/plugin-dispatch.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/handlers/plugin-invoke.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/handlers/vector-index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/model-fit/assess.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/model-fit/sum.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/models/update-models/naming.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/asr-ggml/config.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/asr-ggml/fit.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/audiogen-ggml/config.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/audiogen-ggml/fit.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/audiogen-ggml/ops/audio-edit-stream.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/audiogen-ggml/ops/audio-gen-stream.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/audiogen-ggml/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/bci-whispercpp-transcription/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/ggml-classification/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/ggml-image-embedding/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/ggml-ocr/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/ggml-ocr/resolve-config.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/ggml-vla/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-completion/ops/cache-logger.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-completion/ops/completion-stats.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-completion/ops/context-overflow.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-decision/helpers.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-decision/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-embedding/transform.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-rerank/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/moss-transcribe/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/nmtcpp-translation/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/parakeet-transcription/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/sdcpp-generation/fit.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/sdcpp-generation/load-files.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/tts-ggml/ops/moss-options.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/tts-ggml/ops/parler-options.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/tts-ggml/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/whispercpp-transcription/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/ops/translate-stats.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/plugins/turbovec-backend.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/profiling/envelope.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/profiling/events.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/profiling/exporters.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/profiling/model-execution.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/profiling/operation-metrics.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/profiling/ring-buffer.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/profiling/types.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/registry.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/resources/native.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/resources/normalize.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/resources/types.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/runtime/model-config-utils.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/assess-model-fit.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/bci-config.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/bci.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/calc-tokens.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/cancel.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/classification.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/common.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/completion-event.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/download-asset.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/embed.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/error.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/finetune.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/image-embedding.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/mcp-adapter.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/model-config-schemas.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/model-ops.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/model-types.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/profiling.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/reload-config.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/rpc-server.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/system-resources.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/text-to-speech.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/tools.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/transcription.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/translate.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/vector-index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/schemas/vla.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/surface.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/utils/addon-responses.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/utils/aggregate-events.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/utils/asr-events.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/utils/completion-normalizer.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/utils/tools/dialect.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/utils/tools/parser.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/utils/transcribe-metadata.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/inference/src/utils/tts-stats.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/model-fit/src/index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/ocr-ggml/src/lib/error.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/rag/src/db/encoding.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/rag/src/db/records.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/rag/src/errors.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/rag/src/types.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/rag/src/vector-index/native.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/rag/src/vector-index/options.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/registry-server/lib/fit-description/bci-embedder.js",
+      "priority": 0
+    },
+    {
+      "file": "packages/registry-server/lib/fit-description/ggml-bin.js",
+      "priority": 0
+    },
+    {
+      "file": "packages/registry-server/lib/fit-description/marian.js",
+      "priority": 0
+    },
+    {
+      "file": "packages/registry-server/lib/fit-description/whisper.js",
+      "priority": 0
+    },
+    {
+      "file": "packages/registry-server/lib/source-helpers.js",
+      "priority": 0
+    },
+    {
+      "file": "packages/registry-server/shared/constants.js",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/cancel.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/classify.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/decide.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/delete-cache.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/embed.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/invoke-plugin.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/rag.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/registry.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/rerank.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/rpc-server.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/translate.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/unload-model.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/vla-helpers.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/api/vla.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/rpc/profiling/profiler.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/client/session.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/abi.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/bare-kit-runtimes.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/expo/plugins/withAndroidArchitecture.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/expo/plugins/withOpenCL.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/logging/base-logger.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/logging/registry.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/server/rpc/profiling/context.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/utils/aggregate-events.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/sdk/src/worker/index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/test-suite/src/core/base-executor.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/test-suite/src/index.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/test-suite/src/schemas/expectations.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/test-suite/src/schemas/messages.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/test-suite/src/types/test-definition.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/test-suite/src/utils/compare-reports.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/test-suite/src/utils/profiler-adapter.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/translation-nmtcpp/src/lib/error.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/conditioning.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engineIds.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engineParams.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engines/audio8.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engines/moss.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engines/mossSoundEffect.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engines/mossSpeech.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/engineSetup.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/error.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/fit.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/jobFields.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/optionValidation.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/setup.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/streamingSupport.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/types.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/vla-ggml/src/addon.ts",
+      "priority": 0
+    },
+    {
+      "file": "packages/vla-ggml/src/lib/error.ts",
+      "priority": 0
+    }
+  ],
+  "lint": [
+    {
+      "file": "packages/ai-sdk-provider/src/managed/index.ts",
+      "line": 43,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/managed/serve-process.ts",
+      "line": 29,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/managed/serve-process.ts",
+      "line": 347,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/ai-sdk-provider/src/managed/serve-process.ts",
+      "line": 418,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/asr-ggml/src/engines/parakeet/parakeet.ts",
+      "line": 625,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/asr-ggml/src/engines/whisper/whisper.ts",
+      "line": 523,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/asr-ggml/src/index.ts",
+      "line": 173,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/audiogen-ggml/src/index.ts",
+      "line": 1329,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/audiogen-ggml/src/index.ts",
+      "line": 1487,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/bci-whispercpp/src/bci.ts",
+      "line": 426,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/classification-ggml/src/addon.ts",
+      "line": 117,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/classification-ggml/src/index.ts",
+      "line": 189,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/classification-ggml/src/index.ts",
+      "line": 313,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/cli/src/doctor/deep-probe-child.ts",
+      "line": 71,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/cli/src/serve/core/load-manager.ts",
+      "line": 98,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/cli/src/serve/lib/responses-kv-cache.ts",
+      "line": 355,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/diffusion-cpp/src/index.ts",
+      "line": 377,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/diffusion-cpp/src/index.ts",
+      "line": 716,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/diffusion-cpp/src/video.ts",
+      "line": 331,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/diffusion-cpp/src/world.ts",
+      "line": 246,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/embed-llamacpp/src/index.ts",
+      "line": 162,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/embed-llamacpp/src/modelRunner.ts",
+      "line": 174,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/inference/src/dispatch.ts",
+      "line": 280,
+      "rule": "no-unmodified-loop-condition",
+      "message": "'done' is not modified in this loop."
+    },
+    {
+      "file": "packages/inference/src/dispatch.ts",
+      "line": 284,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/inference/src/handlers/get-model-info.ts",
+      "line": 146,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/download-lock.ts",
+      "line": 174,
+      "rule": "qvac-quality/abort-signal-race",
+      "message": "`signal.aborted` is checked only before an await; an abort during that await is lost when `signal` is used here."
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/download-lock.ts",
+      "line": 220,
+      "rule": "qvac-quality/abort-signal-race",
+      "message": "'abort' listener on `signal` with no `signal.aborted` check: a signal that is already aborted never fires it."
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/http.ts",
+      "line": 338,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/http.ts",
+      "line": 445,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
+      "line": 85,
+      "rule": "qvac-quality/close-on-error",
+      "message": "`corestore` (new Corestore) is still local when this await runs; if it throws, `corestore` is never closed. Close it in a catch/finally, or hand it off first."
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
+      "line": 325,
+      "rule": "qvac-quality/abort-signal-race",
+      "message": "`signal.aborted` is checked only before an await; an abort during that await is lost when `signal` is used here."
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
+      "line": 471,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
+      "line": 481,
+      "rule": "qvac-quality/abort-signal-race",
+      "message": "'abort' listener on `signal` is added after an await with no `signal.aborted` check after it: an abort in between is never seen."
+    },
+    {
+      "file": "packages/inference/src/model-fit/description/fetch.ts",
+      "line": 181,
+      "rule": "qvac-quality/abort-signal-race",
+      "message": "'abort' listener on `options.signal` with no `options.signal.aborted` check: a signal that is already aborted never fires it."
+    },
+    {
+      "file": "packages/inference/src/model-fit/run/run.ts",
+      "line": 180,
+      "rule": "qvac-quality/abort-signal-race",
+      "message": "'abort' listener on `signal` with no `signal.aborted` check: a signal that is already aborted never fires it."
+    },
+    {
+      "file": "packages/inference/src/model-fit/run/run.ts",
+      "line": 256,
+      "rule": "qvac-quality/abort-signal-race",
+      "message": "`options.signal.aborted` is checked only before an await; an abort during that await is lost when `options.signal` is used here."
+    },
+    {
+      "file": "packages/inference/src/plugins/builtin/llamacpp-completion/ops/kv-cache-session.ts",
+      "line": 483,
+      "rule": "qvac-quality/abort-signal-race",
+      "message": "`input.signal.aborted` is checked only before an await; an abort during that await is lost when `input.signal` is used here."
+    },
+    {
+      "file": "packages/inference/src/runtime/registry-client.ts",
+      "line": 138,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/inference/src/runtime/registry-client.ts",
+      "line": 147,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/inference/src/runtime/registry-client.ts",
+      "line": 415,
+      "rule": "no-unmodified-loop-condition",
+      "message": "'shuttingDown' is not modified in this loop."
+    },
+    {
+      "file": "packages/inference/src/runtime/registry-client.ts",
+      "line": 538,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/inference/src/runtime/registry-client.ts",
+      "line": 541,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/inference/src/utils/archive.ts",
+      "line": 170,
+      "rule": "qvac-quality/throw-in-promise-listener",
+      "message": "`fs.mkdirSync` can throw inside a listener registered in a Promise executor; the error escapes as an uncaught exception and the promise never settles. Wrap it in try/catch and reject."
+    },
+    {
+      "file": "packages/llm-llamacpp/src/index.ts",
+      "line": 642,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/llm-llamacpp/src/index.ts",
+      "line": 1028,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/rag/src/vector-index/registry.ts",
+      "line": 361,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/registry-server/client/lib/client.js",
+      "line": 261,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/registry-server/client/lib/client.js",
+      "line": 282,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/registry-server/client/lib/client.js",
+      "line": 632,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/registry-server/client/lib/client.js",
+      "line": 744,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/registry-server/client/lib/profiler.js",
+      "line": 173,
+      "rule": "qvac-quality/close-on-error",
+      "message": "`store` (new Corestore) is still local when this await runs; if it throws, `store` is never closed. Close it in a catch/finally, or hand it off first."
+    },
+    {
+      "file": "packages/registry-server/client/lib/profiler.js",
+      "line": 173,
+      "rule": "qvac-quality/close-on-error",
+      "message": "`swarm` (new Hyperswarm) is still local when this await runs; if it throws, `swarm` is never closed. Close it in a catch/finally, or hand it off first."
+    },
+    {
+      "file": "packages/registry-server/client/lib/profiler.js",
+      "line": 189,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/registry-server/lib/hf-downloader.js",
+      "line": 178,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/registry-server/lib/metrics-server.js",
+      "line": 50,
+      "rule": "qvac-quality/stale-error-reject",
+      "message": "`this._server.on('error', reject)` outlives the startup promise: later errors from `this._server` are swallowed. Remove it after startup or replace it with a logging handler."
+    },
+    {
+      "file": "packages/registry-server/lib/registry-service.js",
+      "line": 881,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/registry-server/lib/registry-service.js",
+      "line": 1033,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/sdk/src/commands/verify/addon-source.ts",
+      "line": 235,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/build-consumer-mobile.ts",
+      "line": 20,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/build-consumer-mobile.ts",
+      "line": 31,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/build-consumer-mobile.ts",
+      "line": 550,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/build-consumer-snap.ts",
+      "line": 64,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/run-consumer-desktop.ts",
+      "line": 51,
+      "rule": "qvac-quality/exit-code-ignores-signal",
+      "message": "`process.exit(code || 0)` exits 0 when the child was killed by a signal (code is null). Read the handler's `signal` argument and exit non-zero."
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/run-consumer-electron.ts",
+      "line": 205,
+      "rule": "qvac-quality/exit-code-ignores-signal",
+      "message": "`process.exit(code || 0)` exits 0 when the child was killed by a signal (code is null). Read the handler's `signal` argument and exit non-zero."
+    },
+    {
+      "file": "packages/test-suite/src/cli/commands/run-consumer-external.ts",
+      "line": 47,
+      "rule": "qvac-quality/exit-code-ignores-signal",
+      "message": "`process.exit(code || 0)` exits 0 when the child was killed by a signal (code is null). Read the handler's `signal` argument and exit non-zero."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/device-utils.ts",
+      "line": 92,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/device-utils.ts",
+      "line": 105,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "line": 37,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "line": 43,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "line": 50,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "line": 172,
+      "rule": "qvac-quality/stale-error-reject",
+      "message": "`tcpServer.on('error', reject)` outlives the startup promise: later errors from `tcpServer` are swallowed. Remove it after startup or replace it with a logging handler."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "line": 173,
+      "rule": "qvac-quality/stale-error-reject",
+      "message": "`httpServer.on('error', reject)` outlives the startup promise: later errors from `httpServer` are swallowed. Remove it after startup or replace it with a logging handler."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "line": 183,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "line": 186,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/local-broker.ts",
+      "line": 189,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 61,
+      "rule": "qvac-quality/spawn-without-error-listener",
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 219,
+      "rule": "qvac-quality/spawn-without-error-listener",
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 223,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 235,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 237,
+      "rule": "qvac-quality/spawn-without-error-listener",
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception."
+    },
+    {
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 242,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/core/batch-orchestrator.ts",
+      "line": 118,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/core/batch-orchestrator.ts",
+      "line": 909,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/test-suite/src/core/consumer-base.ts",
+      "line": 415,
+      "rule": "no-promise-executor-return",
+      "message": "Return values from promise executor functions cannot be read."
+    },
+    {
+      "file": "packages/tts-ggml/src/index.ts",
+      "line": 362,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/tts-ggml/src/lib/pocketLifecycle.ts",
+      "line": 131,
+      "rule": "qvac-quality/abort-signal-race",
+      "message": "'abort' listener on `signal` with no `signal.aborted` check: a signal that is already aborted never fires it."
+    },
+    {
+      "file": "packages/vla-ggml/src/index.ts",
+      "line": 569,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/vla-ggml/src/index.ts",
+      "line": 628,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/vla-ggml/src/index.ts",
+      "line": 706,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    },
+    {
+      "file": "packages/vla-ggml/src/index.ts",
+      "line": 900,
+      "rule": "no-empty",
+      "message": "Empty block statement."
+    }
+  ]
+}

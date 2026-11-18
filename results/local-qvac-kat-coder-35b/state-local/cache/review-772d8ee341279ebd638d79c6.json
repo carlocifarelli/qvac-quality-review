@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "title": "SIGINT/SIGTERM handlers leak and override process signals",
+      "category": "resource-leak",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 43,
+      "anchor": "process.on('SIGINT', () => child.kill('SIGINT' as never))",
+      "evidence": "Lines 43-44 register handlers on process-level signals without storing references or removing them. Lines 38-41 register a child 'error' handler without cleanup. If runConsumerExternal is called multiple times, handlers accumulate. If the function is called in a context where process signals are already handled, the new handlers override existing ones. The child process reference is not cleaned up if an error occurs after spawn but before the exit handler fires, or if the function is called again.",
+      "impact": "Signal handlers accumulate across calls, potentially causing multiple child.kill() calls or overriding existing signal handling. The child process may leak if the function is called multiple times or if an error occurs after spawn.",
+      "reproduction": "Call runConsumerExternal twice in the same process. Both SIGINT/SIGTERM handlers will fire, calling child.kill() twice. If the first call's child has already exited, the second call's handler may attempt to kill an undefined or already-exited child.",
+      "fix": "Store handler references and use process.removeListener after the child exits or on error. Use a single cleanup function."
+    },
+    {
+      "title": "Exit code from child process is ignored when child errors",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 38,
+      "anchor": "child.on('error', (err) => {",
+      "evidence": "Line 38-41: When the child process emits an 'error' event (e.g., spawn fails, ENOENT), the handler logs the error and calls process.exit(1). However, the 'error' event on a child process does not include an exit code - it's a failure to spawn or communicate. The process exits with code 1 regardless of the actual error. More importantly, if the child process exits with a non-zero code, the 'exit' handler on line 46-48 correctly propagates it. But if the child process is killed by a signal (e.g., SIGKILL), the exit code is null, and line 47 does process.exit(code || 0), which exits with 0 instead of indicating the signal termination.",
+      "impact": "When a child process is killed by a signal (e.g., user presses Ctrl+C, or the OS kills it), the parent exits with code 0, masking the failure. Callers cannot distinguish between successful exit and signal termination.",
+      "reproduction": "Send SIGTERM to the parent process. The SIGTERM handler kills the child. The child exits with code null (signal termination). The 'exit' handler runs with code=null, and process.exit(0) is called, indicating success.",
+      "fix": "Check if code is null and use the signal name or a non-zero exit code to indicate signal termination. For example: process.exit(code !== null ? code : 128 + signal)."
+    }
+  ]
+}

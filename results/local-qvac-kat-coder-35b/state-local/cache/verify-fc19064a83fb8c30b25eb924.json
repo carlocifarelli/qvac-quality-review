@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The claim that broker close errors are swallowed and the caller cannot detect cleanup failures is technically true about the local-broker.ts cleanup function, but the impact is overstated and the defect is not actionable for several reasons: (1) The cleanup function is intentionally designed as a best-effort fire-and-forget cleanup — it's called from process-level signal handlers (SIGINT/SIGTERM) and error paths where the process is already exiting. (2) In run-local.ts, cleanup is called in three places: signal handlers (lines 232-233), error recovery before throwing (line 335), and a catch block before process.exit(1) (line 522). In all cases, the process is terminating immediately after cleanup, so a thrown error from broker.close() would not propagate to any meaningful handler — it would just crash the process during shutdown. (3) The BrokerHandle interface explicitly types cleanup as () => void, indicating the design intent is that cleanup does not return errors. (4) Node.js http.Server.close() and net.Server.close() are non-blocking and do not throw synchronously when called without a callback — they return undefined. The broker.close() call from aedes is also typically non-throwing in normal shutdown paths. (5) Even if broker.close() did throw, the try/catch in cleanup prevents the error from propagating, which is appropriate for a shutdown path where the process is exiting anyway. The claim that this causes 'port conflicts or resource leaks on subsequent runs' is speculative — the OS will reclaim ports and file descriptors when the process exits, regardless of whether close() succeeds. The real question is whether the error should be logged for debugging purposes, but that's a logging improvement, not a defect.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "broker cleanup error swallowed",
+    "aedes close error handling",
+    "local broker cleanup try catch",
+    "brokerHandle cleanup void return"
+  ]
+}

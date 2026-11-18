@@ -1,0 +1,11 @@
+{
+  "verdict": "rejected",
+  "reasoning": "The claim is that swarm.flush().then() creates an unhandled promise rejection risk. However, examining the code: (1) swarm.flush() returns a promise that resolves when the DHT has finished announcing/finding peers. The .then() callback calls foundPeers() which is a function that returns a promise (viewCore.findingPeers() and blobCore.findingPeers() are Hypercore methods that return promises). (2) The .then() chain is fire-and-forget, but the rejection would only propagate if the flush promise rejects AND the .then() callback throws. (3) More importantly, the code continues execution after line 201/234 - it doesn't await the flush. The actual peer discovery happens asynchronously. (4) If swarm.flush() rejects, the rejection is unhandled, BUT: the swarm is destroyed in cleanupResources() in the finally block (line 296), which would reject any pending flush promises. However, this is a controlled shutdown, not an error condition. (5) The real question is whether swarm.flush() can reject in normal operation. Looking at hyperswarm documentation, flush() resolves when the DHT has finished its operations. It could reject if the swarm is destroyed, but that's handled by the cleanup. (6) The claim about 'silent failures where peers are not found' is overstated - the code doesn't actually wait for flush to complete before proceeding to download. The download will still work, just potentially slower if peers aren't found immediately. (7) The unhandled rejection risk is minimal because: a) The process continues and eventually exits via cleanupResources, b) Node.js unhandled rejection behavior depends on version/config, c) The .then() callback (foundPeers()) is unlikely to throw synchronously. The defect is theoretical and the impact is overstated. The code works correctly without awaiting flush - it's a performance optimization to try to find peers faster, not a correctness requirement.",
+  "severity": "low",
+  "duplicateSearchTerms": [
+    "swarm.flush unhandled rejection",
+    "hyperswarm flush promise not awaited",
+    "profiler.js unhandled promise rejection",
+    "swarm.destroy race condition flush"
+  ]
+}

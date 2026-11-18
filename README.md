@@ -170,7 +170,7 @@ The first run had shown two problems, both fixed:
 
 The QVAC PR workflow is proposed only, because the exercise forbids changes upstream.
 
-## Running on QVAC itself: a local model, no code leaves the machine (implemented, not yet run on a real model)
+## Running on QVAC itself: a local model, no code leaves the machine (demonstrated, measured)
 
 The review and verify stages can run on any OpenAI-compatible endpoint instead of Claude (`backend: "openai-compatible"`, `src/backends/openai-compatible.ts`). It is built for `qvac serve --openai`, QVAC's own local server, so the model runs on the reviewer's machine and the source code never leaves it.
 
@@ -187,7 +187,16 @@ How it works, since QVAC (like OpenAI) does not combine `tools` and `response_fo
 
 Local models are small, so the file under review is inlined (line-numbered) in the first message: the review still works when the model never calls a tool. The backend is covered by a test against a stub server (`test/openai-backend.test.ts`).
 
-**Status:** in the sandbox where this was built, QVAC resolved the model from its registry but the 2.5 GB weights never downloaded (P2P and Hugging Face both blocked by the network), so it has not yet run against a real model. The next step is to run it on a workstation on the files of the 31 confirmed findings and compare recall, time and cost with the Claude backend. My expectation: a 4B model will find far fewer of the cross-file bugs, so the realistic use is the per-PR check on private code, with the deterministic rules doing most of the work.
+**Measured** (`results/local-qvac/COMPARISON.md`): Qwen3-4B (Q4_K_M) through `qvac serve` on an M4 Max (64 GB), on the 19 files that hold the 31 human-confirmed findings, at the same commit.
+
+| | Claude backend | QVAC, Qwen3-4B local |
+|---|---|---|
+| Confirmed findings recalled | 31/31 (they are its findings) | 0/31 strict, 2 partial (right line, wrong or vague mechanism) |
+| Candidates | 47 on 40 files | 21 on 7 of 19 files: 1 new and plausible (listeners left attached after resolve in `local-broker.ts:172`, the same class as an existing finding), 1 duplicate, 19 noise |
+| Verifier | lenient (see Limitations) | rejected all 21, including the real one: it filters nothing |
+| Time / cost | run 1: 40 files, $27.47 (code sent to Anthropic) | 29.5 min, 96 calls, $0, no code left the machine |
+
+The pipeline runs end to end on QVAC with no code leaving the machine, but a 4B model does not find the defects this tool is for: they need following the code across functions and files, and the model mostly reports generic "possible leak/race" patterns. So today the local backend is a privacy-preserving plumbing option, not a replacement; on private code the deterministic rules carry the gate and a larger local model should be measured the same way. The run also found two integration bugs, now fixed: QVAC rejects tool calls unless the model is loaded with `tools: true` (and needs a larger context for inlined files), and without `max_tokens` one runaway generation blocked QVAC's single-slot server until requests timed out.
 
 ## Scope and verification for this submission
 
@@ -243,6 +252,7 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 - **Prompt injection** from repository content is mitigated (read-only tools, schema, anchors, second pass, human gate), not eliminated.
 - **Rules are intra-file.** `abort-signal-race` follows checks into same-file callees only; both false positives are checks that live in a caller. `close-on-error` knows a fixed list of resource classes (configurable). The rules were written after seeing these findings, so their recall on *unseen* bugs is unmeasured: the 1 new finding and 8 same-shape instances are the only evidence so far.
 - **Workflow costs are partly estimates.** The PR check cost is measured on one simulated PR ($0.88 for 2 files); the weekly figure is extrapolated from runs 1-4, not measured over weeks. The PR agent sees changed files, not their callers.
+- **The local backend is weak today.** With Qwen3-4B through QVAC it recalled 0 of the 31 confirmed findings and its verifier rejected everything; only a run with a larger model would tell whether this is the model size or the approach.
 - **Dedupe is keyword search.** It cannot prove absence; it records what was searched so a reader can judge.
 
 ## Next priorities (proposed, not built)
@@ -251,14 +261,14 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 2. **Evaluation set:** seed known bugs (from QVAC's closed `fix:` PRs, reverting the fix) to measure reviewer recall and verifier precision per model and prompt version; this is how prompt changes should be judged.
 3. **Group by root cause:** several findings share one fix (e.g. the three `process.exit(code || 0)` sites); cluster them before ranking.
 4. **Reproduction scaffolding:** let the agent draft the repro test in the package's own runner (brittle/Bare), with a human reviewing and running it.
-5. **Measure the local backend:** run the QVAC backend on the confirmed-finding files and compare recall with Claude; try larger local models if a 4B one misses too much.
+5. **A larger local model:** repeat the `results/local-qvac/` measurement with a bigger model from QVAC's catalog; Qwen3-4B recalled 0 of 31, so the question is whether any model that fits a workstation closes the gap.
 6. **Feed QVAC's own `quality:audit` hotspots** into selection instead of my churn heuristic.
 7. **Upstream the rules:** propose the six rules to QVAC as a lint preset next to `lunte` (after the maintainers agree the classes are worth enforcing), and add a rule whenever a newly confirmed finding has a syntactic shape. Candidates already visible: `.part`-file cleanup keyed on `instanceof` instead of `signal.aborted` (#4), pid-file ownership (#10, #30).
 
 ## Demonstrated vs proposed
 
 - **Demonstrated** (ran, outputs committed): selection, review, verify, report, presence tracking across commits, cache reuse, dedupe with logged searches, idempotent publish to this repo's issues, the fingerprint migration, all reproductions in `verification/`, the `qvac-quality` rules with their baseline gate on a fix and on a regression, including the PR-scoped `--changed` mode for the rules, and `qr pr` on a simulated pull request (rules + agent + presence, PR comment in `demo/pr/`).
-- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), the agent stage inside Actions (needs an `ANTHROPIC_API_KEY` secret), `publish.yml` in Actions (no triage PR has been merged yet), the QVAC PR workflow (cannot be installed upstream), the QVAC local backend on a real model (implemented and stub-tested only). Everything under "Next priorities" is proposed only.
+- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), the agent stage inside Actions (needs an `ANTHROPIC_API_KEY` secret), `publish.yml` in Actions (no triage PR has been merged yet), the QVAC PR workflow (cannot be installed upstream), and a local model larger than 4B. The QVAC local backend is demonstrated (Qwen3-4B, measured in `results/local-qvac/`). Everything under "Next priorities" is proposed only.
 
 ## AI use
 

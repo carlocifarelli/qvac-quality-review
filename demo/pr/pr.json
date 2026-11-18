@@ -1,0 +1,680 @@
+{
+  "base": "0c8a1510",
+  "head": "7fca50446e1c930a8bb4d5c155436ca3983b07a1",
+  "files": [
+    "packages/test-suite/src/cli/commands/run-consumer-external.ts",
+    "packages/test-suite/src/cli/utils/process-manager.ts"
+  ],
+  "blocking": [
+    {
+      "id": "qq:6b54e602f4e39e5e",
+      "rule": "qvac-quality/spawn-without-error-listener",
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 265,
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
+      "code": "const child = spawn(command, args, { stdio: 'ignore' })"
+    }
+  ],
+  "agent": [
+    {
+      "title": "New spawnQuiet helper spawns without an 'error' listener, so a missing binary crashes the process",
+      "category": "error-handling",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 265,
+      "anchor": "const child = spawn(command, args, { stdio: 'ignore' })",
+      "evidence": "This is a separate helper from the already-reported spawnTracked (line 67). It discards the ChildProcess and returns only `{ pid: child.pid }`, so a caller cannot attach an 'error' listener even if it wanted to. When the command does not exist, spawn emits 'error' asynchronously with no listener, which Node rethrows as an uncaught exception. In that case `pid` is also `undefined`, which the inferred return type hides from callers.",
+      "impact": "Any future caller of spawnQuiet with a command that is not installed crashes the CLI process with an uncaught ENOENT instead of getting a handleable failure. Because the ChildProcess is not returned, the caller has no way to guard against this.",
+      "reproduction": "Run `spawnQuiet('definitely-not-a-binary', [])` in a Node script. The process exits with an uncaught 'spawn definitely-not-a-binary ENOENT' error.",
+      "fix": "Attach `child.on('error', ...)` inside spawnQuiet (log it, or surface it through a returned promise or callback), and either return the child or type `pid` as `number | undefined` and handle it.",
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "fingerprint": "qr2:4a144e07d10029e2",
+      "status": "candidate",
+      "firstSeenCommit": "7fca50446e1c930a8bb4d5c155436ca3983b07a1",
+      "lastSeenCommit": "7fca50446e1c930a8bb4d5c155436ca3983b07a1",
+      "presence": "present",
+      "churn": 2,
+      "score": 0,
+      "verdict": {
+        "verdict": "confirmed",
+        "reasoning": "process-manager.ts:264-267: spawnQuiet calls spawn(command, args, { stdio: 'ignore' }), attaches no 'error' listener, and returns only { pid: child.pid }, dropping the ChildProcess. When the command is missing, Node emits 'error' (ENOENT) asynchronously. With no listener it becomes an uncaught exception that crashes the CLI. pid is also undefined, which the inferred return type hides. A caller can't guard against this: try/catch can't catch an async error event, and the child is never returned, so there is nothing to attach a listener to. Nothing else guards it (no wrapper, validation or finally). The nearby startDeviceLogCapture checks for its binary with `which` first; spawnQuiet doesn't. The comment above the helper says it repeats the #31 pattern, so it's a mistake, not a design choice. A repo-wide grep finds no callers today, so this is a latent defect in an exported helper rather than a live crash path. The claim only alleges impact on future callers, which is accurate. Severity stays low.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "spawnQuiet missing error listener",
+          "uncaught ENOENT spawn process-manager",
+          "spawn error handler test-suite cli",
+          "child process error event crash"
+        ]
+      }
+    }
+  ],
+  "fixed": [
+    {
+      "title": "Runner killed by a signal (OOM, SIGKILL, crash) is reported as exit code 0",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "high",
+      "line": 47,
+      "anchor": "process.exit(code || 0)",
+      "evidence": "run-consumer-external.ts:46-48 listens to `child.on('exit', (code) => process.exit(code || 0))`. When the child dies from a signal, Node passes `code === null` with a non-null `signal`, so `null || 0` makes the CLI exit 0. Sibling code handles this case: utils/external-consumer.ts:105 uses `code ?? (signal ? 1 : 0)`, and run-consumer-snap.ts:110-114 exits 1 when `signal` is set. This command never reads the `signal` argument.",
+      "impact": "A CI job running `run-consumer-external` reports success when the in-place runner is OOM-killed (likely when it loads local models), SIGKILLed by a timeout wrapper, or crashes with SIGSEGV or SIGABRT in a native addon. Any test run cut short this way is hidden from the pipeline.",
+      "reproduction": "Start the command with a valid external consumer config. While it runs, `kill -9 <pid of node run-consumer-external-inplace.js>`. Then `echo $?` on the parent prints 0.",
+      "fix": "`child.on('exit', (code, signal) => process.exit(code ?? (signal ? 1 : 0)))`, the same as runMqttClient.",
+      "file": "packages/test-suite/src/cli/commands/run-consumer-external.ts",
+      "fingerprint": "qr2:6b77a3edfe85576e",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "presence": "gone",
+      "score": 1.4,
+      "verdict": {
+        "verdict": "confirmed",
+        "reasoning": "The defect is real. Line 47 of run-consumer-external.ts is `child.on('exit', (code) => process.exit(code || 0))`. It never reads `signal`, so a runner killed by SIGKILL, OOM, SIGSEGV or SIGABRT (code=null) makes the CLI exit 0. Two sibling files handle the signal case: utils/external-consumer.ts:105 (`code ?? (signal ? 1 : 0)`) and run-consumer-snap.ts:110-114. Two other commands copy the same bug: run-consumer-desktop.ts:50-51 and run-consumer-electron.ts:204-205.\n\nThe path is reachable. index.ts:121 registers the command as `run:consumer:external`, and CI calls it: sdk/ci/e2e.mjs:351 uses it for the python family. Nothing upstream catches the masked code. e2e.mjs:363-365 takes the CLI's close code as `consumerExit = code ?? 0`, so a 0 from this CLI passes through unchanged.\n\nThe impact is overstated. In CI the producer runs in the foreground with `--consumer-timeout=60`, and e2e.mjs:394 returns the producer's non-zero status first. A consumer that dies mid-run leaves tests without results, so the producer should fail the job anyway. The masking only decides the outcome when the runner crashes after the producer has finished (for example, a native-addon abort during teardown), or when the command is used on its own outside the e2e wrapper. run-local.ts:246 checks consumer signals itself, but it watches the CLI process, so it sees the same 0.\n\nSeverity is re-rated to low: the bug is real but mostly covered by the producer's own pass/fail.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "run:consumer:external exits 0 when killed by signal",
+          "consumer exit code ignores signal",
+          "code || 0 masks SIGKILL OOM consumer",
+          "external consumer crash reported as success"
+        ]
+      },
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "reproduction",
+        "note": "Reproduced with verification/test-suite-signal-exit.repro.mjs using the exact handler: child SIGKILLed -> code=null -> parent exits 0. Same bug, same fix, in run-consumer-desktop.ts:51 and run-consumer-electron.ts:205 (findings qr2:5b003a69f0a7be69 and qr2:45c70474ce0b15ed, folded into this one). Siblings already handle it correctly (external-consumer.ts:105, run-consumer-snap.ts:110-114), which shows the intended behaviour."
+      },
+      "churn": 2,
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue run:consumer:external exits 0 when killed by signal",
+          "searchedAt": "2026-11-18T08:37:32.430Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request run:consumer:external exits 0 when killed by signal",
+          "searchedAt": "2026-11-18T08:37:32.430Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue consumer exit code ignores signal",
+          "searchedAt": "2026-11-18T08:37:38.388Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request consumer exit code ignores signal",
+          "searchedAt": "2026-11-18T08:37:38.388Z",
+          "total": 8,
+          "top": [
+            {
+              "title": "feat[notask]: move mobile bundles to current Bare with JavaScriptCore on iOS",
+              "url": "https://github.com/tetherto/qvac/pull/5751",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-26968 feat[api|bc]: SDK caller sessions, model leases and scoped cancellation",
+              "url": "https://github.com/tetherto/qvac/pull/5541",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-27603 test: cover shared prompt-prefix caching in the SDK",
+              "url": "https://github.com/tetherto/qvac/pull/5571",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow",
+              "url": "https://github.com/tetherto/qvac/pull/5186",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-24385 fix: mobile CI failures (audiogen bundle, parler prestage, bundler-require guard)",
+              "url": "https://github.com/tetherto/qvac/pull/4185",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue code || 0 masks SIGKILL OOM consumer",
+          "searchedAt": "2026-11-18T08:37:44.293Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request code || 0 masks SIGKILL OOM consumer",
+          "searchedAt": "2026-11-18T08:37:44.293Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue external consumer crash reported as success",
+          "searchedAt": "2026-11-18T08:37:50.240Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request external consumer crash reported as success",
+          "searchedAt": "2026-11-18T08:37:50.240Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-24656 feat[api]: publish fit facts as a side blob with a pointer on the model record",
+              "url": "https://github.com/tetherto/qvac/pull/4445",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue run-consumer-external",
+          "searchedAt": "2026-11-18T08:37:56.328Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2",
+              "url": "https://github.com/tetherto/qvac/issues/4612",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: RAG search()/infer() throw a raw TypeError for a non-string query instead of QvacErrorRAG INVALID_INPUT",
+              "url": "https://github.com/tetherto/qvac/issues/3727",
+              "state": "closed"
+            },
+            {
+              "title": "[Feature]: expose text-to-text translation (Bergamot NMT) on the OpenAI-compatible HTTP server",
+              "url": "https://github.com/tetherto/qvac/issues/3889",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request run-consumer-external",
+          "searchedAt": "2026-11-18T08:37:56.328Z",
+          "total": 54,
+          "top": [
+            {
+              "title": "QVAC-28195 feat[api]: add DSpark speculative decoding and spec-type auto to llm-llamacpp",
+              "url": "https://github.com/tetherto/qvac/pull/5694",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-26835 feat[api]: mqtt-mode external consumers, a prepare step and run:local:<name>",
+              "url": "https://github.com/tetherto/qvac/pull/5357",
+              "state": "closed"
+            },
+            {
+              "title": "chore[notask]: release @qvac/test-suite 0.15.0",
+              "url": "https://github.com/tetherto/qvac/pull/5714",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26691 feat[api]: centralize error code reservations",
+              "url": "https://github.com/tetherto/qvac/pull/5234",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26835 test: run the shared e2e catalog on the Kotlin SDK on Android",
+              "url": "https://github.com/tetherto/qvac/pull/5322",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/8"
+    }
+  ],
+  "open": [
+    {
+      "title": "Stale .pid files are never removed, so killTracked can SIGTERM unrelated processes that reused those PIDs",
+      "category": "correctness",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 106,
+      "anchor": "process.kill(pid, 'SIGTERM')",
+      "evidence": "spawnTracked writes `<name>.pid` (process-manager.ts:68), and nothing deletes it when the child exits: the 'close' handler at :80 only ends the log stream. killTracked (:90-115) signals every `*.pid` it finds in the directory and never checks that the PID still belongs to a child of this run. createReportDir (:187) reuses `opts.reportDir` exactly as given, and setupCleanup (run-local.ts:225) calls killTracked whenever the producer exits, on SIGINT or on SIGTERM. Even within one run, cleanup fires from the producer's 'exit' event, after Node has already reaped that PID, so the PID is signalled after it has been released.",
+      "impact": "Rerun with the same `--reportDir` (for example a fixed CI path) and the earlier run's producer.pid and consumer-*.pid files are still there. When the new run cleans up, it sends SIGTERM to whatever processes now hold those PIDs, which can kill unrelated user processes. On Windows the call is `taskkill /F /T`, which also force-kills their child processes.",
+      "reproduction": "Run `run:local:desktop --reportDir=/tmp/r` and let it finish. Start a long-running process and give it the PID recorded in /tmp/r/consumer-desktop.pid (or wait for PID wraparound). Run `run:local:desktop --reportDir=/tmp/r` again and press Ctrl+C. The unrelated process receives SIGTERM.",
+      "fix": "Delete the pid file in the child's 'exit' handler inside spawnTracked, and have killTracked signal only the PIDs of processes tracked in this run (or use child.kill() on the tracked ChildProcess objects), not every *.pid in the directory.",
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "fingerprint": "qr2:0d264caeed8ed992",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "7fca50446e1c930a8bb4d5c155436ca3983b07a1",
+      "presence": "present",
+      "score": 0.88,
+      "verdict": {
+        "verdict": "confirmed",
+        "reasoning": "The mechanism holds up. spawnTracked writes `<name>.pid` (process-manager.ts:68), and the 'close' handler (:80-82) only ends the log stream. No code anywhere in src/cli deletes a .pid file. killTracked (:90-115) reads every `*.pid` in reportDir and sends SIGTERM (or `taskkill /F /T` on Windows) without checking that the PID is still one of its own children. setupCleanup (run-local.ts:214-254) calls it on SIGINT, on SIGTERM, on producer exit and on a failed consumer exit. Users can reach this: `--report-dir` is a public option on every run:local:* command (index.ts:260), and createReportDir (:187-193) reuses that directory with nothing to clear it. A fixed `--runId` also gives the same default dir.\n\nThe claimed impact is overstated, though. On a rerun, spawnTracked overwrites producer.pid and consumer-<same name>.pid before cleanup can happen, so those files are not stale. The stale files that actually survive are:\n(a) consumer-<other>.pid from an earlier run with a different consumer, for example a desktop run followed by a python run in the same dir;\n(b) broker.pid, which local-broker.ts:178 writes with the old CLI's own process.pid when the earlier run started the embedded broker and the new run did not.\n\nWithin a single run, a consumer may exit cleanly with code 0, which run-local.ts:247 ignores, and its reaped PID is signalled later when the producer finishes. The producer-exit window the reviewer cites is microseconds, so PID reuse there is negligible.\n\nExploiting this needs an opt-in reused directory or an early-exiting consumer, plus PID reuse by another process of the same user. Low likelihood, but a real wrong-process kill, and on Windows `/F /T` also kills that process's children.\n\nA side note: broker.pid holds the CLI's own PID, so killTracked SIGTERMs itself. The cleaningUp guard keeps that harmless.\n\nRe-rated low: not the default path, and it needs PID reuse.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "stale pid files killTracked",
+          "report-dir reuse kills unrelated process",
+          "pid file not removed on child exit",
+          "killTracked PID reuse"
+        ]
+      },
+      "churn": 1,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read process-manager.ts:68-115, 187-193 and run-local.ts:214-254: .pid files are never deleted, killTracked SIGTERMs (taskkill /F /T on Windows) every *.pid in the report dir without ownership checks, and --report-dir is reused as given. A rerun with the same --report-dir or --runId signals PIDs from the previous run, which may now belong to unrelated processes. Low; same pid-file design as #10."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue stale pid files killTracked",
+          "searchedAt": "2026-11-18T08:56:23.782Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request stale pid files killTracked",
+          "searchedAt": "2026-11-18T08:56:23.782Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue report-dir reuse kills unrelated process",
+          "searchedAt": "2026-11-18T08:56:29.600Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request report-dir reuse kills unrelated process",
+          "searchedAt": "2026-11-18T08:56:29.600Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue pid file not removed on child exit",
+          "searchedAt": "2026-11-18T08:56:35.613Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request pid file not removed on child exit",
+          "searchedAt": "2026-11-18T08:56:35.613Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow",
+              "url": "https://github.com/tetherto/qvac/pull/5186",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-25039 fix: run the qvac-fabric fit on both on-disk load paths",
+              "url": "https://github.com/tetherto/qvac/pull/4447",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-23977 feat(ggml-rpc-server): add managed cross-platform RPC server",
+              "url": "https://github.com/tetherto/qvac/pull/4516",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue killTracked PID reuse",
+          "searchedAt": "2026-11-18T08:56:41.561Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request killTracked PID reuse",
+          "searchedAt": "2026-11-18T08:56:41.561Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue process-manager",
+          "searchedAt": "2026-11-18T08:56:47.826Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2",
+              "url": "https://github.com/tetherto/qvac/issues/4612",
+              "state": "closed"
+            },
+            {
+              "title": "@qvac/sdk: 3.7 GB node_modules footprint + bare-runtime compatibility issues",
+              "url": "https://github.com/tetherto/qvac/issues/2444",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: Error on Windows: No binaries found for target 'win32-x64' on qvac serve openai",
+              "url": "https://github.com/tetherto/qvac/issues/1492",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request process-manager",
+          "searchedAt": "2026-11-18T08:56:47.826Z",
+          "total": 22,
+          "top": [
+            {
+              "title": "ci(diffusion-cpp): capture native CUDA parity diagnostics",
+              "url": "https://github.com/tetherto/qvac/pull/5264",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: let deleteCache wait for a download this process just cancelled",
+              "url": "https://github.com/tetherto/qvac/pull/5750",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26819 doc: turn system requirements into a platform support page",
+              "url": "https://github.com/tetherto/qvac/pull/5778",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            },
+            {
+              "title": "fix[notask]: fix the full-suite SDK e2e failures",
+              "url": "https://github.com/tetherto/qvac/pull/5748",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/30"
+    },
+    {
+      "title": "spawnTracked has no 'error' listener, so a failed spawn crashes the CLI and skips cleanup",
+      "category": "error-handling",
+      "severity": "medium",
+      "confidence": "medium",
+      "line": 67,
+      "anchor": "const pid = child.pid!",
+      "evidence": "If spawn cannot start the process (ENOENT, EACCES, EMFILE or EAGAIN), Node sets `child.pid` to undefined and emits 'error' asynchronously. spawnTracked registers no 'error' handler (:61-82), so the event becomes an uncaught exception. Before that happens, :67-68 write the string \"undefined\" into the .pid file and the function returns a TrackedProcess whose `pid` is undefined, which goes against its `pid: number` type. Callers in run-local.ts (e.g. :268, :279) wrap the call in try/catch, but the error is emitted after the call returns, so the catch never sees it and setupCleanup's brokerHandle.cleanup() never runs.",
+      "impact": "Under fd or process exhaustion, or when `node` is not on the PATH of the env passed in, the CLI dies with an unhandled 'error' event stack trace. A local broker it started, and any sibling process it already spawned (for example the producer when the consumer spawn fails), keep running.",
+      "reproduction": "Call spawnTracked('does-not-exist', [], {reportDir: tmp, name: 'x'}). The .pid file contains \"undefined\", and the process crashes on the next tick with `Error: spawn does-not-exist ENOENT` (unhandled 'error' event).",
+      "fix": "Add `child.on('error', err => { logStream.end(); /* log the error and surface it to the caller */ })`, and write the pid file only when `child.pid !== undefined` (throw synchronously otherwise, so callers' try/catch and cleanup run).",
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "fingerprint": "qr2:621f2d08e39c5ab8",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "7fca50446e1c930a8bb4d5c155436ca3983b07a1",
+      "presence": "present",
+      "score": 0.88,
+      "verdict": {
+        "verdict": "confirmed",
+        "reasoning": "I read the code and the mechanism holds. In process-manager.ts:61-82, spawnTracked calls spawn() and attaches only stdout/stderr 'data' listeners and a 'close' listener. It never adds an 'error' listener. When Node hits ENOENT, EACCES, EAGAIN, EMFILE or ENFILE at spawn time, it does not throw synchronously. It leaves child.pid undefined and emits 'error' on nextTick, and it emits no 'exit' event. Line 67 uses a non-null assertion (`child.pid!`), so line 68 writes \"undefined\" to the .pid file, and the returned TrackedProcess has pid undefined even though the type says number. killTracked parses that value to NaN and skips it, so that part does no harm.\n\nCaller check: in run-local.ts:260-294 (and the other run:local:* variants) the try/catch around spawnTracked only catches synchronous throws. setupCleanup (:214-254) registers SIGINT/SIGTERM and 'exit' listeners only. There is no process.on('uncaughtException') anywhere in packages/test-suite/src (I grepped). So the asynchronous 'error' crashes the CLI with an unhandled-error stack trace. setupCleanup's cleanup(), which runs killTracked and brokerHandle.cleanup(), never runs. A producer that was already spawned, or a local broker started by ensureBroker, can be left running. I found no tests or comments that make this intentional.\n\nImpact is overstated in one respect: the trigger is unlikely. The command is 'node', which the user is already running the CLI with. cwd is configDir, which loadConfig has just read successfully. The env is inherited unless a caller overrides it. That leaves fd or process exhaustion (EMFILE/EAGAIN) or an unusual PATH or runtime (for example the CLI running under bun without a node binary on PATH). It is a real but rare robustness gap in a dev/test CLI that leaves orphaned processes, so I rate it low rather than medium.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "spawnTracked missing error handler",
+          "run:local crash unhandled error event spawn",
+          "orphaned producer broker when spawn fails",
+          "child.pid undefined pid file"
+        ]
+      },
+      "churn": 1,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "reproduction",
+        "note": "Reproduced with verification/test-suite-spawn-error.repro.mjs (same code shape as process-manager.ts:61-82): spawning a missing binary returns pid=undefined, writes the string 'undefined' to the .pid file, and the ENOENT surfaces as an uncaught exception after the caller's try/catch has returned, so run-local.ts cleanup never runs. Low: test tooling, but a missing broker/bare binary is the common setup error."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue spawnTracked missing error handler",
+          "searchedAt": "2026-11-18T08:56:53.738Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request spawnTracked missing error handler",
+          "searchedAt": "2026-11-18T08:56:53.738Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue run:local crash unhandled error event spawn",
+          "searchedAt": "2026-11-18T08:56:59.587Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request run:local crash unhandled error event spawn",
+          "searchedAt": "2026-11-18T08:56:59.587Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue orphaned producer broker when spawn fails",
+          "searchedAt": "2026-11-18T08:57:05.370Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request orphaned producer broker when spawn fails",
+          "searchedAt": "2026-11-18T08:57:05.370Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue child.pid undefined pid file",
+          "searchedAt": "2026-11-18T08:57:11.201Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request child.pid undefined pid file",
+          "searchedAt": "2026-11-18T08:57:11.201Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue process-manager",
+          "searchedAt": "2026-11-18T08:57:17.312Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2",
+              "url": "https://github.com/tetherto/qvac/issues/4612",
+              "state": "closed"
+            },
+            {
+              "title": "@qvac/sdk: 3.7 GB node_modules footprint + bare-runtime compatibility issues",
+              "url": "https://github.com/tetherto/qvac/issues/2444",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: Error on Windows: No binaries found for target 'win32-x64' on qvac serve openai",
+              "url": "https://github.com/tetherto/qvac/issues/1492",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request process-manager",
+          "searchedAt": "2026-11-18T08:57:17.312Z",
+          "total": 22,
+          "top": [
+            {
+              "title": "ci(diffusion-cpp): capture native CUDA parity diagnostics",
+              "url": "https://github.com/tetherto/qvac/pull/5264",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: let deleteCache wait for a download this process just cancelled",
+              "url": "https://github.com/tetherto/qvac/pull/5750",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26819 doc: turn system requirements into a platform support page",
+              "url": "https://github.com/tetherto/qvac/pull/5778",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            },
+            {
+              "title": "fix[notask]: fix the full-suite SDK e2e failures",
+              "url": "https://github.com/tetherto/qvac/pull/5748",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/31"
+    },
+    {
+      "title": "Ctrl+C sends SIGINT to the runner twice, and the second one kills it during graceful shutdown",
+      "category": "concurrency",
+      "severity": "low",
+      "confidence": "medium",
+      "line": 43,
+      "anchor": "process.on('SIGINT', () => child.kill('SIGINT' as never))",
+      "evidence": "The child is spawned without `detached` and with stdio 'inherit' (lines 33-36), so it is in the parent's foreground process group and gets the terminal's SIGINT directly. Line 43 then forwards another SIGINT. The runner registers `process.once('SIGINT', ...)` (run-consumer-external-inplace.ts:134), and in mqtt mode utils/external-consumer.ts:103 does the same. After the first delivery the once-listener is removed and Node restores the default SIGINT behaviour, so the forwarded signal ends the runner immediately. That cuts off the async `consumer.forceShutdown()` and `executor.stop()` (lines 119-133), and in mqtt mode it kills the runner before it can mirror its client's exit. Because the child then exits by signal (code null), finding 1 also applies and the parent exits 0.",
+      "impact": "Pressing Ctrl+C in an interactive run can skip the consumer's MQTT shutdown and the stop of the external bridge client. The spawned interpreter or worker can be left orphaned, and the parent still exits 0.",
+      "reproduction": "Run the command interactively in bridge mode and press Ctrl+C once. The '⚠️ Force shutdown' / graceful path does not finish, and `ps` can still show the external client process. Delivery order of the two signals depends on timing, so this may not happen every run.",
+      "fix": "Do not forward SIGINT when the child shares the terminal's process group, for example by only forwarding SIGTERM. Or spawn the child with `detached: true` so it receives only the forwarded signal. Making the runner's handlers `process.on` (idempotent) would also prevent the default kill.",
+      "file": "packages/test-suite/src/cli/commands/run-consumer-external.ts",
+      "fingerprint": "qr2:59e0a7ed358e79c6",
+      "status": "candidate",
+      "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "7fca50446e1c930a8bb4d5c155436ca3983b07a1",
+      "presence": "present",
+      "score": 0.98,
+      "verdict": {
+        "verdict": "confirmed",
+        "reasoning": "I could not disprove the mechanism. In run-consumer-external.ts:33-36 the runner is spawned with no `detached` and with stdio 'inherit', so it stays in the terminal's foreground process group. Ctrl+C therefore sends SIGINT straight to the runner, and line 43 (`process.on('SIGINT', () => child.kill('SIGINT'))`) then sends it a second one.\n\nThe runner listens only with `process.once('SIGINT', ...)` (run-consumer-external-inplace.ts:134; in mqtt mode also external-consumer.ts:103). The first SIGINT removes that listener. When the last SIGINT listener goes, Node closes its signal watcher and SIGINT goes back to the default action. The forwarded signal arrives after the parent's event loop has handled its own SIGINT, which is usually milliseconds later and not close enough to merge with the first. So it most likely kills the runner while `await consumer.forceShutdown()` / `await executor.stop()` (lines 119-133) are still running.\n\nThe child then exits by signal with code null, and the parent runs `process.exit(code || 0)` (line 47), so it exits 0. Nothing guards against this: there is no `detached`, no check that the signal was already received, and no persistent handler. The same pattern is copied in run-consumer-desktop.ts:47 and the desktop runner's `once`, which suggests copy-paste rather than a deliberate choice.\n\nThe impact is somewhat overstated. Grandchildren with inherited stdio (the bridge interpreter and the mqtt-mode client) are in the same process group, so they get the terminal's SIGINT directly, and orphaning is less likely than the claim says. What is really lost is the consumer's MQTT forceShutdown/cleanup, plus a misleading exit code 0. This only affects interactive Ctrl+C in a dev/test CLI, so the severity stays low. One detail depends on runtime timing (whether the two signals merge), but in practice they usually don't.",
+        "severity": "low",
+        "duplicateSearchTerms": [
+          "Ctrl+C double SIGINT external consumer",
+          "SIGINT forwarded twice kills runner during shutdown",
+          "process.once SIGINT graceful shutdown cut off",
+          "external consumer exits 0 on Ctrl+C"
+        ]
+      },
+      "churn": 2,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "reproduction",
+        "note": "Reproduced with verification/test-suite-double-sigint.repro.mjs, which mirrors run-consumer-external.ts:33-48 and the runner's process.once('SIGINT'): a process-group SIGINT (what Ctrl+C sends) kills the runner before its graceful shutdown completes (child exit signal=SIGINT) and, through #8, the command exits 0. Fix: spawn the runner detached or stop forwarding SIGINT that the child already received. Low: interactive Ctrl+C only."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue Ctrl+C double SIGINT external consumer",
+          "searchedAt": "2026-11-18T08:59:52.478Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request Ctrl+C double SIGINT external consumer",
+          "searchedAt": "2026-11-18T08:59:52.478Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue SIGINT forwarded twice kills runner during shutdown",
+          "searchedAt": "2026-11-18T08:59:58.319Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request SIGINT forwarded twice kills runner during shutdown",
+          "searchedAt": "2026-11-18T08:59:58.319Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue process.once SIGINT graceful shutdown cut off",
+          "searchedAt": "2026-11-18T09:00:04.191Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request process.once SIGINT graceful shutdown cut off",
+          "searchedAt": "2026-11-18T09:00:04.191Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue external consumer exits 0 on Ctrl+C",
+          "searchedAt": "2026-11-18T09:00:10.313Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request external consumer exits 0 on Ctrl+C",
+          "searchedAt": "2026-11-18T09:00:10.313Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-19900 feat[api]: add managed mode to @qvac/ai-sdk-provider",
+              "url": "https://github.com/tetherto/qvac/pull/2408",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue run-consumer-external",
+          "searchedAt": "2026-11-18T09:00:16.669Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2",
+              "url": "https://github.com/tetherto/qvac/issues/4612",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: RAG search()/infer() throw a raw TypeError for a non-string query instead of QvacErrorRAG INVALID_INPUT",
+              "url": "https://github.com/tetherto/qvac/issues/3727",
+              "state": "closed"
+            },
+            {
+              "title": "[Feature]: expose text-to-text translation (Bergamot NMT) on the OpenAI-compatible HTTP server",
+              "url": "https://github.com/tetherto/qvac/issues/3889",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request run-consumer-external",
+          "searchedAt": "2026-11-18T09:00:16.669Z",
+          "total": 54,
+          "top": [
+            {
+              "title": "QVAC-28195 feat[api]: add DSpark speculative decoding and spec-type auto to llm-llamacpp",
+              "url": "https://github.com/tetherto/qvac/pull/5694",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-26835 feat[api]: mqtt-mode external consumers, a prepare step and run:local:<name>",
+              "url": "https://github.com/tetherto/qvac/pull/5357",
+              "state": "closed"
+            },
+            {
+              "title": "chore[notask]: release @qvac/test-suite 0.15.0",
+              "url": "https://github.com/tetherto/qvac/pull/5714",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26691 feat[api]: centralize error code reservations",
+              "url": "https://github.com/tetherto/qvac/pull/5234",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26835 test: run the shared e2e catalog on the Kotlin SDK on Android",
+              "url": "https://github.com/tetherto/qvac/pull/5322",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/28"
+    }
+  ],
+  "usage": {
+    "calls": 4,
+    "cached": 0,
+    "costUsd": 0.8754826000000001,
+    "seconds": 104.297
+  },
+  "failures": []
+}

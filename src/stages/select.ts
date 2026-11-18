@@ -22,9 +22,19 @@ export async function scopeFiles(root: string, cfg: Config): Promise<string[]> {
   return (await git(root, ['ls-files'])).split('\n').filter((f) => f && isIn(f) && !isOut(f))
 }
 
-export async function select(root: string, cfg: Config, opts: { typedLint: boolean }): Promise<Selection> {
+/** Files changed between `base` and HEAD (merge-base diff, as a PR shows it), restricted to the scope. Deleted files are dropped. */
+export async function changedFiles(root: string, cfg: Config, base: string): Promise<string[]> {
+  const changed = new Set((await git(root, ['diff', '--name-only', '--diff-filter=d', `${base}...HEAD`])).split('\n').filter(Boolean))
+  return (await scopeFiles(root, cfg)).filter((f) => changed.has(f))
+}
+
+/**
+ * `only`: restrict to these files (PR mode). They are all kept, whatever their
+ * size, because a small changed file is still part of the change.
+ */
+export async function select(root: string, cfg: Config, opts: { typedLint: boolean; only?: string[] }): Promise<Selection> {
   const commit = (await git(root, ['rev-parse', 'HEAD'])).trim()
-  const files = await scopeFiles(root, cfg)
+  const files = opts.only ?? (await scopeFiles(root, cfg))
 
   const churn = new Map<string, number>()
   const log = await git(root, ['log', `--since=${cfg.churnSince}`, '--name-only', '--pretty=format:'])
@@ -42,7 +52,7 @@ export async function select(root: string, cfg: Config, opts: { typedLint: boole
   for (const file of files) {
     const src = await readFile(join(root, file), 'utf8')
     const loc = src.split('\n').filter((l) => l.trim() && !/^\s*(\/\/|\*|\/\*)/.test(l)).length
-    if (loc < cfg.minLoc) continue
+    if (loc < cfg.minLoc && !opts.only) continue
     const signals = countSignals(src)
     const l = lintByFile.get(file) ?? {}
     const lintHits = Object.values(l).reduce((a, b) => a + b.length, 0)

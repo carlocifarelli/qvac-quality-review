@@ -1,0 +1,80 @@
+# Systematic scan of tetherto/qvac main (runs in this repo; nothing is sent upstream).
+#
+# Weekly, or on demand:
+#   1. rules over the whole scope (free, ~10 s)
+#   2. agent review of the top-risk files, only if ANTHROPIC_API_KEY is set
+#      (the cache in state/ means unchanged files cost nothing)
+#   3. a triage pull request in this repo with the updated state and reports.
+# A human triages in that PR (state/overrides.json, state/rules-baseline.json);
+# merging it triggers publish.yml, which files the confirmed findings as issues.
+name: scheduled-scan
+on:
+  schedule:
+    - cron: '0 5 * * 1' # Mondays 05:00 UTC
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: tetherto/qvac ref to scan
+        default: main
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: scheduled-scan
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      HAS_AGENT: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: tetherto/qvac
+          ref: ${{ inputs.ref || 'main' }}
+          path: target
+          fetch-depth: 0 # churn needs history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Rules (deterministic)
+        id: rules
+        run: |
+          set +e
+          npx tsx src/cli.ts rules target > rules-new.txt
+          echo "new=$(grep -c 'qvac-quality/' rules-new.txt || true)" >> "$GITHUB_OUTPUT"
+          cat rules-new.txt
+
+      - name: Agent review + verify
+        if: env.HAS_AGENT == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          npx tsx src/cli.ts run target
+
+      - name: Report
+        run: npx tsx src/cli.ts report target
+
+      - name: Open triage pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RULES_NEW: ${{ steps.rules.outputs.new }}
+        run: |
+          sha=$(git -C target rev-parse --short=12 HEAD)
+          if git diff --quiet -- state results; then echo "nothing changed at $sha"; exit 0; fi
+          branch="scan/$(date -u +%F)-$sha"
+          git config user.name "qvac-quality-review[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add state results
+          git commit -m "Scan of tetherto/qvac@$sha"
+          git push -u origin "$branch"
+          leads=$(node -e 'const s=require("./state/findings.json");console.log(Object.values(s.findings).filter(f=>!f.human&&f.presence!=="gone"&&f.verdict?.verdict!=="rejected").length)')
+          gh pr create --base main --head "$branch" \
+            --title "Triage: scan of tetherto/qvac@$sha ($leads agent leads, $RULES_NEW untriaged rule hits)" \
+            --body "Weekly scan. Read results/FINDINGS.md and results/RULES.md, then record decisions in this PR: state/overrides.json for agent leads, state/rules-baseline.json for rule hits. Merging files the confirmed findings as issues (publish.yml). A confirmed class with a syntactic shape should get a rule in src/rules/ with the finding as its test case."

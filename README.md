@@ -18,6 +18,7 @@ npx tsx src/cli.ts publish --dry-run             # then without --dry-run: file 
 npx tsx src/cli.ts report /path/to/qvac         # re-render after editing state/overrides.json
 npx tsx src/cli.ts rules /path/to/qvac          # deterministic qvac-quality rules, ~9 s, $0; exit 1 on untriaged hits (CI gate)
 npx tsx src/cli.ts rules /path/to/qvac --changed origin/main   # same, only files changed in a PR
+npx tsx src/cli.ts pr /path/to/qvac --base origin/main          # one change: rules (blocking) + agent on changed files (advisory) -> results/PR.md
 npm test
 ```
 
@@ -132,6 +133,31 @@ The rules also feed the selection stage: their hits count as lint signals, so fi
 
 **What rules cannot replace.** 7 of the 32 findings became rules. The rest are semantic: a schema missing keys that another table defines (#1), docs contradicting code (#7), a lost update across an RPC (#3), a wrong field in a message (#19). These are exactly what the agent pass is for. The intended loop is: the agent finds a new class, a human confirms it, and if it has a shape it becomes a rule with the finding as its test case.
 
+## When it runs: the workflow (systematic)
+
+A one-off review finds bugs once. To keep finding and preventing them, each part runs at the point where it is cheapest and still useful, and a person decides at one fixed place.
+
+| When | What runs | Cost | Effect | Where |
+|---|---|---|---|---|
+| **Every pull request** in the target repo | `qr pr`: rules on the changed files; agent review + verify on the riskiest changed files (at most `prMaxFiles`, default 10) | rules: seconds, $0. Agent: ~1 min and ~$0.5-1 per file | Rule hits not in the baseline **block** the PR. Agent leads are **advisory**, in one sticky comment. Known findings fixed by the PR are reported. | [`integrations/github/qvac-quality-pr.yml`](integrations/github/qvac-quality-pr.yml) (proposed for QVAC) |
+| **Weekly** (Mon 05:00 UTC) and on demand, on target `main` | rules on the whole scope; full `qr run` on the top-risk files (cache: unchanged files cost $0); report | ~10 s rules; agent ~$3-6 a week in steady state | Opens a **triage PR** in this repo with the new state and reports | [`.github/workflows/scheduled-scan.yml`](.github/workflows/scheduled-scan.yml) |
+| **Triage PR merged** (a person edited `state/overrides.json` / `state/rules-baseline.json` in it) | `dedupe --human-confirmed`, `publish` | GitHub API only | Confirmed findings become issues, with the duplicate searches logged | [`.github/workflows/publish.yml`](.github/workflows/publish.yml) |
+| **When a confirmed finding has a syntactic shape** | a person (or the agent, reviewed) adds a rule in `src/rules/` with the finding as its RuleTester case | one PR | The class is blocked on every future PR at no cost | `src/rules/`, `test/rules.test.ts` |
+| Every change to this tool | typecheck, unit tests, RuleTester | free | | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+
+Why this split:
+- **Deterministic checks block.** They are repeatable and cheap, and each hit has an id that can be accepted with a reason.
+- **The agent never blocks.** It is non-deterministic and its "confirmed" is a lead, not a fact (see Limitations). It informs the reviewer on the PR and feeds the weekly triage.
+- **People decide in one place.** That place is a pull request on `state/`, so every decision is reviewed, versioned and replayed on later runs.
+- **The cost goes down over time.** Each class that becomes a rule moves from the paid, advisory path to the free, blocking one.
+
+**Demonstrated:** `qr pr` on a simulated PR in [`demo/pr/`](demo/pr/). The PR has two local commits: one fixes a site of #8, the other adds a helper that repeats #31.
+- The rule blocked the helper.
+- The agent and the verifier independently flagged the same helper (4 calls, $0.88, 63 s).
+- #8 was reported as probably fixed, and the known open findings in the touched files were listed.
+
+The gate on a fix and on a regression is in [`demo/rules/`](demo/rules/). The workflow files are written. The QVAC PR workflow is proposed only, because the exercise forbids changes upstream.
+
 ## Scope and verification for this submission
 
 - **Repository:** `tetherto/qvac` at the commit above, cloned fresh; `pnpm install --ignore-scripts` (no native builds needed for anything below).
@@ -185,11 +211,12 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 - **Runtime-only findings** (lost updates in the registry, hyperdrive store collisions) were verified by reading, not executed; they need a HyperDB/Hyperdrive fixture.
 - **Prompt injection** from repository content is mitigated (read-only tools, schema, anchors, second pass, human gate), not eliminated.
 - **Rules are intra-file.** `abort-signal-race` follows checks into same-file callees only; both false positives are checks that live in a caller. `close-on-error` knows a fixed list of resource classes (configurable). The rules were written after seeing these findings, so their recall on *unseen* bugs is unmeasured: the 1 new finding and 8 same-shape instances are the only evidence so far.
+- **Workflow costs are partly estimates.** The PR check cost is measured on one simulated PR ($0.88 for 2 files); the weekly figure is extrapolated from runs 1-4, not measured over weeks. The PR agent sees changed files, not their callers.
 - **Dedupe is keyword search.** It cannot prove absence; it records what was searched so a reader can judge.
 
 ## Next priorities (proposed, not built)
 
-1. **PR mode:** review only files changed in a PR plus their direct callers, post the human-confirmed delta as a comment. Cheapest high-value use; the cache and fingerprints already support it.
+1. **Install the PR workflow in QVAC** (with the maintainers' agreement) and extend `qr pr` to also review the direct callers of changed functions, which is where several of these bugs lived (the caller side of #11 and #16).
 2. **Evaluation set:** seed known bugs (from QVAC's closed `fix:` PRs, reverting the fix) to measure reviewer recall and verifier precision per model and prompt version; this is how prompt changes should be judged.
 3. **Group by root cause:** several findings share one fix (e.g. the three `process.exit(code || 0)` sites); cluster them before ranking.
 4. **Reproduction scaffolding:** let the agent draft the repro test in the package's own runner (brittle/Bare), with a human reviewing and running it.
@@ -199,8 +226,8 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 
 ## Demonstrated vs proposed
 
-- **Demonstrated** (ran, outputs committed): selection, review, verify, report, presence tracking across commits, cache reuse, dedupe with logged searches, idempotent publish to this repo's issues, the fingerprint migration, all reproductions in `verification/`, the `qvac-quality` rules with their baseline gate on a fix and on a regression, including the PR-scoped `--changed` mode for the rules.
-- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), a PR-scoped mode for the agent stages, a CI workflow file (the gate is a command that exits non-zero, not yet wired into GitHub Actions), a non-Claude backend. Everything under "Next priorities" is proposed only.
+- **Demonstrated** (ran, outputs committed): selection, review, verify, report, presence tracking across commits, cache reuse, dedupe with logged searches, idempotent publish to this repo's issues, the fingerprint migration, all reproductions in `verification/`, the `qvac-quality` rules with their baseline gate on a fix and on a regression, including the PR-scoped `--changed` mode for the rules, and `qr pr` on a simulated pull request (rules + agent + presence, PR comment in `demo/pr/`).
+- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), the GitHub Actions workflows running in Actions (they are written and the commands they call are demonstrated locally; the QVAC PR workflow cannot be installed upstream), a non-Claude backend. Everything under "Next priorities" is proposed only.
 
 ## AI use
 
@@ -212,3 +239,4 @@ Assessment received 09:07 CET on 2026-11-18; first complete version pushed at ab
 
 - **Assessment completed (same day):** human decision on all remaining 24 agent leads (18 confirmed, 6 rejected; one of the rejections came from the duplicate search, because PR #4379 documents the behaviour), 2 new executed reproductions, 188 more duplicate searches, 18 more issues filed (#14-#31).
 - **Deterministic rules (same day):** the `qvac-quality` ESLint plugin (6 rules, 42 RuleTester cases), the `qr rules` command with its triaged baseline and gate, a run over all 1,013 files with every hit triaged, one new finding filed (#32), and the fix and regression demos.
+- **Workflow (same day):** `qr pr` (rules blocking, agent advisory on changed files, fixed/open findings, PR comment), `prMaxFiles` cap, the simulated PR demo ($0.88), and four workflow files: tool CI, weekly scan with triage PR, publish on merge, and the proposed PR check for QVAC.

@@ -10,6 +10,8 @@ export const Config = z.object({
   churnSince: z.string().default('6 months ago'),
   /** How many files the AI reviewer reads per run */
   reviewTop: z.number().int().default(25),
+  /** PR mode: at most this many changed files get the agent review (highest risk first); rules always cover all */
+  prMaxFiles: z.number().int().default(10),
   /** Files smaller than this are skipped (barrels, constants) */
   minLoc: z.number().int().default(40),
   /** Files larger than this are still reviewed but flagged as partial */

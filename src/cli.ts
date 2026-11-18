@@ -6,6 +6,7 @@ import { loadConfig } from './config.js'
 import { scopeFiles, select } from './stages/select.js'
 import { baselinePath, loadBaseline, runRules } from './stages/rules.js'
 import { rulesMarkdown } from './report.js'
+import { prMarkdown, runPr } from './stages/pr.js'
 import { review, verify } from './stages/review.js'
 import { dedupe } from './stages/dedupe.js'
 import { publish } from './stages/publish.js'
@@ -111,6 +112,28 @@ program
     console.error(`rules: ${files.length} files in ${Date.now() - started} ms, ${hits.length} hits, ${fresh.length} not in baseline`)
     for (const h of fresh) console.log(`${h.file}:${h.line}  ${h.rule}  ${h.id}\n    ${h.message}`)
     process.exitCode = fresh.length ? 1 : 0
+  })
+
+program
+  .command('pr')
+  .description('check one change: rules (blocking) + agent review of the changed files (advisory); writes a PR comment')
+  .argument('<repo>', 'path to a git checkout of the target, with the PR head checked out')
+  .requiredOption('--base <ref>', 'base to diff against, e.g. origin/main')
+  .option('-c, --config <file>', 'config file', 'qr.config.json')
+  .option('-s, --state <dir>', 'state directory', 'state')
+  .option('-o, --out <dir>', 'report directory', 'results')
+  .option('--no-agent', 'rules and presence only (no LLM, no secret needed)')
+  .action(async (repo: string, o) => {
+    const root = resolve(repo)
+    const cfg = await loadConfig(o.config)
+    const { store, state } = await openState(o.state)
+    const baseline = await loadBaseline(baselinePath(o.state))
+    const r = await runPr(root, cfg, store, state, baseline, { base: o.base, agent: o.agent })
+    await mkdir(o.out, { recursive: true })
+    await writeFile(join(o.out, 'PR.md'), prMarkdown(r, cfg.upstreamRepo))
+    await writeJson(join(o.out, 'pr.json'), r)
+    console.error(`pr: ${r.files.length} files, ${r.blocking.length} blocking, ${r.agent.length} agent leads, ${r.fixed.length} fixed, $${r.usage.costUsd.toFixed(2)}`)
+    process.exitCode = r.blocking.length ? 1 : 0
   })
 
 program

@@ -85,16 +85,15 @@ The verifier gets the claim, not the reviewer's conversation, and is told to dis
 
 ## What happens on subsequent runs (demonstrated)
 
-Runs 2-4 are recorded in `demo/` (state and reports), so they can be inspected without re-running.
+Both runs below are recorded in `demo/` (state and reports), so they can be inspected without re-running.
 
 | Run | Target | Agent calls | Cost | Wall time | Result |
 |---|---|---|---|---|---|
-| 1 (submission) | `0c8a151` | 86 (40 reviews + 46 verifications) | $27.47 | ~10 min (5 parallel agents; 49 min of agent time) | 47 candidates; 10 human-confirmed, 27 agent-confirmed, 1 uncertain, 9 rejected |
+| 1 (submission) | `0c8a151` | 86 (40 reviews + 46 verifications) | $27.47 | ~10 min (5 parallel agents; 49 min of agent time) | 47 candidates. After human review of all 47: **31 confirmed** (issues #1-#31), **16 rejected** |
 | 2 (same commit) | `0c8a151` | **0** (40 cache hits) | **$0.00** | 12 s | identical findings; nothing re-reviewed |
-| 3 (simulated next commit) | `0c8a151` + a local commit that fixes finding #8 in one file | **2** (39 cache hits) | **$0.64** | 87 s | the fixed finding moved to **"No longer present"**; only the changed file was re-reviewed and re-verified; one duplicate (see below) |
-| 4 (same simulated commit, after the v2 fix) | as run 3 | **1** (39 cache hits) | **$0.32** | ~40 s | fixed finding "No longer present", **0 new candidates**, no duplicate |
+| 3 (simulated next commit) | `0c8a151` + a local commit that fixes finding #9 in one file | **2** (39 cache hits) | **$0.64** | 87 s | the fixed finding moved to **"No longer present"**; only the changed file was re-reviewed and re-verified |
 
-Run 3 also exposed a defect in my own design, which I fixed and kept here as evidence: the re-review of the changed file found the *other* known finding in that file again, and classified it `correctness` instead of `concurrency`. Category was part of the v1 fingerprint, so it became a duplicate. The fix (v2): the fingerprint is `file + anchor` only, and the reviewer prompt now lists the findings already recorded for that file so it does not re-report them. `scripts/migrate-fingerprints-v2.ts` migrated the state and the human overrides, and run 4 shows the duplicate no longer appears.
+Run 3 also exposed a defect in my own design, which I fixed and kept here as evidence: the re-review of the changed file found the *other* known finding in that file again, and classified it `correctness` instead of `concurrency`. Category was part of the v1 fingerprint, so it became a duplicate. The fix (v2): the fingerprint is `file + anchor` only, and the reviewer prompt now lists the findings already recorded for that file so it does not re-report them. `scripts/migrate-fingerprints-v2.ts` migrated the state and the human overrides.
 
 ## Scope and verification for this submission
 
@@ -103,8 +102,8 @@ Run 3 also exposed a defect in my own design, which I fixed and kept here as evi
 - **Not in scope:** C++ addons, the Kotlin SDK, docs site, CI scripts. JS/TS only, as the brief allows.
 - **How results were verified, in three tiers:**
   1. *Agent verification* for all 47 candidates (adversarial second pass; reasoning stored per finding).
-  2. *Human code reading* for every finding marked confirmed: I read the cited paths and the callers named in the evidence, and wrote what I checked in `state/overrides.json`.
-  3. *Executed reproductions* for 6 of the 10 confirmed findings (`verification/`, outputs in `verification/outputs.md`): two on Bare with the package's own test runner, three on Node against the real modules, one with the exact handler copied.
+  2. *Human code reading* for every one of the 47 candidates: I read the cited paths and the callers named in the evidence, and wrote the decision and what I checked in `state/overrides.json` (31 confirmed, 16 rejected).
+  3. *Executed reproductions* for 10 of the 31 confirmed findings (`verification/`, outputs in `verification/outputs.md`): three on Bare with the package's own test runner, four on Node against the real modules, three with the exact handler code copied.
 - **Duplicate search:** every human-confirmed finding was searched in upstream issues and pull requests, open and closed, with the verifier's suggested phrases plus the file name. Every query and its timestamp is stored in `state/findings.json` (`duplicates`) and listed per finding in the report and the issues. Searches ran on 2026-11-18.
 
 ## Design choices and alternatives
@@ -142,7 +141,7 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 ## Limitations (honest)
 
 - **Recall is unknown.** Only 40 of 681 candidate files were reviewed, and there is no labelled set of known QVAC bugs to measure what the reviewer misses. Selection is a heuristic.
-- **The agent verifier is lenient.** It confirmed 40 of 47 candidates; human review rejected or downgraded several of those, and conversely the verifier rejected two candidates I would have filed (both rejections were correct). Agent "confirmed" is a lead, not a fact; that is why filing requires a human decision.
+- **The agent verifier is lenient.** Of 47 candidates it confirmed 39, rejected 7 and left 1 uncertain. Human review then rejected 8 of its 39 confirmations (two as already known upstream, the rest below the bar) and downgraded several; conversely the verifier rejected candidates I would have filed, and overturned one of my rejections (both times it was right). Agent "confirmed" is a lead, not a fact; that is why filing requires a human decision.
 - **Severity is coarse** (four levels) and set by the model, then the verifier; the ranking formula is intentionally simple and has not been calibrated against maintainers' priorities.
 - **Single-file units.** Bugs that only appear across several files are found only if the agent follows the references on its own.
 - **Non-determinism.** Two reviews of the same file can word or classify a finding differently; fingerprints are anchored to code to absorb this, and the cache makes a given commit reproducible, but a cache-cold re-run can surface a slightly different set.
@@ -158,7 +157,6 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 4. **Reproduction scaffolding:** let the agent draft the repro test in the package's own runner (brittle/Bare), with a human reviewing and running it.
 5. **Local model backend** (e.g. through QVAC itself) for code that must not leave the machine.
 6. **Feed QVAC's own `quality:audit` hotspots** into selection instead of my churn heuristic.
-7. **Close the loop on issues:** when a filed finding becomes "No longer present", comment on its issue with the commit and close it (today this is a manual step).
 
 ## Demonstrated vs proposed
 
@@ -172,3 +170,5 @@ See [AI_USAGE.md](AI_USAGE.md).
 ## Time spent
 
 Assessment received 09:07 CET on 2026-11-18; first complete version pushed at about 09:45 CET. Timestamps in `state/findings.json` (`runs`), `results/run-log.json` and the duplicate-search log are in UTC and back this up. The agent stages ran in parallel (49 minutes of agent time in about 10 minutes of wall-clock time), which is why the elapsed time is short. Further work, if any, is logged below.
+
+- **Assessment completed (same day):** human decision on all remaining 24 agent leads (18 confirmed, 6 rejected; one of the rejections came from the duplicate search, because PR #4379 documents the behaviour), 2 new executed reproductions, 188 more duplicate searches, 18 more issues filed (#14-#31).

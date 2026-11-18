@@ -1,6 +1,6 @@
 # Findings for tetherto/qvac@0c8a1510ab4f
 
-Generated 2026-11-18T08:40:16.088Z. 9 confirmed by a human, 27 confirmed by the verifier agent only, 1 uncertain, 0 unverified, 10 rejected, 0 no longer present. 47 first seen at this commit.
+Generated 2026-11-18T09:06:42.840Z. 31 confirmed by a human, 0 confirmed by the verifier agent only, 0 uncertain, 0 unverified, 16 rejected, 0 no longer present. 47 first seen at this commit.
 
 ## Confirmed: human-verified (ranked)
 | # | Score | Severity | Category | Location | Finding | Tracked |
@@ -9,63 +9,63 @@ Generated 2026-11-18T08:40:16.088Z. 9 confirmed by a human, 27 confirmed by the 
 | 2 | 5.49 | medium | concurrency | [packages/registry-server/lib/registry-service.js:866](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/lib/registry-service.js#L866) | addModel can hang forever in reseedTracker.waitForComplete when two ingests overlap, or when the tracker is destroyed | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/2) |
 | 3 | 5.49 | medium | concurrency | [packages/registry-server/lib/registry-service.js:1432](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/lib/registry-service.js#L1432) | fillFitBlobs writes back a stale model snapshot, overwriting concurrent metadata updates and re-ingests | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/3) |
 | 4 | 5.25 | medium | error-handling | [packages/inference/src/handlers/load-model/registry.ts:567](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/registry.ts#L567) | Cancelling with clearCache during a registry transfer leaves the partial file or shard directory on disk | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/4) |
-| 5 | 3.15 | medium | correctness | [packages/inference/src/utils/archive.ts:292](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/utils/archive.ts#L292) | Shards inside a top-level folder are extracted but never found, so the load fails | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/5) |
-| 6 | 3.15 | medium | error-handling | [packages/inference/src/utils/archive.ts:170](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/utils/archive.ts#L170) | Synchronous mkdirSync throw inside tar-stream 'entry' listener escapes the promise as an uncaught exception | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/6) |
-| 7 | 1.98 | low | api-contract | [packages/inference/src/schemas/config.ts:226](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/schemas/config.ts#L226) | Documented 'first matching pattern wins' contradicts the implementation, where every match is merged and the last one wins | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/7) |
-| 8 | 1.4 | low | error-handling | [packages/test-suite/src/cli/commands/run-consumer-external.ts:47](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/test-suite/src/cli/commands/run-consumer-external.ts#L47) | Runner killed by a signal (OOM, SIGKILL, crash) is reported as exit code 0 | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/8) |
-| 9 | 1.4 | low | correctness | [packages/registry-server/lib/metrics-server.js:14](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/lib/metrics-server.js#L14) | port 0 (ephemeral) is silently replaced by fixed port 9210 | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/9) |
+| 5 | 3.46 | medium | concurrency | [packages/inference/src/handlers/load-model/hyperdrive.ts:481](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/hyperdrive.ts#L481) | Abort during file lookup or metadata fetch is missed, so the hyperdrive transfer hangs and keeps the lock and corestore | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/11) |
+| 6 | 3.46 | medium | resource-leak | [packages/inference/src/handlers/load-model/hyperdrive.ts:370](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/hyperdrive.ts#L370) | Failed or cancelled seed downloads never close the corestore; a retry cannot reopen it and clearCache deletes the dir while it is still open | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/14) |
+| 7 | 3.15 | medium | correctness | [packages/inference/src/utils/archive.ts:292](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/utils/archive.ts#L292) | Shards inside a top-level folder are extracted but never found, so the load fails | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/5) |
+| 8 | 3.15 | medium | error-handling | [packages/inference/src/utils/archive.ts:170](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/utils/archive.ts#L170) | Synchronous mkdirSync throw inside tar-stream 'entry' listener escapes the promise as an uncaught exception | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/6) |
+| 9 | 1.98 | low | api-contract | [packages/inference/src/schemas/config.ts:226](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/schemas/config.ts#L226) | Documented 'first matching pattern wins' contradicts the implementation, where every match is merged and the last one wins | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/7) |
+| 10 | 1.75 | low | correctness | [packages/inference/src/models/update-models/codegen.ts:233](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/models/update-models/codegen.ts#L233) | getModelByName returns Object.prototype members for names like "constructor", "toString" or "__proto__" instead of undefined | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/12) |
+| 11 | 1.65 | low | resource-leak | [packages/ai-sdk-provider/src/managed/index.ts:295](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/ai-sdk-provider/src/managed/index.ts#L295) | The closeOnParentExit interval is never cleared when startup fails and can later process.exit() the caller | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/15) |
+| 12 | 1.5 | low | correctness | [packages/inference/src/model-fit/run/run.ts:218](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/model-fit/run/run.ts#L218) | An abort that fires during the state-dir await is lost: the fitter still starts and the caller waits up to 30 s instead of getting 'cancelled' | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/16) |
+| 13 | 1.4 | low | error-handling | [packages/test-suite/src/cli/commands/run-consumer-external.ts:47](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/test-suite/src/cli/commands/run-consumer-external.ts#L47) | Runner killed by a signal (OOM, SIGKILL, crash) is reported as exit code 0 | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/8) |
+| 14 | 1.4 | low | correctness | [packages/registry-server/lib/metrics-server.js:14](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/lib/metrics-server.js#L14) | port 0 (ephemeral) is silently replaced by fixed port 9210 | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/9) |
+| 15 | 1.4 | low | correctness | [packages/registry-server/client/lib/profiler.js:46](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/client/lib/profiler.js#L46) | Throughput rates divide swarm-lifetime byte counters by download-only elapsed time, inflating rx/tx per second | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/17) |
+| 16 | 1.4 | low | correctness | [packages/inference/src/handlers/load-model/download-stats.ts:61](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/download-stats.ts#L61) | totalBytesDownloaded/downloadSpeedBps count bytes that were already on disk (resumed partials, cached shards) | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/18) |
+| 17 | 1.31 | low | correctness | [packages/sdk/src/commands/verify/prebuilds.ts:105](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/sdk/src/commands/verify/prebuilds.ts#L105) | A mismatch in the inner addon is blamed on the platform package, which leads to a wrong message and a pin that cannot fix it | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/19) |
+| 18 | 1.28 | low | error-handling | [packages/registry-server/lib/registry-service.js:861](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/lib/registry-service.js#L861) | addModel reports failure after the model is already committed when blind-peer replication stalls | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/20) |
+| 19 | 1.25 | low | correctness | [packages/test-suite/src/cli/utils/local-broker.ts:178](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/test-suite/src/cli/utils/local-broker.ts#L178) | broker.pid records the CLI's own PID, so shutdown on Windows force-kills the CLI before its own cleanup runs | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/10) |
+| 20 | 1.25 | low | concurrency | [packages/sdk/src/client/rpc/node-rpc-client.ts:482](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/sdk/src/client/rpc/node-rpc-client.ts#L482) | close() returns early on a background-stop promise without bumping generation, so a pending getRPC starts a new worker after close() resolved | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/21) |
+| 21 | 1.15 | low | resource-leak | [packages/inference/src/handlers/load-model/hyperdrive.ts:85](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/hyperdrive.ts#L85) | setupHyperdrive leaks an opened Corestore when Hyperdrive.ready() throws | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/22) |
+| 22 | 1.15 | low | correctness | [packages/inference/src/handlers/load-model/coreml-sidecars.ts:207](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/coreml-sidecars.ts#L207) | A cached Core ML set that is missing a bundle is reused forever, so bundles ingested later are never staged | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/23) |
+| 23 | 1.15 | low | resource-leak | [packages/inference/src/handlers/load-model/coreml-sidecars.ts:216](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/coreml-sidecars.ts#L216) | Deleting a model leaves its Core ML sidecar blobs in storage when any staged sidecar file is missing or partial | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/24) |
+| 24 | 1.15 | low | correctness | [packages/ai-sdk-provider/src/managed/serve-process.ts:361](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/ai-sdk-provider/src/managed/serve-process.ts#L361) | An IPv6 serveHost builds an invalid health URL, so every start times out | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/13) |
+| 25 | 1.15 | low | concurrency | [packages/ai-sdk-provider/src/managed/index.ts:100](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/ai-sdk-provider/src/managed/index.ts#L100) | Stealing a dead owner's lock is check-then-delete, so two waiters can both 'win' and spawn duplicate serves | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/25) |
+| 26 | 1.15 | low | correctness | [packages/ai-sdk-provider/src/managed/index.ts:99](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/ai-sdk-provider/src/managed/index.ts#L99) | A lock whose dead owner's pid gets reused is never stolen, so starts on that fleet key time out until that unrelated process exits | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/26) |
+| 27 | 0.98 | low | concurrency | [packages/sdk/src/commands/bundle/scratch.ts:27](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/sdk/src/commands/bundle/scratch.ts#L27) | Scratch folder is visible before its owner.pid is written, so a concurrent removeStaleScratch can delete a live bundle's scratch | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/27) |
+| 28 | 0.98 | low | concurrency | [packages/test-suite/src/cli/commands/run-consumer-external.ts:43](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/test-suite/src/cli/commands/run-consumer-external.ts#L43) | Ctrl+C sends SIGINT to the runner twice, and the second one kills it during graceful shutdown | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/28) |
+| 29 | 0.98 | low | error-handling | [packages/registry-server/lib/metrics-server.js:50](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/lib/metrics-server.js#L50) | Server 'error' listener left as a stale promise reject, so runtime server errors are swallowed | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/29) |
+| 30 | 0.88 | low | correctness | [packages/test-suite/src/cli/utils/process-manager.ts:106](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/test-suite/src/cli/utils/process-manager.ts#L106) | Stale .pid files are never removed, so killTracked can SIGTERM unrelated processes that reused those PIDs | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/30) |
+| 31 | 0.88 | low | error-handling | [packages/test-suite/src/cli/utils/process-manager.ts:67](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/test-suite/src/cli/utils/process-manager.ts#L67) | spawnTracked has no 'error' listener, so a failed spawn crashes the CLI and skips cleanup | [issue](https://github.com/carlocifarelli/qvac-quality-review/issues/31) |
 
 ## Confirmed by the verifier agent, not yet human-verified (ranked)
 Treat as leads: the adversarial pass could not disprove them, but nobody has reproduced them yet.
 
 | # | Score | Severity | Category | Location | Finding | Tracked |
 |---|---|---|---|---|---|---|
-| 1 | 3.84 | medium | correctness | [packages/registry-server/lib/registry-service.js:451](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/lib/registry-service.js#L451) | Blind-peering setup and reseed mirror the legacy 'models' core instead of the active generation's core | - |
-| 2 | 3.75 | medium | correctness | [packages/test-suite/src/cli/utils/local-broker.ts:178](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/test-suite/src/cli/utils/local-broker.ts#L178) | broker.pid records the CLI's own PID, so shutdown on Windows force-kills the CLI before its own cleanup runs | - |
-| 3 | 3.46 | medium | concurrency | [packages/inference/src/handlers/load-model/hyperdrive.ts:481](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/hyperdrive.ts#L481) | Abort during file lookup or metadata fetch is missed, so the hyperdrive transfer hangs and keeps the lock and corestore | - |
-| 4 | 3.46 | medium | resource-leak | [packages/inference/src/handlers/load-model/hyperdrive.ts:370](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/hyperdrive.ts#L370) | Failed or cancelled seed downloads never close the corestore; a retry cannot reopen it and clearCache deletes the dir while it is still open | - |
-| 5 | 3.46 | medium | correctness | [packages/ai-sdk-provider/src/managed/index.ts:99](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/ai-sdk-provider/src/managed/index.ts#L99) | A lock whose dead owner's pid gets reused is never stolen, so starts on that fleet key time out until that unrelated process exits | - |
-| 6 | 1.83 | low | resource-leak | [packages/registry-server/client/lib/client.js:760](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/client/lib/client.js#L760) | The abort listener added in _streamBlobToFile is never removed, so listeners and stream references build up on the caller's signal | - |
-| 7 | 1.75 | low | correctness | [packages/inference/src/models/update-models/codegen.ts:233](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/models/update-models/codegen.ts#L233) | getModelByName returns Object.prototype members for names like "constructor", "toString" or "__proto__" instead of undefined | - |
-| 8 | 1.65 | low | resource-leak | [packages/ai-sdk-provider/src/managed/index.ts:295](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/ai-sdk-provider/src/managed/index.ts#L295) | The closeOnParentExit interval is never cleared when startup fails and can later process.exit() the caller | - |
-| 9 | 1.5 | low | correctness | [packages/inference/src/model-fit/run/run.ts:218](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/model-fit/run/run.ts#L218) | An abort that fires during the state-dir await is lost: the fitter still starts and the caller waits up to 30 s instead of getting 'cancelled' | - |
-| 10 | 1.4 | low | correctness | [packages/registry-server/client/lib/profiler.js:46](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/client/lib/profiler.js#L46) | Throughput rates divide swarm-lifetime byte counters by download-only elapsed time, inflating rx/tx per second | - |
-| 11 | 1.4 | low | correctness | [packages/inference/src/handlers/load-model/download-stats.ts:61](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/download-stats.ts#L61) | totalBytesDownloaded/downloadSpeedBps count bytes that were already on disk (resumed partials, cached shards) | - |
-| 12 | 1.31 | low | correctness | [packages/sdk/src/commands/verify/prebuilds.ts:105](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/sdk/src/commands/verify/prebuilds.ts#L105) | A mismatch in the inner addon is blamed on the platform package, which leads to a wrong message and a pin that cannot fix it | - |
-| 13 | 1.28 | low | error-handling | [packages/registry-server/lib/registry-service.js:861](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/lib/registry-service.js#L861) | addModel reports failure after the model is already committed when blind-peer replication stalls | - |
-| 14 | 1.25 | low | concurrency | [packages/sdk/src/client/rpc/node-rpc-client.ts:482](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/sdk/src/client/rpc/node-rpc-client.ts#L482) | close() returns early on a background-stop promise without bumping generation, so a pending getRPC starts a new worker after close() resolved | - |
-| 15 | 1.15 | low | resource-leak | [packages/inference/src/handlers/load-model/hyperdrive.ts:85](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/hyperdrive.ts#L85) | setupHyperdrive leaks an opened Corestore when Hyperdrive.ready() throws | - |
-| 16 | 1.15 | low | correctness | [packages/inference/src/handlers/load-model/coreml-sidecars.ts:207](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/coreml-sidecars.ts#L207) | A cached Core ML set that is missing a bundle is reused forever, so bundles ingested later are never staged | - |
-| 17 | 1.15 | low | resource-leak | [packages/inference/src/handlers/load-model/coreml-sidecars.ts:216](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/inference/src/handlers/load-model/coreml-sidecars.ts#L216) | Deleting a model leaves its Core ML sidecar blobs in storage when any staged sidecar file is missing or partial | - |
-| 18 | 1.15 | low | correctness | [packages/ai-sdk-provider/src/managed/serve-process.ts:361](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/ai-sdk-provider/src/managed/serve-process.ts#L361) | An IPv6 serveHost builds an invalid health URL, so every start times out | - |
-| 19 | 1.15 | low | concurrency | [packages/ai-sdk-provider/src/managed/index.ts:100](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/ai-sdk-provider/src/managed/index.ts#L100) | Stealing a dead owner's lock is check-then-delete, so two waiters can both 'win' and spawn duplicate serves | - |
-| 20 | 1.11 | low | error-handling | [packages/cli/src/openai/coverage/parse-spec.ts:129](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/cli/src/openai/coverage/parse-spec.ts#L129) | Live spec fetch fails outright when the cache directory isn't writable, even though the download succeeded | - |
-| 21 | 1.11 | low | concurrency | [packages/cli/src/openai/coverage/parse-spec.ts:169](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/cli/src/openai/coverage/parse-spec.ts#L169) | Spec, SHA and ETag cache files are updated separately, so an interrupted or concurrent run leaves a hash-mismatched cache | - |
-| 22 | 0.98 | low | concurrency | [packages/sdk/src/commands/bundle/scratch.ts:27](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/sdk/src/commands/bundle/scratch.ts#L27) | Scratch folder is visible before its owner.pid is written, so a concurrent removeStaleScratch can delete a live bundle's scratch | - |
-| 23 | 0.98 | low | concurrency | [packages/test-suite/src/cli/commands/run-consumer-external.ts:43](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/test-suite/src/cli/commands/run-consumer-external.ts#L43) | Ctrl+C sends SIGINT to the runner twice, and the second one kills it during graceful shutdown | - |
-| 24 | 0.98 | low | error-handling | [packages/registry-server/lib/metrics-server.js:50](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/lib/metrics-server.js#L50) | Server 'error' listener left as a stale promise reject, so runtime server errors are swallowed | - |
-| 25 | 0.98 | low | resource-leak | [packages/cli/src/serve/lib/ffmpeg.ts:38](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/cli/src/serve/lib/ffmpeg.ts#L38) | runFfmpeg has no cancellation path: aborted requests/jobs leave ffmpeg running until exit or the 5-minute timeout | - |
-| 26 | 0.88 | low | correctness | [packages/test-suite/src/cli/utils/process-manager.ts:106](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/test-suite/src/cli/utils/process-manager.ts#L106) | Stale .pid files are never removed, so killTracked can SIGTERM unrelated processes that reused those PIDs | - |
-| 27 | 0.88 | low | error-handling | [packages/test-suite/src/cli/utils/process-manager.ts:67](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/test-suite/src/cli/utils/process-manager.ts#L67) | spawnTracked has no 'error' listener, so a failed spawn crashes the CLI and skips cleanup | - |
 
 ## Uncertain (needs a human or a runtime test)
 | # | Score | Severity | Category | Location | Finding | Tracked |
 |---|---|---|---|---|---|---|
-| 1 | 0.49 | low | error-handling | [packages/registry-server/client/lib/profiler.js:185](https://github.com/tetherto/qvac/blob/0c8a1510ab4fe89893de174b07eb4901a2f3e9fd/packages/registry-server/client/lib/profiler.js#L185) | cleanupResources skips store close and temp-dir removal if swarm.destroy() rejects, and masks the original error | - |
 
 ## Rejected
 | Location | Claim | Why rejected |
 |---|---|---|
 | packages/inference/src/handlers/load-model/registry-download-utils.ts:165 | Cancelling during post-download size/checksum verification is ignored: the file is published and the call resolves as success | The headline claim, that the call resolves as success and the load continues, is false. It is true that downloadSingleFileFromRegistry (registry-download-utils.ts:105-176) checks the signal only at entry and in the registry client. measureChecksum (utils/checksum.ts:91) takes no signal. But callers never see the inner task's return value directly. downloadModelFromRegistry wraps the work in startO |
+| packages/cli/src/openai/coverage/parse-spec.ts:129 | Live spec fetch fails outright when the cache directory isn't writable, even though the download succeeded | Mechanism is correct (mkdirSync/writeFileAtomically unguarded in parse-spec.ts:129/168), but this is the internal `qvac openai coverage` report generator run by maintainers; an unwritable ~/.cache is an environment problem with a clear error. Below the bar. |
+| packages/cli/src/openai/coverage/parse-spec.ts:169 | Spec, SHA and ETag cache files are updated separately, so an interrupted or concurrent run leaves a hash-mismatched cache | Correct that spec/sha/etag are replaced separately (parse-spec.ts:168-175), but the failure is loud ('cached OpenAI specification hash mismatch') and fixed by re-running online, in a maintainer-only coverage tool. Below the bar. |
 | packages/registry-server/client/lib/client.js:361 | Blob-core swarm topics are joined on every download and retry but never left, so DHT discovery sessions pile up | The literal fact holds: client.js:310, 361 and 465 call hyperswarm.join(core.discoveryKey, {client:true, server:false}) and nothing in client.js calls leave(). _doReleaseDownload (578-612) only closes blobs and core, and the swarm is torn down only in _close (837). But the claimed impact does not survive a read of hyperswarm 4.17.2:  1) Nothing is announced. Every join is client:true, server:false |
+| packages/registry-server/client/lib/client.js:760 | The abort listener added in _streamBlobToFile is never removed, so listeners and stream references build up on the caller's signal | Correct that the abort listener at client.js:760-768 is never removed. But every in-repo caller passes a per-operation signal (registry-download-utils.ts:100-136, model-fit/description/fetch.ts:176-195 with its own controller), so at most maxRetries+1 = 4 listeners hold already-destroyed streams until the signal is collected. Only a caller reusing one long-lived signal across many downloads would  |
 | packages/test-suite/src/cli/utils/process-manager.ts:231 | Shell command built by interpolating the device serial and package name into execSync | No trust boundary. The serial and package name come from the operator's own test-suite config/CLI on a developer or CI machine; whoever controls them can already run arbitrary commands. Using execFile would be tidier, but this is not a security finding worth a maintainer's time. |
 | packages/test-suite/src/cli/utils/process-manager.ts:212 | Parent never closes the device.log fd after handing it to the spawned logger | The code is as described. process-manager.ts:212 opens logFd, and the two success returns (:222, :240) never close the parent's copy. Only the fall-through path closes it (:244). But the claimed impact does not hold up.  1. It is called once per process. startDeviceLogCapture has exactly two callers, run-local.ts:583 (Android) and run-local.ts:745 (iOS). Each runs once per CLI invocation, so at mo |
 | packages/inference/src/handlers/load-model/hyperdrive.ts:374 | Corestore dir is keyed per drive but the lock is per file, so concurrent downloads from one drive collide and one deletes the other's store | Real, but already known upstream. Dedupe surfaced merged PR tetherto/qvac#5689 ("stop separate processes from corrupting or deleting each other's model downloads"), whose 'Known limits' section says: "A Hyperdrive corestore can still be removed while another process uses it, since it is shared by every file in a drive but locked per file." Not filed as an issue there, but acknowledged by the maint |
 | packages/test-suite/src/cli/commands/run-consumer-desktop.ts:51 | A consumer killed by a signal makes the CLI exit with code 0 | Duplicate root cause of qr2:6b77a3edfe85576e (same `process.exit(code \|\| 0)` handler); filed together as one finding with all three locations. |
+| packages/registry-server/lib/registry-service.js:451 | Blind-peering setup and reseed mirror the legacy 'models' core instead of the active generation's core | The code reads as described (registry-service.js:441-451 mirrors the hard-coded legacy 'models' core), but the duplicate search surfaced merged PR tetherto/qvac#4379, which introduced generations and says it "leaves production blob distribution and reseeding to the separate operational workflow". The runbook (packages/registry-server/docs/BLOB_CORE_ROTATION.md:59-67) tells operators to hand the ne |
 | packages/inference/src/handlers/get-model-info.ts:41 | ModelNotFoundError message is missing its opening quote around the model name | Real but cosmetic: the error message at get-model-info.ts:41 lacks an opening quote. No behavioural impact; below the bar for this report (would be a one-character drive-by fix). |
 | packages/ai-sdk-provider/src/managed/serve-process.ts:417 | stopServe returns early when the serve already exited, leaving the worker in its process group running | The control flow the reviewer describes is accurate. stopServe (serve-process.ts:417) returns as soon as exitCode or signalCode is set. On spawnServe's error path (catch at :371, after a ServeExitedError from waitForHealth at :196 or from waitForReady at :254), nothing sends process.kill(-pid). The runner's post-start 'exit' handler (runner.ts:148) also never signals the group.  The impact claim f |
 | packages/test-suite/src/cli/commands/run-consumer-electron.ts:205 | Electron consumer killed by a signal (crash/OOM/timeout kill) exits the runner with code 0 | Duplicate root cause of qr2:6b77a3edfe85576e (same `process.exit(code \|\| 0)` handler); filed together as one finding with all three locations. |
+| packages/cli/src/serve/lib/ffmpeg.ts:38 | runFfmpeg has no cancellation path: aborted requests/jobs leave ffmpeg running until exit or the 5-minute timeout | True that runFfmpeg takes no AbortSignal (ffmpeg.ts:3-10, 38-113), but the work is bounded by the 5-minute SIGKILL timeout and its output is only discarded; no wrong result or leak beyond that bound. This is a cancellation feature request, not a defect; the verifier also called the impact overstated. |
 | packages/registry-server/client/lib/profiler.js:173 | Swarm, store and temp dir leak if setup fails before the try/finally | The ordering the claim describes is real: tmpdir (profiler.js:167), the Corestore (169-170) and the Hyperswarm (172) are all created before the try at 192. But the failure paths it relies on are not realistic.  1. The swarm only leaks if something between line 172 and line 192 throws. That code is all synchronous and practically cannot throw:    - `HypercoreStats.fromCorestore` (hypercore-stats@2. |
+| packages/registry-server/client/lib/profiler.js:185 | cleanupResources skips store close and temp-dir removal if swarm.destroy() rejects, and masks the original error | The ordering is fragile (profiler.js:184-190, awaited in finally at 296), but it needs swarm.destroy() or store.close() to reject, which I could not show happens; the impact is a leftover temp dir in a diagnostic CLI. Speculative, below the bar. |
 
 ## Details
 
@@ -269,6 +269,94 @@ Read registry.ts:396 and :567 (cleanup only if `error instanceof DownloadCancell
 
 <sub>fingerprint `qr2:6211347ee9db2601` · first seen at 0c8a1510ab4f</sub>
 
+### Abort during file lookup or metadata fetch is missed, so the hyperdrive transfer hangs and keeps the lock and corestore
+
+**File:** `packages/inference/src/handlers/load-model/hyperdrive.ts:481`  
+**Category:** concurrency · **Severity:** medium · **Confidence:** medium · **Status:** confirmed
+
+### Evidence
+downloadAndValidateFile registers the reject-on-abort listener only at line 481. That comes after validateFileExistence (lines 405-406), which awaits drive.core.update() and drive.entry(..., { wait: true }) (lines 160, 167) and can block until a peer answers. If the signal aborts in that window, the outer `cleanup` (lines 306-314) suspends the swarm, so the pending drive.entry and the read stream never get blocks. When execution reaches line 481 the signal is already aborted, and addEventListener on an already-aborted signal never fires. There is no `if (signal.aborted)` check before the await at 476. The promise never settles and nothing has timeouts. download-manager.ts:185-189 settles the subscriber on its own, so the caller sees a cancellation. Meanwhile the background startDownload promise stays pending forever. It holds the `await using` download lock (hyperdrive.ts:747), the open Corestore/Hyperdrive and its entry in runningDownloads.
+
+### Impact
+After a user cancels a pear:// download early (while peers are still being found or the entry/blob metadata is still arriving), the next load of the same model waits forever in acquireDownloadLock or fails to open the still-locked corestore. Shutdown, which waits for runningDownloads, can also hang.
+
+### Reproduction
+Start loading a hyperdrive model while the seeding peer is offline or slow, so drive.entry waits. Cancel the request, then bring the peer online or retry the load: the retry logs '⏳ … is being downloaded elsewhere' and never proceeds. In a unit test, stub drive.entry to resolve after the signal is aborted and observe that downloadAndValidateFile never settles.
+
+### Suggested fix
+Check `if (signal?.aborted) throw new DownloadCancelledError()` right before creating the streams and inside the Promise at 476. Also race validateFileExistence against the abort signal, or pass a timeout or abort to drive.entry/update. Remove the listener once the promise settles.
+
+### Adversarial verification (agent)
+The core defect is real. In downloadAndValidateFile (hyperdrive.ts:395-482), validateFileExistence runs first (lines 405-406). It awaits drive.core.update() (line 160), drive.entry(..., {wait:true}) (line 167) and drive.getBlobs()/blobs.core.has(). The only abort hookup in this function is the addEventListener at line 481, and nothing checks `signal.aborted` before it. A listener added to an already-aborted signal never fires. So an abort during the lookup is lost, and the promise at line 476 can only settle on stream finish or stream error. The callers do not guard this either. downloadSingleFileToFilesystem checks `signal.aborted` only before setup (line 298). The sharded loop checks it only before and after each downloadAndValidateFile call (lines 609, 670). Nothing in this path has a timeout. In download-manager.ts, attachRequestBinding settles the subscriber on its own (lines 185-189), and startOrJoinDownload starts a new transfer when the existing one is aborted (line 229). The orphaned startDownload promise keeps the `await using` lock (line 747) and stays in runningDownloads, and cleanupDownloads awaits it (line 473).
+
+The reviewer's mechanism is partly wrong, and that lowers the severity. The abort `cleanup` (lines 306-312) sets `swarm.suspended = true` before it calls `swarm.suspend()`. In hyperswarm 4.17.x, suspend() starts with `if (this.suspended) return` (index.js:611), so the call does nothing. Existing connections are not destroyed, and the flag only blocks new connections (_attemptClientConnections at line 287, incoming at line 347). That gives two outcomes:
+(a) A peer is already connected when the user cancels. Replication keeps going, the entry and blob blocks arrive, and the whole file downloads and validates while the cancel is ignored. The lock is held for the full transfer and then released, so this is not a permanent hang. It hangs only if that peer later drops, because no reconnection is possible.
+(b) The user cancels while peers are still being found. Peers that discovery queues are never dialled. swarm.flush() can then stay pending, because its pending-flush `missing` count never decreases (index.js:577-583, 142-150). doneFindingPeers is then never called, and drive.core.update() on an empty core waits on findingPeers. The result is a permanent hang that keeps the lock and the corestore, matching the claimed impact.
+
+The path is reachable from a public entry point: a user cancels a pear:// model load early. Outcome (b) depends on hypercore/hyperswarm runtime timing, and outcome (a) is a cancel that is ignored rather than a hang. I rate it medium, not high: the timing window is narrow, but when it hits, the stuck lock persists until restart. A real fix would check `signal.aborted` before line 476 and race the lookup awaits against the signal. Separately, the `swarm.suspended = true` line stops suspend() from ever tearing down connections, which is a second bug.
+
+### Human verification
+Reproduced on Bare with a stub drive (verification/inference-hyperdrive-abort.repro.test.ts): aborting at 50 ms, while drive.entry() is still resolving, leaves downloadAndValidateFile pending 2 s later; the control that aborts at 300 ms, after the lookup, rejects with DownloadCancelledError at once. Cause: the abort listener is added at hyperdrive.ts:481 on a signal that may already be aborted, with no `signal.aborted` check before it. Uncertainty: the stub models the suspended swarm as a read stream that never ends; with real peers the stream could still end or error, in which case the symptom is a slow cancel rather than a hang. Either way the background download keeps its lock and corestore until then.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue hyperdrive download cancel hangs during file lookup` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request hyperdrive download cancel hangs during file lookup` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue abort listener registered after signal already aborted` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request abort listener registered after signal already aborted` on 2026-11-18: 3 results: [QVAC-26968 feat[api|bc]: SDK caller sessions, model leases and scoped cancellation](https://github.com/tetherto/qvac/pull/5541) (closed), [QVAC-18183 feat[bc]: CLI cancel bridge + cancelHandler retirement](https://github.com/tetherto/qvac/pull/2074) (closed), [QVAC-19082 feat[api]: add text-to-video support with WAN models to the SDK](https://github.com/tetherto/qvac/pull/2129) (closed)
+- `repo:tetherto/qvac is:issue download lock not released after cancelling pear download` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request download lock not released after cancelling pear download` on 2026-11-18: 1 results: [QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow](https://github.com/tetherto/qvac/pull/5186) (closed)
+- `repo:tetherto/qvac is:issue swarm.suspend no-op because suspended set true first` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request swarm.suspend no-op because suspended set true first` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue hyperdrive` on 2026-11-18: 6 results: [[Bug]: Arbitrary file write via sharded HTTP model URLs on Windows (path traversal)](https://github.com/tetherto/qvac/issues/5802) (open), [[Bug]: unloadModel({ clearStorage: true }) deletes the whole folder of a local sharded model](https://github.com/tetherto/qvac/issues/5593) (open), [[Bug]: @qvac/diffusion-cpp still DT_NEEDED-links libvulkan.so.1 on linux-arm64; eager addon load blocks all CPU inference (follow-up to #1823)](https://github.com/tetherto/qvac/issues/3853) (closed)
+- `repo:tetherto/qvac is:pull-request hyperdrive` on 2026-11-18: 96 results: [fix[notask]: prevent arbitrary file write via sharded HTTP model URLs on Windows](https://github.com/tetherto/qvac/pull/5801) (open), [QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads](https://github.com/tetherto/qvac/pull/5689) (closed), [QVAC-26838 feat[api]: run the SDK in the browser over a Web Worker transport](https://github.com/tetherto/qvac/pull/5375) (open)
+
+<sub>fingerprint `qr2:d856f8e3fc6586be` · first seen at 0c8a1510ab4f</sub>
+
+### Failed or cancelled seed downloads never close the corestore; a retry cannot reopen it and clearCache deletes the dir while it is still open
+
+**File:** `packages/inference/src/handlers/load-model/hyperdrive.ts:370`  
+**Category:** resource-leak · **Severity:** medium · **Confidence:** medium · **Status:** confirmed
+
+### Evidence
+In both finally blocks (lines 367-391 and 711-726) cleanupHyperdrive runs only when `!seed`, whatever the outcome. For seed=true, an error (checksum mismatch, NoBlobFoundError, network failure) or an abort leaves the Corestore, Hyperdrive and swarm open. On abort, `cleanup` has already suspended the swarm, so the open swarm is not even seeding. A retry calls setupHyperdrive with the same corestoreDir while the old Corestore still holds its storage lock. Also, if the user aborts with clearCache, line 389/724 deletes corestoreDir while that corestore is still open. The comment at line 372 flags exactly this as an EBUSY hazard on Windows.
+
+### Impact
+With seed: true, one failed or cancelled download makes every later attempt for that drive fail until the process restarts. Handles and swarm connections leak, and clearCache can fail with EBUSY or leave a corrupted store.
+
+### Reproduction
+loadModel with seed: true for a hyperdrive model whose registry checksum mismatches, or cancel it mid-download. Then call loadModel again for the same model: opening the corestore fails because the previous instance still holds the lock.
+
+### Suggested fix
+Call cleanupHyperdrive(setup) in the finally block whenever downloadSucceeded is false, and keep the setup alive only for a successful seed.
+
+### Adversarial verification (agent)
+I read hyperdrive.ts and the defect holds. In downloadSingleFileToFilesystem (finally block, lines 367-391) and downloadShardedFilesToFilesystem (lines 711-726), cleanupHyperdrive(setup) runs only inside `if (!seed)`, and no other branch closes the setup. When seed is true, keeping things open is intended after a successful download (that is what seeding means). It is not intended after an error or an abort. downloadAndValidateFile can throw FileNotFoundError, NoBlobFoundError, ChecksumValidationFailedError, size mismatch or stream errors. Abort throws DownloadCancelledError, and the abort `cleanup` listener has already suspended the swarm. In all of those cases the Corestore, Hyperdrive and Hyperswarm are left open and registered, and nothing in the caller (startOrJoinDownload or the download lock) closes them.
+
+The path is reachable from public APIs: loadModel and downloadAsset both pass `seed` through handler.ts, download-asset.ts and resolve.ts. resolve.ts only checks that the source is a hyperdrive.
+
+A retry uses the same getCorestoreDir(hyperdriveKey) and setupHyperdrive always builds `new Corestore(corestoreDir)`. No cached instance is reused. corestore ^7.11 is backed by hypercore-storage/RocksDB, which holds an exclusive LOCK on the directory, so a second open in the same process should fail. That is likely, but I could not run it. Even if the reopen worked, the old handles and swarm would still leak.
+
+The clearCache branch runs regardless of `seed`, so with seed=true it calls deleteCorestoreDirectory while the store is still open. The comment on line 372 names that ordering as the Windows EBUSY hazard. deleteCorestoreDirectory swallows the error, so the result is a silently failed or partial delete, not a thrown error.
+
+There is no test or comment saying the failure path is meant to leave things open. I am rating it medium, not high, because it only affects the opt-in seed=true path and only after a failure or cancel. Restarting the process clears it.
+
+### Human verification
+Read hyperdrive.ts:367-391 and 711-726: cleanupHyperdrive runs only when `!seed`, whatever the outcome, so with seed=true a failed or aborted download keeps Corestore, Hyperdrive and a suspended swarm open. A retry reopens the same corestoreDir while the storage lock is held, and clearCache removes a directory that is still open. Same file as #11; seed is opt-in, so it affects seeding users only.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue seed corestore not closed on failed download` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request seed corestore not closed on failed download` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue hyperdrive seed retry fails corestore lock` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request hyperdrive seed retry fails corestore lock` on 2026-11-18: 1 results: [QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads](https://github.com/tetherto/qvac/pull/5689) (closed)
+- `repo:tetherto/qvac is:issue clearCache EBUSY seeding corestore` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request clearCache EBUSY seeding corestore` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue cleanupHyperdrive skipped when seed true` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request cleanupHyperdrive skipped when seed true` on 2026-11-18: 1 results: [QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads](https://github.com/tetherto/qvac/pull/5689) (closed)
+- `repo:tetherto/qvac is:issue hyperdrive` on 2026-11-18: 6 results: [[Bug]: Arbitrary file write via sharded HTTP model URLs on Windows (path traversal)](https://github.com/tetherto/qvac/issues/5802) (open), [[Bug]: unloadModel({ clearStorage: true }) deletes the whole folder of a local sharded model](https://github.com/tetherto/qvac/issues/5593) (open), [[Bug]: @qvac/diffusion-cpp still DT_NEEDED-links libvulkan.so.1 on linux-arm64; eager addon load blocks all CPU inference (follow-up to #1823)](https://github.com/tetherto/qvac/issues/3853) (closed)
+- `repo:tetherto/qvac is:pull-request hyperdrive` on 2026-11-18: 96 results: [fix[notask]: prevent arbitrary file write via sharded HTTP model URLs on Windows](https://github.com/tetherto/qvac/pull/5801) (open), [QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads](https://github.com/tetherto/qvac/pull/5689) (closed), [QVAC-26838 feat[api]: run the SDK in the browser over a Web Worker transport](https://github.com/tetherto/qvac/pull/5375) (open)
+
+<sub>fingerprint `qr2:4facb8033b0fee0e` · first seen at 0c8a1510ab4f</sub>
+
 ### Shards inside a top-level folder are extracted but never found, so the load fails
 
 **File:** `packages/inference/src/utils/archive.ts:292`  
@@ -400,6 +488,133 @@ Reproduced with verification/F-device-defaults.ts: with user patterns [samsung-s
 
 <sub>fingerprint `qr2:ccf5e961f2ad013e` · first seen at 0c8a1510ab4f</sub>
 
+### getModelByName returns Object.prototype members for names like "constructor", "toString" or "__proto__" instead of undefined
+
+**File:** `packages/inference/src/models/update-models/codegen.ts:233`  
+**Category:** correctness · **Severity:** low · **Confidence:** high · **Status:** confirmed
+
+### Evidence
+The template (codegen.ts:222-224) emits `modelNameCompatibilityAliases` as a plain object literal, so it inherits from Object.prototype. When no catalog entry matches, `getModelByName` (codegen.ts:233, generated at models.ts:29617) falls back to `modelNameCompatibilityAliases[name]` with no own-property check. `name` is an arbitrary string, so 'constructor' returns the `Object` function, 'toString'/'hasOwnProperty' return functions, and '__proto__' returns Object.prototype. All of these are typed as `RegistryItem`. The JSDoc says the function returns `undefined` when no catalog entry has that name.
+
+### Impact
+A caller that looks up a user-supplied or config-supplied model name, such as the documented `getModelByName("WHISPER_TINY_Q8_0")` usage, gets a truthy non-RegistryItem back for these keys. Code then reads `.registryPath`, `.blobCoreKey` and similar fields as undefined and fails later with confusing errors, or builds a source like `registry://undefined/undefined`, instead of taking the not-found branch.
+
+### Reproduction
+`import { getModelByName } from '@qvac/sdk/models/registry'; console.log(getModelByName('constructor'))` prints `[Function: Object]`, not `undefined`. `getModelByName('__proto__')` returns `{}` (Object.prototype).
+
+### Suggested fix
+Emit the lookup table with a null prototype, e.g. `Object.assign(Object.create(null), { ... })`, or a `Map`, or guard it with `Object.hasOwn(modelNameCompatibilityAliases, name) ? modelNameCompatibilityAliases[name] : undefined`. Then regenerate models.ts.
+
+### Adversarial verification (agent)
+I could not disprove the claim. codegen.ts:222-224 emits `modelNameCompatibilityAliases` as a plain `{...}` literal. It is not built with `Object.create(null)` or a `Map`. At codegen.ts:233 (generated as models.ts:29617), `getModelByName` returns `models.find(...) ?? modelNameCompatibilityAliases[name]` without an own-property check (no `Object.hasOwn`). In JavaScript this means `getModelByName('constructor')` returns `Object`, `'toString'` and `'hasOwnProperty'` return functions, and `'__proto__'` returns `Object.prototype`. None of these is undefined, which breaks the JSDoc promise that the function returns `undefined` when nothing matches. The function is public. models/registry/index.ts re-exports `@/models/registry/models`, and both @qvac/inference (package.json:82) and @qvac/sdk (package.json:157) export `./models/registry`. The docs (ocr-ggml registry-models.md:145) show it being called with a string. Nothing guards the input: there is no schema validation, and no internal caller wraps it. The only use I found is model-constant-compatibility.test.ts, which tests only real legacy names. The impact is overstated, though. No code inside the repo passes untrusted names to it. Only an external caller doing a lookup by a name taken from config could hit it, and only with Object.prototype key names, which is unlikely. The likely result is a confusing error later on, with no security impact. The fix is one line: use `Object.hasOwn`, `Object.create(null)`, or a `Map`. Severity stays low.
+
+### Human verification
+Reproduced with verification/get-model-by-name-prototype.repro.ts: getModelByName('constructor') returns the Object function, 'toString' and 'hasOwnProperty' return functions and '__proto__' returns an object, while the JSDoc promises undefined for unknown names. Public via @qvac/inference/models. Low severity: callers get a confusing downstream error instead of 'not found'. Fix: Object.hasOwn check or a Map, in codegen.ts (models.ts is generated).
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue getModelByName prototype` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request getModelByName prototype` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue getModelByName constructor` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request getModelByName constructor` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue modelNameCompatibilityAliases hasOwn` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request modelNameCompatibilityAliases hasOwn` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue getModelByName returns non-undefined` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request getModelByName returns non-undefined` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue codegen` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request codegen` on 2026-11-18: 36 results: [QVAC-27808 feat[bc|mod]: point EmbeddingGemma-300M constants at the Dense-layer models](https://github.com/tetherto/qvac/pull/5634) (closed), [chore[notask]: release @qvac/sdk 0.17.2 (lockstep inference/sdk/bare/python)](https://github.com/tetherto/qvac/pull/3895) (closed), [fix[notask]: repair model drift detection in check-models](https://github.com/tetherto/qvac/pull/3501) (closed)
+
+<sub>fingerprint `qr2:b9cb8c16bc51e7cb` · first seen at 0c8a1510ab4f</sub>
+
+### The closeOnParentExit interval is never cleared when startup fails and can later process.exit() the caller
+
+**File:** `packages/ai-sdk-provider/src/managed/index.ts:295`  
+**Category:** resource-leak · **Severity:** low · **Confidence:** high · **Status:** confirmed
+
+### Evidence
+With closeOnParentExit, `parentWatch` is armed at lines 193-205, before resolveServe. If resolveServe throws (ServeStartTimeoutError, ServeSpawnFailedError, an fs error), the catch at lines 291-297 only removes the consumer and rethrows. `parentWatch` is not cleared, and no provider or close() is returned that could clear it. The interval is unref'd, so it doesn't keep the loop alive, but it keeps polling for the life of the process. If the parent later goes away, it calls `process.exit(0)` (line 201) for a provider that does not exist. Each failed attempt adds another interval.
+
+### Impact
+A host that catches the startup failure and keeps running (e.g. falls back to another backend or retries) is left with leaked timers, one per failed attempt. If the parent dies later, the host is force-exited with code 0 by an object it never got back, without its own shutdown logic.
+
+### Reproduction
+Call startManagedQvac({models, closeOnParentExit: true, serveBinPath: '/nonexistent'}) and catch the rejection. Check that the interval is still registered (e.g. via process._getActiveHandles or a fake-timer spy on setInterval/clearInterval): it was never cleared.
+
+### Suggested fix
+In the catch block around resolveServe (line 291), add `if (parentWatch !== undefined) clearInterval(parentWatch)` before rethrowing.
+
+### Adversarial verification (agent)
+The code matches the claim. In packages/ai-sdk-provider/src/managed/index.ts, `parentWatch` is armed at lines 193-205, before `resolveServe()`. The catch at lines 291-297 only calls `removeConsumer` and rethrows. It never calls `clearInterval(parentWatch)`. The only other place that clears the interval is `close()` (line 375), and `close()` only exists after startup succeeds. You can reach this from the public API: `startManagedQvac` (or `createQvac` with mode 'managed') with `closeOnParentExit: true` and a startup failure, such as ServeStartTimeoutError, ServeSpawnFailedError, or an fs/lock error from addConsumer or writeEphemeralConfig. No finally block or wrapper guards it, and no test or comment says the interval should outlive a failed start. Each failed attempt leaves one more unref'd 2s interval running.
+
+The claimed impact is overstated, though. According to types.ts:77-85, `closeOnParentExit` is opt-in and only meant for daemon-style hosts "whose lifetime must not exceed its parent's", and it explicitly "exits this process" when the parent dies. A host that sets it has already agreed to be exited when the parent dies. So the leftover watch exiting the process after a failed start is close to what that host asked for, not an unexpected kill of an unrelated caller. The real problems are:
+- the timers leak, one per retry, but each is cheap and unref'd;
+- the behavior is inconsistent: a successful provider stops the pact on `close()`, while a failed start can never stop it;
+- the exit skips the host's own shutdown, and the stale `removeConsumer` runs on an already-removed marker, which does no harm.
+
+It's a real but minor lifecycle bug in an opt-in, niche path, so I'm keeping the severity at low.
+
+### Human verification
+Read index.ts:193-205 and 291-297: parentWatch is armed before resolveServe; on startup failure the catch only removes the consumer and rethrows, never clearInterval. The unref'd interval keeps polling and calls process.exit(0) if the original parent goes away, killing a caller that handled the error and moved on. Low: needs closeOnParentExit and a failed start.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue closeOnParentExit interval not cleared on startup failure` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request closeOnParentExit interval not cleared on startup failure` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue parentWatch leak startManagedQvac error` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request parentWatch leak startManagedQvac error` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue managed provider process.exit after failed start` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request managed provider process.exit after failed start` on 2026-11-18: 1 results: [QVAC-23222 fix[bc]: harden serve CORS and managed authentication](https://github.com/tetherto/qvac/pull/3744) (closed)
+- `repo:tetherto/qvac is:issue clearInterval parentWatch catch resolveServe` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request clearInterval parentWatch catch resolveServe` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue index` on 2026-11-18: 28 results: [[Feature]: Vector index: 4-bit adds are ~28× slower than f32, and a loaded index slows the next model load](https://github.com/tetherto/qvac/issues/5419) (open), [[Bug]: LLM cpu-mask leaks caller affinity into subsequent embedding loads](https://github.com/tetherto/qvac/issues/5537) (open), [[Bug]: duck TUI on Windows fails with "worker closed before ready" (harness entry path built with URL.pathname)](https://github.com/tetherto/qvac/issues/5655) (closed)
+- `repo:tetherto/qvac is:pull-request index` on 2026-11-18: 754 results: [fix[notask]: apply the findBy name filter with every index](https://github.com/tetherto/qvac/pull/5621) (open), [QVAC-28496 feat[bc|api]: make IdMapIndex async and cancellable](https://github.com/tetherto/qvac/pull/5790) (open), [chore[notask]: DO NOT MERGE, overlay-validate fabric against qvac-fabric 11739.4.0](https://github.com/tetherto/qvac/pull/5810) (open)
+
+<sub>fingerprint `qr2:d391add6a74bbaec` · first seen at 0c8a1510ab4f</sub>
+
+### An abort that fires during the state-dir await is lost: the fitter still starts and the caller waits up to 30 s instead of getting 'cancelled'
+
+**File:** `packages/inference/src/model-fit/run/run.ts:218`  
+**Category:** correctness · **Severity:** low · **Confidence:** high · **Status:** confirmed
+
+### Evidence
+runFit checks `options.signal?.aborted` only once, at run.ts:209, before `await resolveStateDir(...)` (run.ts:218). When no stateDir is passed, which is the production path through fit-load.ts:48-51, that await runs a dynamic `import('@/utils/cache/paths')` plus `getCacheDir`, so it yields to the event loop. If the signal aborts in that window, its one 'abort' event fires while nothing is listening. After the await, runFit does not check `signal.aborted` again. It writes the `.running` marker, starts the fitter through settle() (run.ts:255), and then bounded() calls `signal.addEventListener('abort', onAbort, {once:true})` at run.ts:180 on a signal that is already aborted. That event never fires again, and bounded() never checks `signal.aborted` itself. The call therefore resolves only when the fitter returns, or after FIT_TIMEOUT_MS (30 s) with reason 'timeout'. If it times out, run.ts:177 also adds the key to `hung`, so every later fit of that request answers 'timeout' until the fitter returns. The doc comment (run.ts:196-198) says an aborted signal answers 'cancelled' at once, and the test 'an aborted caller never reaches the fitter' says a cancelled caller never reaches the fitter. Both are broken in this window.
+
+### Impact
+A user who cancels a model load right as it starts can still have the native fitter run and can wait up to 30 s before the load call returns. The result comes back as 'timeout' or 'completed' instead of 'cancelled'. A hung fitter can also put the request into the process-wide `hung` set, so later loads of that model get 'timeout' answers.
+
+### Reproduction
+In a brittle test, call `runFit(PROBE, { signal: controller.signal, callFit, timeoutMs: 200 })` with no stateDir, so the dynamic import runs, and call `controller.abort()` straight after, in the same tick and before the returned promise settles. Use a callFit that counts calls and waits on a promise that never resolves. Expected: status 'unknown' with reason 'cancelled' and calls === 0. Actual: calls === 1 and, after 200 ms, reason 'timeout'. You can also inject the delay by passing a stateDir and wrapping resolveStateDir in a setImmediate-delayed promise.
+
+### Suggested fix
+After the await, re-check `if (options.signal?.aborted === true) return unknown('cancelled', 'Fit was cancelled')` before any markers are written or inFlight is changed. As a second guard, have bounded() check `signal?.aborted` right after registering its listener and call onAbort() if the signal is already aborted.
+
+### Adversarial verification (agent)
+The code matches the claim. runFit (run.ts:209) checks `signal.aborted` once, before `await resolveStateDir(...)` (run.ts:218). fitLoad (fit-load.ts:48-51) never passes a stateDir, so production always takes the `await import('@/utils/cache/paths')` path. tsconfig uses module esnext, so the dynamic import is kept and the function yields there. After the await, nothing checks the signal again before settle() starts the fitter (run.ts:255). bounded() then only calls `signal.addEventListener('abort', ...)` (run.ts:180). bare-abort-controller@1.1.2 `_abort()` returns early when the signal is already aborted and dispatches 'abort' only once (index.js:39-44). A listener added later never fires, and bounded() never checks `signal.aborted`. So an abort that lands in that window cannot answer 'cancelled'. The fitter runs, and the call resolves only when the fitter returns or after 30 s with 'timeout' (which also adds the key to `hung`, run.ts:177). This breaks the doc comment at run.ts:196-198.
+
+The path is reachable from a public entry point: load-model.ts:136-146 passes `request.signal` to runLoadFitCheck, then fitLoad, then runFit.
+
+The impact is overstated:
+1. The window is narrow. It lasts as long as the dynamic import of an already-cached module takes to resolve, maybe only a few microtasks. An abort delivered as an I/O or timer macrotask may rarely or never land in it. The exact timing depends on Bare's import() scheduling, which I can't observe.
+2. The caller's final result is still correct. load-model.ts:150-152 re-checks `request.signal.aborted` after the fit check and throws InferenceCancelledError, so the user does get a cancellation, only late (up to 30 s).
+3. The fit is advisory. A 'timeout' or `hung` entry maps to an 'unknown' verdict, and the load goes ahead, so later loads are not blocked.
+
+The real costs are a delayed cancel, a wasted native fitter run, and possible `hung` pollution. Severity: low.
+
+### Human verification
+Read model-fit/run/run.ts:209-218 and fit-load.ts:48-51: signal.aborted is checked once before `await resolveStateDir()`, which in production does a dynamic import and yields. An abort in that window fires with no listener and is never re-checked, so the fitter starts and the caller waits up to the 30 s budget. Same 'abort between check and listen' class as #11. Low.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue runFit abort lost during resolveStateDir` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request runFit abort lost during resolveStateDir` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue model fit cancel ignored signal already aborted` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request model fit cancel ignored signal already aborted` on 2026-11-18: 2 results: [QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow](https://github.com/tetherto/qvac/pull/5186) (closed), [QVAC-23489 feat[api]: add ABot-World interactive world sessions to the SDK](https://github.com/tetherto/qvac/pull/3812) (closed)
+- `repo:tetherto/qvac is:issue fit check delays cancelled load 30s` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request fit check delays cancelled load 30s` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue bounded addEventListener aborted signal never fires` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request bounded addEventListener aborted signal never fires` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue run` on 2026-11-18: 103 results: [Weekend Mobile Tests (LLM) — 2026-11-15](https://github.com/tetherto/qvac/issues/5770) (open), [OpenCode upstream compatibility smoke failing](https://github.com/tetherto/qvac/issues/5768) (open), [OpenClaw upstream compatibility smoke failing](https://github.com/tetherto/qvac/issues/5825) (open)
+- `repo:tetherto/qvac is:pull-request run` on 2026-11-18: 3336 results: [QVAC-28496 feat[api]: run JsAsyncTask work on an addon-owned executor](https://github.com/tetherto/qvac/pull/5828) (open), [QVAC-25197 feat: run the QV.AC app CLI with qvac app](https://github.com/tetherto/qvac/pull/5780) (open), [QVAC-27302 feat(bci-whispercpp): run on the shared @qvac/fabric runtime](https://github.com/tetherto/qvac/pull/5765) (open)
+
+<sub>fingerprint `qr2:3fb004f1ff02a6bb` · first seen at 0c8a1510ab4f</sub>
+
 ### Runner killed by a signal (OOM, SIGKILL, crash) is reported as exit code 0
 
 **File:** `packages/test-suite/src/cli/commands/run-consumer-external.ts:47`  
@@ -480,260 +695,6 @@ Initially rejected by me as unreachable in production (bin.js only constructs Me
 
 <sub>fingerprint `qr2:fbef8f97b8d025af` · first seen at 0c8a1510ab4f</sub>
 
-### Blind-peering setup and reseed mirror the legacy 'models' core instead of the active generation's core
-
-**File:** `packages/registry-server/lib/registry-service.js:451`  
-**Category:** correctness · **Severity:** medium · **Confidence:** medium · **Status:** confirmed
-
-### Evidence
-Since blob-core rotation, new ingests write to `this.activeBlobCoreLabel` ('models-<generation>', lines 69-72, 845, 1427). _setupBlindPeering, which runs at startup (line 278) and from reseed() (line 494), still opens and mirrors the hard-coded BLOB_CORE_NAME 'models' (line 451). It does not mirror the active core, and _mirroredCoreIds is cleared just before (line 441). The core that holds every post-rotation model is mirrored and tracked again only when the next addModel/fillFitBlobs calls _mirrorBlobCore. On a node configured with a generation from day one, line 451 also creates an empty writable 'blobs-models' core that is never used.
-
-### Impact
-After setting QVAC_BLOB_CORE_GENERATION and restarting, or after running reseed(), the blind peers are not asked to mirror the core that holds the post-rotation models. _waitForInitialSeeding reports 'blind peers finished initial sync' without having checked it. With --clear-after-reseed, the local blocks of those models are already gone, so their availability depends on mirroring that this setup no longer re-establishes.
-
-### Reproduction
-Start a service with blobCoreGeneration '2026-09-10' and blindPeerKeys, add a model, then restart it or call `svc.reseed()`. Inspect `svc._mirroredCoreIds` / `reseedTracker._cores`: they contain only the 'blobs-models' discovery key, not that of 'blobs-models-2026-09-10'.
-
-### Suggested fix
-In _setupBlindPeering, mirror the active core (`this.activeBlobCoreLabel`), and ideally every distinct blobBinding.coreKey this node owns among existing models, instead of only BLOB_CORE_NAME.
-
-### Adversarial verification (agent)
-The code matches the claim. activeBlobCoreLabel becomes 'models-<generation>' when a generation is configured (registry-service.js:69-72). addModel (845-849) and fillFitBlobs (1427-1430) write to that core and call _mirrorBlobCore on it. _setupBlindPeering (427-464) runs at startup (278) and from reseed() (494). It clears _mirroredCoreIds (441), then calls _getOrCreateBlobsCore(BLOB_CORE_NAME) with the hard-coded 'models' (451). _getOrCreateBlobsCore (1165-1172) opens 'blobs-models' with writable:true. On a node that never used the legacy label, that creates an empty, unused local core and mirrors it.
-
-The eager open at 286-303 does use activeBlobCoreLabel, but it runs after _setupBlindPeering and never calls _mirrorBlobCore. So the active core is not added to the blind peers or to the ReseedTracker, and _waitForInitialSeeding (463, 497-503) logs 'finished initial sync' without having checked it. The core is mirrored again only when the next addModel or fillFitBlobs runs.
-
-Reachability: QVAC_BLOB_CORE_GENERATION or the blobCoreGeneration option at startup, or a public reseed() call. reseed() also accepts new blindPeerKeys, and in that case the new mirrors never receive the rotated core until the next ingest. Nothing else guards this path. The rotation test (blob-core-rotation.integration.test.js) does not use blind peers, so this case is untested. I found no comment saying the behaviour is intentional.
-
-The impact is somewhat smaller than claimed. Blind peers that had already mirrored the rotated core through an earlier addModel probably keep it across a restart, so the worst case is a reseed to new or wiped mirrors, especially with --clear-after-reseed. There is also no data corruption: models stay readable locally until that local data is cleared. Medium severity stands.
-
-<sub>fingerprint `qr2:dbcbe70076319611` · first seen at 0c8a1510ab4f</sub>
-
-### broker.pid records the CLI's own PID, so shutdown on Windows force-kills the CLI before its own cleanup runs
-
-**File:** `packages/test-suite/src/cli/utils/local-broker.ts:178`  
-**Category:** correctness · **Severity:** medium · **Confidence:** high · **Status:** confirmed
-
-### Evidence
-local-broker.ts:178 writes `process.pid` (the CLI process that hosts the embedded broker) into `<reportDir>/broker.pid`. The only consumer of `*.pid` files is `killTracked(reportDir)` (process-manager.ts:90-116), which reads every `.pid` file in reportDir and kills that PID. On win32 it runs `taskkill /PID <pid> /F /T`. `setupCleanup` in run-local.ts:221-229 calls `killTracked(reportDir)` first, then `extraCleanup?.()`, `brokerHandle.cleanup()`, `printLogPaths(reportDir)` and `process.exit(exitCode)`. Because broker.pid holds the CLI's own PID, `taskkill /F /T` force-terminates the CLI (and its whole tree) from inside killTracked, so none of the later steps run. On POSIX the self-sent SIGTERM is only queued, and the `cleaningUp` guard plus the synchronous `process.exit` hide the problem. The embedded broker lives in-process and is already stopped by `brokerHandle.cleanup()`, so a PID file for it is wrong in the first place.
-
-### Impact
-On Windows, any `run:local:*` session that started the embedded broker ends with the CLI force-killed: the producer's exit code is replaced by taskkill's forced exit code (so a passing run looks failed in CI or scripts), `extraCleanup` (for example stopping device log capture, run-local.ts:512/619/773) is skipped, and the log-path summary never prints.
-
-### Reproduction
-On Windows, with no MQTT broker running, run a `run:local` command so ensureBroker starts the embedded aedes broker and writes reportDir/broker.pid. Let the producer exit with code 0, or press Ctrl+C. Check `echo %ERRORLEVEL%`: it is non-zero, and the 'log paths' output after 'Shutting down...' is missing.
-
-### Suggested fix
-Don't write the CLI's own PID to a `.pid` file that killTracked reads. Drop the broker.pid write, since `cleanup()` already stops the in-process broker, or give it a name or extension killTracked skips. Another option is for killTracked to skip `pid === process.pid`.
-
-### Adversarial verification (agent)
-I read the code and the claim holds. local-broker.ts:178 writes `process.pid` to `<reportDir>/broker.pid` after starting the embedded aedes broker in-process (lines 162-176). This is the CLI's own PID, not a child process. killTracked (process-manager.ts:90-116) reads every `*.pid` file in reportDir. On win32 it runs `execSync('taskkill /PID <pid> /F /T')`. Its catch only swallows errors from taskkill, and nothing excludes `process.pid`. setupCleanup (run-local.ts:221-230) calls killTracked(reportDir) first, then extraCleanup, brokerHandle.cleanup(), printLogPaths and process.exit(exitCode). On Windows, taskkill /F /T against the parent of the execSync child force-terminates the CLI and its tree, so none of the later steps run. The exit code becomes taskkill's forced-termination code (1) instead of the producer's code.
-
-The path is reachable. Every run:local:* command goes through setupLocalRun → ensureBroker(brokerUrl, reportDir) (run-local.ts:208). The PID file is written whenever no broker is already running, which is the default case on a dev machine. run:local:desktop and run:local:electron are realistic on Windows: the repo has win32 handling in run-consumer-electron.ts:79 and build-consumer-electron.ts:59.
-
-Nothing guards against it. No filter skips broker.pid or the current PID. No comment or test shows it is intentional. The embedded broker is already shut down in-process by brokerHandle.cleanup(), so the pid file does nothing useful. On POSIX the self-SIGTERM is queued and process.exit runs synchronously first. The cleaningUp guard also stops the handler from re-entering, so POSIX is largely unaffected, as the claim says.
-
-One point in the claim is overstated. Tracked child processes still die, because /T kills the CLI's whole tree, so there are no orphans. The real impact is a wrong exit code (a passing run can look failed in CI), skipped extraCleanup (device log capture, which only matters for the mobile commands), and a missing log-path summary. That is Windows-only, with no data loss, so medium-to-low. I keep it at medium because a wrong exit code from a test runner breaks CI signal.
-
-<sub>fingerprint `qr2:ee5e04c40d926e1b` · first seen at 0c8a1510ab4f</sub>
-
-### Abort during file lookup or metadata fetch is missed, so the hyperdrive transfer hangs and keeps the lock and corestore
-
-**File:** `packages/inference/src/handlers/load-model/hyperdrive.ts:481`  
-**Category:** concurrency · **Severity:** medium · **Confidence:** medium · **Status:** confirmed
-
-### Evidence
-downloadAndValidateFile registers the reject-on-abort listener only at line 481. That comes after validateFileExistence (lines 405-406), which awaits drive.core.update() and drive.entry(..., { wait: true }) (lines 160, 167) and can block until a peer answers. If the signal aborts in that window, the outer `cleanup` (lines 306-314) suspends the swarm, so the pending drive.entry and the read stream never get blocks. When execution reaches line 481 the signal is already aborted, and addEventListener on an already-aborted signal never fires. There is no `if (signal.aborted)` check before the await at 476. The promise never settles and nothing has timeouts. download-manager.ts:185-189 settles the subscriber on its own, so the caller sees a cancellation. Meanwhile the background startDownload promise stays pending forever. It holds the `await using` download lock (hyperdrive.ts:747), the open Corestore/Hyperdrive and its entry in runningDownloads.
-
-### Impact
-After a user cancels a pear:// download early (while peers are still being found or the entry/blob metadata is still arriving), the next load of the same model waits forever in acquireDownloadLock or fails to open the still-locked corestore. Shutdown, which waits for runningDownloads, can also hang.
-
-### Reproduction
-Start loading a hyperdrive model while the seeding peer is offline or slow, so drive.entry waits. Cancel the request, then bring the peer online or retry the load: the retry logs '⏳ … is being downloaded elsewhere' and never proceeds. In a unit test, stub drive.entry to resolve after the signal is aborted and observe that downloadAndValidateFile never settles.
-
-### Suggested fix
-Check `if (signal?.aborted) throw new DownloadCancelledError()` right before creating the streams and inside the Promise at 476. Also race validateFileExistence against the abort signal, or pass a timeout or abort to drive.entry/update. Remove the listener once the promise settles.
-
-### Adversarial verification (agent)
-The core defect is real. In downloadAndValidateFile (hyperdrive.ts:395-482), validateFileExistence runs first (lines 405-406). It awaits drive.core.update() (line 160), drive.entry(..., {wait:true}) (line 167) and drive.getBlobs()/blobs.core.has(). The only abort hookup in this function is the addEventListener at line 481, and nothing checks `signal.aborted` before it. A listener added to an already-aborted signal never fires. So an abort during the lookup is lost, and the promise at line 476 can only settle on stream finish or stream error. The callers do not guard this either. downloadSingleFileToFilesystem checks `signal.aborted` only before setup (line 298). The sharded loop checks it only before and after each downloadAndValidateFile call (lines 609, 670). Nothing in this path has a timeout. In download-manager.ts, attachRequestBinding settles the subscriber on its own (lines 185-189), and startOrJoinDownload starts a new transfer when the existing one is aborted (line 229). The orphaned startDownload promise keeps the `await using` lock (line 747) and stays in runningDownloads, and cleanupDownloads awaits it (line 473).
-
-The reviewer's mechanism is partly wrong, and that lowers the severity. The abort `cleanup` (lines 306-312) sets `swarm.suspended = true` before it calls `swarm.suspend()`. In hyperswarm 4.17.x, suspend() starts with `if (this.suspended) return` (index.js:611), so the call does nothing. Existing connections are not destroyed, and the flag only blocks new connections (_attemptClientConnections at line 287, incoming at line 347). That gives two outcomes:
-(a) A peer is already connected when the user cancels. Replication keeps going, the entry and blob blocks arrive, and the whole file downloads and validates while the cancel is ignored. The lock is held for the full transfer and then released, so this is not a permanent hang. It hangs only if that peer later drops, because no reconnection is possible.
-(b) The user cancels while peers are still being found. Peers that discovery queues are never dialled. swarm.flush() can then stay pending, because its pending-flush `missing` count never decreases (index.js:577-583, 142-150). doneFindingPeers is then never called, and drive.core.update() on an empty core waits on findingPeers. The result is a permanent hang that keeps the lock and the corestore, matching the claimed impact.
-
-The path is reachable from a public entry point: a user cancels a pear:// model load early. Outcome (b) depends on hypercore/hyperswarm runtime timing, and outcome (a) is a cancel that is ignored rather than a hang. I rate it medium, not high: the timing window is narrow, but when it hits, the stuck lock persists until restart. A real fix would check `signal.aborted` before line 476 and race the lookup awaits against the signal. Separately, the `swarm.suspended = true` line stops suspend() from ever tearing down connections, which is a second bug.
-
-<sub>fingerprint `qr2:d856f8e3fc6586be` · first seen at 0c8a1510ab4f</sub>
-
-### Failed or cancelled seed downloads never close the corestore; a retry cannot reopen it and clearCache deletes the dir while it is still open
-
-**File:** `packages/inference/src/handlers/load-model/hyperdrive.ts:370`  
-**Category:** resource-leak · **Severity:** medium · **Confidence:** medium · **Status:** confirmed
-
-### Evidence
-In both finally blocks (lines 367-391 and 711-726) cleanupHyperdrive runs only when `!seed`, whatever the outcome. For seed=true, an error (checksum mismatch, NoBlobFoundError, network failure) or an abort leaves the Corestore, Hyperdrive and swarm open. On abort, `cleanup` has already suspended the swarm, so the open swarm is not even seeding. A retry calls setupHyperdrive with the same corestoreDir while the old Corestore still holds its storage lock. Also, if the user aborts with clearCache, line 389/724 deletes corestoreDir while that corestore is still open. The comment at line 372 flags exactly this as an EBUSY hazard on Windows.
-
-### Impact
-With seed: true, one failed or cancelled download makes every later attempt for that drive fail until the process restarts. Handles and swarm connections leak, and clearCache can fail with EBUSY or leave a corrupted store.
-
-### Reproduction
-loadModel with seed: true for a hyperdrive model whose registry checksum mismatches, or cancel it mid-download. Then call loadModel again for the same model: opening the corestore fails because the previous instance still holds the lock.
-
-### Suggested fix
-Call cleanupHyperdrive(setup) in the finally block whenever downloadSucceeded is false, and keep the setup alive only for a successful seed.
-
-### Adversarial verification (agent)
-I read hyperdrive.ts and the defect holds. In downloadSingleFileToFilesystem (finally block, lines 367-391) and downloadShardedFilesToFilesystem (lines 711-726), cleanupHyperdrive(setup) runs only inside `if (!seed)`, and no other branch closes the setup. When seed is true, keeping things open is intended after a successful download (that is what seeding means). It is not intended after an error or an abort. downloadAndValidateFile can throw FileNotFoundError, NoBlobFoundError, ChecksumValidationFailedError, size mismatch or stream errors. Abort throws DownloadCancelledError, and the abort `cleanup` listener has already suspended the swarm. In all of those cases the Corestore, Hyperdrive and Hyperswarm are left open and registered, and nothing in the caller (startOrJoinDownload or the download lock) closes them.
-
-The path is reachable from public APIs: loadModel and downloadAsset both pass `seed` through handler.ts, download-asset.ts and resolve.ts. resolve.ts only checks that the source is a hyperdrive.
-
-A retry uses the same getCorestoreDir(hyperdriveKey) and setupHyperdrive always builds `new Corestore(corestoreDir)`. No cached instance is reused. corestore ^7.11 is backed by hypercore-storage/RocksDB, which holds an exclusive LOCK on the directory, so a second open in the same process should fail. That is likely, but I could not run it. Even if the reopen worked, the old handles and swarm would still leak.
-
-The clearCache branch runs regardless of `seed`, so with seed=true it calls deleteCorestoreDirectory while the store is still open. The comment on line 372 names that ordering as the Windows EBUSY hazard. deleteCorestoreDirectory swallows the error, so the result is a silently failed or partial delete, not a thrown error.
-
-There is no test or comment saying the failure path is meant to leave things open. I am rating it medium, not high, because it only affects the opt-in seed=true path and only after a failure or cancel. Restarting the process clears it.
-
-<sub>fingerprint `qr2:4facb8033b0fee0e` · first seen at 0c8a1510ab4f</sub>
-
-### A lock whose dead owner's pid gets reused is never stolen, so starts on that fleet key time out until that unrelated process exits
-
-**File:** `packages/ai-sdk-provider/src/managed/index.ts:99`  
-**Category:** correctness · **Severity:** medium · **Confidence:** medium · **Status:** confirmed
-
-### Evidence
-The lock lives in ~/.qvac/managed-serves (registry.ts:20-21, 50-51), so it survives crashes and reboots. A client killed while holding it (SIGKILL, OOM, power loss, or the `process.exit(0)` at index.ts:201, which skips the `finally releaseLock`) leaves `<key>.lock` holding its pid. Liveness is only `kill(pid,0)` (registry.ts:57-65), and EPERM also counts as alive. Once any unrelated process reuses that pid, which is common after a reboot, tryLock returns false forever. The mtime fallback (lines 105-108) only covers locks with no readable pid. sweepServes never touches lock files. Every later startManagedQvac for that fleet key then loops in waitForHealthyRecord until overallDeadline and throws ServeStartTimeoutError (lines 279-284), without ever spawning.
-
-### Impact
-The user cannot start the managed provider for that model set. Every attempt waits the full serveStartTimeout+10s (minutes) and then fails, until the unrelated pid exits, which may be never for a system daemon. The only fix is to delete the lock file by hand.
-
-### Reproduction
-Write `~/.qvac/managed-serves/<fleetKey>.lock` containing the pid of a long-lived process, e.g. `1` or the shell's pid. Call startManagedQvac with models that hash to that fleetKey: it times out and never spawns.
-
-### Suggested fix
-Record a start time, boot id, or nonce with the pid and check it. At a minimum, treat a lock as stealable when its mtime is older than serveStartTimeout plus a margin, even if the pid looks alive. The owner could also refresh the lock's mtime as a heartbeat while it waits.
-
-### Adversarial verification (agent)
-I read the code and the claim holds up.
-
-1. tryLock (index.ts:97-101) steals a lock only when `isProcessAlive(owner)` is false. isProcessAlive (registry.ts:57-65) is just `kill(pid,0)`, and it treats EPERM as alive. Nothing else is checked: no process start time, no boot ID, no hostname.
-2. The mtime fallback (index.ts:103-108) runs only when the lock has no readable pid. The test managed-spawn-lock.test.ts:37-42 confirms on purpose that a lock with a live owner and an old mtime is never stolen. So a live pid always wins, including a reused one.
-3. Nothing else removes `<key>.lock`. The only caller of releaseLock is the finally block at index.ts:273. sweepServes and sweepRunnerParams never touch .lock files. The lock lives in ~/.qvac/managed-serves, so it survives a reboot.
-4. A lock can be left behind on reachable paths:
-   - SIGKILL, OOM or power loss during the spawn window, which can last minutes of model download.
-   - The `closeOnParentExit` watcher calls `process.exit(0)` (index.ts:201). That can fire while resolveServe holds the lock, and the code comment says the watcher is armed for exactly this long first-run download. process.exit skips the async finally, so releaseLock never runs.
-5. Once the dead owner's pid belongs to any other process, every caller with that fleet key gets false from tryLock. They loop in 5s slices (index.ts:279-284) until overallDeadline and then throw ServeStartTimeoutError without spawning. The fallback mtime is 30s, but it does not apply here.
-
-There is also a worse variant: the new client can get the same pid itself. This is common in a container whose home directory is a persistent volume, where pids are small and deterministic. Then `kill(own pid,0)` succeeds and the client waits on its own stale lock.
-
-What makes it less likely: it needs an abnormal exit inside the spawn-lock window, and then a pid reuse. Linux usually has a large pid_max, so reuse during normal uptime is rare. It is more plausible after a reboot or in containers.
-
-What makes it worse: once it happens, the state lasts until the unrelated process exits or someone deletes the lock file by hand. Each attempt costs serveStartTimeout+10s. The claimed impact is accurate but uncommon. I rate it medium, borderline low.
-
-<sub>fingerprint `qr2:7ddcab2e4784b597` · first seen at 0c8a1510ab4f</sub>
-
-### The abort listener added in _streamBlobToFile is never removed, so listeners and stream references build up on the caller's signal
-
-**File:** `packages/registry-server/client/lib/client.js:760`  
-**Category:** resource-leak · **Severity:** low · **Confidence:** high · **Status:** confirmed
-
-### Evidence
-Each call to _streamBlobToFile adds an 'abort' listener with { once: true } (client.js:760-768). The finally block (:771-778) destroys the streams and turns off the 'download' handler, but it never calls removeEventListener. A once listener is only removed when abort actually fires, so after a successful or failed attempt the closure (which holds stream, writeStream and reject) stays attached to the signal. withRetry calls _streamBlobToFile up to maxRetries times per download (:379-391, :489-499), and each attempt adds another listener.
-
-### Impact
-When a caller reuses one AbortSignal across many downloads (for example a session-wide cancel signal), listeners and the destroyed read/write streams they reference build up without limit. On Node this can raise MaxListenersExceeded warnings. A later abort then runs destroy/reject on stale streams from downloads that already finished.
-
-### Reproduction
-Create a single AbortController and run 20 downloadModel(path, source, { outputFile, signal: ctrl.signal }) calls one after another. On Node, use events.getEventListeners(ctrl.signal, 'abort').length: it reports 20 or more after every download has finished.
-
-### Suggested fix
-Keep the handler in a variable, and in the finally block call options.signal.removeEventListener('abort', onAbort).
-
-### Adversarial verification (agent)
-client.js:753-769 adds an anonymous 'abort' listener with { once: true } to options.signal, and nothing ever removes it. The finally block (:771-778) destroys both streams, awaits the writer closing, destroys rangeDownload and turns off the core 'download' handler, but it never calls removeEventListener, and no AbortController is kept to remove the listener later. options.signal is the caller's signal passed straight through. The public download paths call _streamBlobToFile inside withRetry (:380, :490), so each attempt adds one more listener. Nothing wraps or derives the signal per download (a grep for AbortController in the file finds none). The path is reachable and nothing guards it: a caller that reuses one signal across downloads keeps one closure per attempt, holding stream, writeStream and reject. On Node, an AbortSignal with more than 10 listeners triggers the MaxListenersExceededWarning. The impact is overstated in one way. On a later abort, the stale listeners call destroy() on streams that are already destroyed, which does nothing, and reject() on promises that already settled, which also does nothing. So there is no wrong behaviour, only memory held until the signal is collected, plus the warning. This only happens when a long-lived signal is reused; with one signal per download it is garbage-collected together with the listeners. Severity stays low.
-
-<sub>fingerprint `qr2:a60fa6edffc5508f` · first seen at 0c8a1510ab4f</sub>
-
-### getModelByName returns Object.prototype members for names like "constructor", "toString" or "__proto__" instead of undefined
-
-**File:** `packages/inference/src/models/update-models/codegen.ts:233`  
-**Category:** correctness · **Severity:** low · **Confidence:** high · **Status:** confirmed
-
-### Evidence
-The template (codegen.ts:222-224) emits `modelNameCompatibilityAliases` as a plain object literal, so it inherits from Object.prototype. When no catalog entry matches, `getModelByName` (codegen.ts:233, generated at models.ts:29617) falls back to `modelNameCompatibilityAliases[name]` with no own-property check. `name` is an arbitrary string, so 'constructor' returns the `Object` function, 'toString'/'hasOwnProperty' return functions, and '__proto__' returns Object.prototype. All of these are typed as `RegistryItem`. The JSDoc says the function returns `undefined` when no catalog entry has that name.
-
-### Impact
-A caller that looks up a user-supplied or config-supplied model name, such as the documented `getModelByName("WHISPER_TINY_Q8_0")` usage, gets a truthy non-RegistryItem back for these keys. Code then reads `.registryPath`, `.blobCoreKey` and similar fields as undefined and fails later with confusing errors, or builds a source like `registry://undefined/undefined`, instead of taking the not-found branch.
-
-### Reproduction
-`import { getModelByName } from '@qvac/sdk/models/registry'; console.log(getModelByName('constructor'))` prints `[Function: Object]`, not `undefined`. `getModelByName('__proto__')` returns `{}` (Object.prototype).
-
-### Suggested fix
-Emit the lookup table with a null prototype, e.g. `Object.assign(Object.create(null), { ... })`, or a `Map`, or guard it with `Object.hasOwn(modelNameCompatibilityAliases, name) ? modelNameCompatibilityAliases[name] : undefined`. Then regenerate models.ts.
-
-### Adversarial verification (agent)
-I could not disprove the claim. codegen.ts:222-224 emits `modelNameCompatibilityAliases` as a plain `{...}` literal. It is not built with `Object.create(null)` or a `Map`. At codegen.ts:233 (generated as models.ts:29617), `getModelByName` returns `models.find(...) ?? modelNameCompatibilityAliases[name]` without an own-property check (no `Object.hasOwn`). In JavaScript this means `getModelByName('constructor')` returns `Object`, `'toString'` and `'hasOwnProperty'` return functions, and `'__proto__'` returns `Object.prototype`. None of these is undefined, which breaks the JSDoc promise that the function returns `undefined` when nothing matches. The function is public. models/registry/index.ts re-exports `@/models/registry/models`, and both @qvac/inference (package.json:82) and @qvac/sdk (package.json:157) export `./models/registry`. The docs (ocr-ggml registry-models.md:145) show it being called with a string. Nothing guards the input: there is no schema validation, and no internal caller wraps it. The only use I found is model-constant-compatibility.test.ts, which tests only real legacy names. The impact is overstated, though. No code inside the repo passes untrusted names to it. Only an external caller doing a lookup by a name taken from config could hit it, and only with Object.prototype key names, which is unlikely. The likely result is a confusing error later on, with no security impact. The fix is one line: use `Object.hasOwn`, `Object.create(null)`, or a `Map`. Severity stays low.
-
-<sub>fingerprint `qr2:b9cb8c16bc51e7cb` · first seen at 0c8a1510ab4f</sub>
-
-### The closeOnParentExit interval is never cleared when startup fails and can later process.exit() the caller
-
-**File:** `packages/ai-sdk-provider/src/managed/index.ts:295`  
-**Category:** resource-leak · **Severity:** low · **Confidence:** high · **Status:** confirmed
-
-### Evidence
-With closeOnParentExit, `parentWatch` is armed at lines 193-205, before resolveServe. If resolveServe throws (ServeStartTimeoutError, ServeSpawnFailedError, an fs error), the catch at lines 291-297 only removes the consumer and rethrows. `parentWatch` is not cleared, and no provider or close() is returned that could clear it. The interval is unref'd, so it doesn't keep the loop alive, but it keeps polling for the life of the process. If the parent later goes away, it calls `process.exit(0)` (line 201) for a provider that does not exist. Each failed attempt adds another interval.
-
-### Impact
-A host that catches the startup failure and keeps running (e.g. falls back to another backend or retries) is left with leaked timers, one per failed attempt. If the parent dies later, the host is force-exited with code 0 by an object it never got back, without its own shutdown logic.
-
-### Reproduction
-Call startManagedQvac({models, closeOnParentExit: true, serveBinPath: '/nonexistent'}) and catch the rejection. Check that the interval is still registered (e.g. via process._getActiveHandles or a fake-timer spy on setInterval/clearInterval): it was never cleared.
-
-### Suggested fix
-In the catch block around resolveServe (line 291), add `if (parentWatch !== undefined) clearInterval(parentWatch)` before rethrowing.
-
-### Adversarial verification (agent)
-The code matches the claim. In packages/ai-sdk-provider/src/managed/index.ts, `parentWatch` is armed at lines 193-205, before `resolveServe()`. The catch at lines 291-297 only calls `removeConsumer` and rethrows. It never calls `clearInterval(parentWatch)`. The only other place that clears the interval is `close()` (line 375), and `close()` only exists after startup succeeds. You can reach this from the public API: `startManagedQvac` (or `createQvac` with mode 'managed') with `closeOnParentExit: true` and a startup failure, such as ServeStartTimeoutError, ServeSpawnFailedError, or an fs/lock error from addConsumer or writeEphemeralConfig. No finally block or wrapper guards it, and no test or comment says the interval should outlive a failed start. Each failed attempt leaves one more unref'd 2s interval running.
-
-The claimed impact is overstated, though. According to types.ts:77-85, `closeOnParentExit` is opt-in and only meant for daemon-style hosts "whose lifetime must not exceed its parent's", and it explicitly "exits this process" when the parent dies. A host that sets it has already agreed to be exited when the parent dies. So the leftover watch exiting the process after a failed start is close to what that host asked for, not an unexpected kill of an unrelated caller. The real problems are:
-- the timers leak, one per retry, but each is cheap and unref'd;
-- the behavior is inconsistent: a successful provider stops the pact on `close()`, while a failed start can never stop it;
-- the exit skips the host's own shutdown, and the stale `removeConsumer` runs on an already-removed marker, which does no harm.
-
-It's a real but minor lifecycle bug in an opt-in, niche path, so I'm keeping the severity at low.
-
-<sub>fingerprint `qr2:d391add6a74bbaec` · first seen at 0c8a1510ab4f</sub>
-
-### An abort that fires during the state-dir await is lost: the fitter still starts and the caller waits up to 30 s instead of getting 'cancelled'
-
-**File:** `packages/inference/src/model-fit/run/run.ts:218`  
-**Category:** correctness · **Severity:** low · **Confidence:** high · **Status:** confirmed
-
-### Evidence
-runFit checks `options.signal?.aborted` only once, at run.ts:209, before `await resolveStateDir(...)` (run.ts:218). When no stateDir is passed, which is the production path through fit-load.ts:48-51, that await runs a dynamic `import('@/utils/cache/paths')` plus `getCacheDir`, so it yields to the event loop. If the signal aborts in that window, its one 'abort' event fires while nothing is listening. After the await, runFit does not check `signal.aborted` again. It writes the `.running` marker, starts the fitter through settle() (run.ts:255), and then bounded() calls `signal.addEventListener('abort', onAbort, {once:true})` at run.ts:180 on a signal that is already aborted. That event never fires again, and bounded() never checks `signal.aborted` itself. The call therefore resolves only when the fitter returns, or after FIT_TIMEOUT_MS (30 s) with reason 'timeout'. If it times out, run.ts:177 also adds the key to `hung`, so every later fit of that request answers 'timeout' until the fitter returns. The doc comment (run.ts:196-198) says an aborted signal answers 'cancelled' at once, and the test 'an aborted caller never reaches the fitter' says a cancelled caller never reaches the fitter. Both are broken in this window.
-
-### Impact
-A user who cancels a model load right as it starts can still have the native fitter run and can wait up to 30 s before the load call returns. The result comes back as 'timeout' or 'completed' instead of 'cancelled'. A hung fitter can also put the request into the process-wide `hung` set, so later loads of that model get 'timeout' answers.
-
-### Reproduction
-In a brittle test, call `runFit(PROBE, { signal: controller.signal, callFit, timeoutMs: 200 })` with no stateDir, so the dynamic import runs, and call `controller.abort()` straight after, in the same tick and before the returned promise settles. Use a callFit that counts calls and waits on a promise that never resolves. Expected: status 'unknown' with reason 'cancelled' and calls === 0. Actual: calls === 1 and, after 200 ms, reason 'timeout'. You can also inject the delay by passing a stateDir and wrapping resolveStateDir in a setImmediate-delayed promise.
-
-### Suggested fix
-After the await, re-check `if (options.signal?.aborted === true) return unknown('cancelled', 'Fit was cancelled')` before any markers are written or inFlight is changed. As a second guard, have bounded() check `signal?.aborted` right after registering its listener and call onAbort() if the signal is already aborted.
-
-### Adversarial verification (agent)
-The code matches the claim. runFit (run.ts:209) checks `signal.aborted` once, before `await resolveStateDir(...)` (run.ts:218). fitLoad (fit-load.ts:48-51) never passes a stateDir, so production always takes the `await import('@/utils/cache/paths')` path. tsconfig uses module esnext, so the dynamic import is kept and the function yields there. After the await, nothing checks the signal again before settle() starts the fitter (run.ts:255). bounded() then only calls `signal.addEventListener('abort', ...)` (run.ts:180). bare-abort-controller@1.1.2 `_abort()` returns early when the signal is already aborted and dispatches 'abort' only once (index.js:39-44). A listener added later never fires, and bounded() never checks `signal.aborted`. So an abort that lands in that window cannot answer 'cancelled'. The fitter runs, and the call resolves only when the fitter returns or after 30 s with 'timeout' (which also adds the key to `hung`, run.ts:177). This breaks the doc comment at run.ts:196-198.
-
-The path is reachable from a public entry point: load-model.ts:136-146 passes `request.signal` to runLoadFitCheck, then fitLoad, then runFit.
-
-The impact is overstated:
-1. The window is narrow. It lasts as long as the dynamic import of an already-cached module takes to resolve, maybe only a few microtasks. An abort delivered as an I/O or timer macrotask may rarely or never land in it. The exact timing depends on Bare's import() scheduling, which I can't observe.
-2. The caller's final result is still correct. load-model.ts:150-152 re-checks `request.signal.aborted` after the fit check and throws InferenceCancelledError, so the user does get a cancellation, only late (up to 30 s).
-3. The fit is advisory. A 'timeout' or `hung` entry maps to an 'unknown' verdict, and the load goes ahead, so later loads are not blocked.
-
-The real costs are a delayed cancel, a wasted native fitter run, and possible `hung` pollution. Severity: low.
-
-<sub>fingerprint `qr2:3fb004f1ff02a6bb` · first seen at 0c8a1510ab4f</sub>
-
 ### Throughput rates divide swarm-lifetime byte counters by download-only elapsed time, inflating rx/tx per second
 
 **File:** `packages/registry-server/client/lib/profiler.js:46`  
@@ -753,6 +714,21 @@ Snapshot udxBytesReceived/Transmitted at tDownloadStart. Pass the baseline into 
 
 ### Adversarial verification (agent)
 The code matches the claim. collectStats (profiler.js:29-30) reads swarmStats.dhtStats.udxBytesReceived/Transmitted. These are cumulative UDX counters for the Hyperswarm created at line 172, and the code never subtracts a baseline. emitStats (line 244) computes elapsed from tDownloadStart, which is set at line 241. That happens only after DHT bootstrap, the viewCore.update() metadata sync (line 203), the db reads, and blobCore.update() (line 236). So rxPerSec/txPerSec at line 46 divide all bytes since the swarm started by the blob-transfer seconds only. No baseline snapshot is taken, so nothing guards against this. The unit tests (tests/unit/profiler.test.js:84-126) only check the division on synthetic inputs, so they don't show the mixed time bases are intended. The path is the main code path of profileDownload, so every run hits it. The impact is limited, which keeps severity low. It is a diagnostic tool. The final summary's 'Avg speed' (line 274) is computed correctly as blob.byteLength/transferSec, so the headline number is not affected. Pre-download DHT and metadata traffic is usually small (KB to low MB) next to model blobs (hundreds of MB to GB). The inflation is therefore large mainly in the first interval and on small or fast blobs, and fades on long downloads. The 'Bytes received' total also counts non-blob traffic, but the label says 'Network (UDX)', which partly signals that. Fix: take a baseline of the UDX byte counters at tDownloadStart and report deltas, or divide by time since swarm creation.
+
+### Human verification
+Read registry-server/client/lib/profiler.js:29-46, 172, 241-244: rx/tx counters are cumulative since swarm creation (DHT bootstrap + metadata sync) but divided by blob-transfer time only, so reported throughput is inflated, most for small blobs. Low: diagnostic tool, but it is the tool operators use to judge peer throughput.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue profiler rxPerSec inflated` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request profiler rxPerSec inflated` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue profiler throughput includes metadata bytes` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request profiler throughput includes metadata bytes` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue udxBytesReceived baseline download start` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request udxBytesReceived baseline download start` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue registry profiler wrong bytes per second` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request registry profiler wrong bytes per second` on 2026-11-18: 1 results: [QVAC-23728 feat[bc]: remove DHT delegated inference](https://github.com/tetherto/qvac/pull/4042) (closed)
+- `repo:tetherto/qvac is:issue profiler` on 2026-11-18: 1 results: [[Bug]: Android Vulkan GPU offload crashes during llama.cpp backend tensor allocation](https://github.com/tetherto/qvac/issues/2399) (closed)
+- `repo:tetherto/qvac is:pull-request profiler` on 2026-11-18: 46 results: [QVAC-27624 doc: add Python code examples, part 3](https://github.com/tetherto/qvac/pull/5462) (closed), [doc[notask|skiplog]: move SDK feature docs out of the README](https://github.com/tetherto/qvac/pull/5367) (closed), [QVAC-27653 doc: publish the SDK v0.24 and CLI v0.19 documentation lines](https://github.com/tetherto/qvac/pull/5758) (closed)
 
 <sub>fingerprint `qr2:6abb1d19cc841f3a` · first seen at 0c8a1510ab4f</sub>
 
@@ -776,6 +752,21 @@ Record a baseline from the first progress event received after markCacheMiss (or
 ### Adversarial verification (agent)
 I checked each part of the claim against the code and none of it holds up as a false alarm. wrapProgressCallback (download-stats.ts:57-67) skips progress only when collector.cacheHit === true. Otherwise it records max(fileSetInfo.overallDownloaded ?? shardInfo.overallDownloaded ?? downloaded). Nothing records the bytes already on disk at the start, so nothing is subtracted. computeStats (102-108) then reports that value as totalBytesDownloaded and divides it by elapsed time to get downloadSpeedBps. I confirmed each source the reviewer named. (1) http.ts:229-230 sets downloadedBytes = startOffset, the size of the partial file already on disk. When the server answers 206, the counter is not reset (it resets only for a non-206 reply, lines 302-306). The data handler then emits downloaded: downloadedBytes, which includes the prefix (393-397). The 416 branch (283-289) is worse: no cache hook is called, so cacheHit stays undefined, and it emits downloaded: startOffset. That reports the whole file as downloaded in roughly zero time. (2) In the HTTP sharded path, cached shards get downloadedBytes = expectedSize (780-784), markCacheMiss is called when any shard is missing (793), and overallDownloaded adds up every shard (1010). (3) In Hyperdrive, markCacheMiss runs at hyperdrive.ts:585, then already-valid files add their size to overallDownloaded and report it in progress (618-638). registry.ts:216 and registry-companion-set.ts:122 do the same thing, so the problem is wider than the reviewer said. These paths are reachable through the public loadModel/download flow whenever a download resumes or some shards are already cached. No caller or wrapper corrects for it. The comment at line 58 says cache-hit bytes should not count as network transfer, which shows this behaviour is not intended. No test sets an expected value for totalBytesDownloaded. The impact is limited to profiling gauges (types.ts:86-87, operation-metrics.ts:60-61) and does not affect downloads or model loading, so low severity is right.
 
+### Human verification
+Read download-stats.ts:57-67, 102-108 and http.ts:230, 393-397: totalBytesDownloaded is the max of absolute progress counters, which start at the resume offset or include cached shards, so a resumed or partly cached download reports bytes and speed it never transferred. Low: telemetry only.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue download stats count cached shards as downloaded bytes` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request download stats count cached shards as downloaded bytes` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue totalBytesDownloaded includes resumed partial download` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request totalBytesDownloaded includes resumed partial download` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue downloadSpeedBps overstated on resume or partial cache` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request downloadSpeedBps overstated on resume or partial cache` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue download metrics no baseline for already-present bytes` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request download metrics no baseline for already-present bytes` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue download-stats` on 2026-11-18: 1 results: [audiogen: backend is reported as an undocumented number, and a CPU fallback gives no reason](https://github.com/tetherto/qvac/issues/4060) (closed)
+- `repo:tetherto/qvac is:pull-request download-stats` on 2026-11-18: 98 results: [QVAC-26838 docs: replace the fabric-llm-web PoC with an SDK browser example](https://github.com/tetherto/qvac/pull/5376) (open), [QVAC-27586 feat[api]: expose the tts-ggml controls and stats the SDK dropped](https://github.com/tetherto/qvac/pull/5554) (closed), [QVAC-26884 feat[api]: expose llm-llamacpp speculative decoding in the SDK](https://github.com/tetherto/qvac/pull/5261) (closed)
+
 <sub>fingerprint `qr2:98c9a5b42189703d` · first seen at 0c8a1510ab4f</sub>
 
 ### A mismatch in the inner addon is blamed on the platform package, which leads to a wrong message and a pin that cannot fix it
@@ -797,6 +788,21 @@ Store the inner-addon mismatch in its own field (for example `nestedMismatchedVe
 
 ### Adversarial verification (agent)
 I read the code and the claim holds. In prebuilds.ts:89-96, mismatchedVersion is set only when the platform package's own manifest version differs from addon.version. Lines 97-106 then fill that same field with the inner `addon/` manifest version when the wrapper's version matched. PrebuildLocation does not record which of the two mismatched. So when the wrapper is 0.8.1 (the same as the addon) and the inner addon is 0.8.0, three things follow. (1) missingPlatformPackageHint (lines 203-207) prints "<platformPackage> 0.8.0 is installed ... Pin it ...: \"<pkg>\": \"0.8.1\"". That is false: the wrapper is already at 0.8.1, so the pin changes nothing. (2) checkPrebuilds sets needsPin from any mismatchedVersion (lines 151-155), so issue.platformPackage = {name, version: addon.version}. (3) For mobile hosts, host-prebuilds/index.ts:108-145 runs `<pm> add pkg@0.8.1`, which installs the version already present, and checks again at line 135. The inner addon is still 0.8.0, so the same pin comes back and the command throws HostPrebuildsInstallFailedError("... succeeded, but <pkg> is still not installed under node_modules"). That error is misleading. Nothing upstream guards this. The test at commands-verify.test.ts:1052-1057 sets up exactly this state but asserts only the issue count, and the test at 1058-1066 covers only the precedence when both versions mismatch. So the behavior is untested, not shown to be intended. Impact is overstated in one respect: the inner addon only disagrees with its own wrapper when the platform package was published wrongly or node_modules was hand-edited or corrupted, which is uncommon. Rejecting the prebuild is still the right outcome there. Only the diagnosis and the auto-install remedy are wrong. Severity: low.
+
+### Human verification
+Read sdk/src/commands/verify/prebuilds.ts:89-106 and 203-207: the inner addon/ version is stored in the same mismatchedVersion field as the platform package's own version, so the hint tells the user to pin the platform package to a version it already has. Low: wrong remediation message in a verify command.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue inner addon version mismatch blamed on platform package` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request inner addon version mismatch blamed on platform package` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue host-prebuilds still not installed under node_modules after install` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request host-prebuilds still not installed under node_modules after install` on 2026-11-18: 8 results: [feat[notask|bc]: reduce split addons' binding.js to require('#host-addon')](https://github.com/tetherto/qvac/pull/4938) (closed), [QVAC-24884 chore[api]: update @qvac/tts-ggml to 0.9.1](https://github.com/tetherto/qvac/pull/4428) (closed), [QVAC-24552 feat[bc]: split @qvac/fabric into per-platform packages](https://github.com/tetherto/qvac/pull/4268) (closed)
+- `repo:tetherto/qvac is:issue mismatchedVersion nested addon wrong pin message` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request mismatchedVersion nested addon wrong pin message` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue verify prebuilds platform package already installed same version` on 2026-11-18: 4 results: [[Bug]: rocksdb-native prebuilds DT_NEEDED-link libatomic.so.1; worker cannot start on slim Linux images (follow-up to #3853)](https://github.com/tetherto/qvac/issues/4290) (closed), [[Bug]: translation-nmtcpp prebuild SIGILL on ARMv8.0-A (Cortex-A53) kills the default worker; request ARMv8.0-A baseline for engine prebuilds](https://github.com/tetherto/qvac/issues/3364) (closed), [[Bug]: @qvac/diffusion-cpp still DT_NEEDED-links libvulkan.so.1 on linux-arm64; eager addon load blocks all CPU inference (follow-up to #1823)](https://github.com/tetherto/qvac/issues/3853) (closed)
+- `repo:tetherto/qvac is:pull-request verify prebuilds platform package already installed same version` on 2026-11-18: 44 results: [QVAC-26667 feat: @qvac/decision-ggml addon for Laya and upstream decision models](https://github.com/tetherto/qvac/pull/5628) (open), [chore[notask]: lock the bare toolchain and drop the bare-make 1.8.0 pin](https://github.com/tetherto/qvac/pull/5457) (closed), [infra[notask]: move fabric, diffusion-cpp and inference-addon-cpp onto the package CI contract](https://github.com/tetherto/qvac/pull/5455) (closed)
+- `repo:tetherto/qvac is:issue prebuilds` on 2026-11-18: 17 results: [bare toolchain update available](https://github.com/tetherto/qvac/issues/5552) (open), [[Bug]: speech addons' Linux CUDA module needs libstdc++ without linking it, so it fails to load under bare-sidecar](https://github.com/tetherto/qvac/issues/5461) (closed), [[Bug]: fabric-linux-x64 CUDA backend needs libstdc++ but does not link it, so it fails to load under bare-sidecar and inference falls back to CPU](https://github.com/tetherto/qvac/issues/5352) (closed)
+- `repo:tetherto/qvac is:pull-request prebuilds` on 2026-11-18: 664 results: [Sync all addons with fabric b12032 prebuilds](https://github.com/tetherto/qvac/pull/5773) (open), [QVAC-26838 feat: add a browser (WebAssembly + WebGPU) build of @qvac/llm-llamacpp](https://github.com/tetherto/qvac/pull/5410) (open), [infra[notask]: add fabric nightly consumer tests](https://github.com/tetherto/qvac/pull/5720) (open)
 
 <sub>fingerprint `qr2:24eae57b164cac27` · first seen at 0c8a1510ab4f</sub>
 
@@ -832,7 +838,65 @@ Waiting on replication is clearly deliberate (it protects clearAfterReseed). The
 
 Severity: low. The path is operator-only, the error is explicit, and a documented mitigation exists.
 
+### Human verification
+Read registry-service.js:845-866 and reseed-tracker.js:95-121: DISPATCH_PUT_MODEL is appended at 861, then waitForComplete() can reject after 30 s without progress; no try/catch, so the RPC reports failure for a model that is committed. A client retry then re-ingests. Low; same await as #2 (which is the hang, this is the false failure).
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue add-model fails after commit when blind peer replication stalls` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request add-model fails after commit when blind peer replication stalls` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue ReseedTracker stalled error after model added` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request ReseedTracker stalled error after model added` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue addModel retry duplicates blob orphaned storage` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request addModel retry duplicates blob orphaned storage` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue reseed timeout reports add-model failure` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request reseed timeout reports add-model failure` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue registry-service` on 2026-11-18: 5 results: [[Bug]: A cached model is downloaded again on start, and a failed download leaves a truncated file in ~/.qvac/models](https://github.com/tetherto/qvac/issues/5677) (open), [[Bug]: darwin-x64 — LLM loadModel hangs forever in Metal shader compilation (Intel Mac), even with device 'cpu'](https://github.com/tetherto/qvac/issues/5378) (closed), [translation-nmtcpp: unvalidated model-file fields in nmt_model_load (ttype OOB read + unbounded vocab/SP length reads) — follow-up to #4590](https://github.com/tetherto/qvac/issues/4593) (closed)
+- `repo:tetherto/qvac is:pull-request registry-service` on 2026-11-18: 28 results: [fix[notask]: resume registry downloads and prevent socket-error crashes](https://github.com/tetherto/qvac/pull/5682) (closed), [QVAC-26761 feat: publish ESRGAN checkpoint fit descriptions](https://github.com/tetherto/qvac/pull/5341) (closed), [QVAC-25129 feat[api]: add ABot-World layer streaming to diffusion-cpp](https://github.com/tetherto/qvac/pull/4483) (closed)
+
 <sub>fingerprint `qr2:85ed260bc5ebad8d` · first seen at 0c8a1510ab4f</sub>
+
+### broker.pid records the CLI's own PID, so shutdown on Windows force-kills the CLI before its own cleanup runs
+
+**File:** `packages/test-suite/src/cli/utils/local-broker.ts:178`  
+**Category:** correctness · **Severity:** low · **Confidence:** high · **Status:** confirmed
+
+### Evidence
+local-broker.ts:178 writes `process.pid` (the CLI process that hosts the embedded broker) into `<reportDir>/broker.pid`. The only consumer of `*.pid` files is `killTracked(reportDir)` (process-manager.ts:90-116), which reads every `.pid` file in reportDir and kills that PID. On win32 it runs `taskkill /PID <pid> /F /T`. `setupCleanup` in run-local.ts:221-229 calls `killTracked(reportDir)` first, then `extraCleanup?.()`, `brokerHandle.cleanup()`, `printLogPaths(reportDir)` and `process.exit(exitCode)`. Because broker.pid holds the CLI's own PID, `taskkill /F /T` force-terminates the CLI (and its whole tree) from inside killTracked, so none of the later steps run. On POSIX the self-sent SIGTERM is only queued, and the `cleaningUp` guard plus the synchronous `process.exit` hide the problem. The embedded broker lives in-process and is already stopped by `brokerHandle.cleanup()`, so a PID file for it is wrong in the first place.
+
+### Impact
+On Windows, any `run:local:*` session that started the embedded broker ends with the CLI force-killed: the producer's exit code is replaced by taskkill's forced exit code (so a passing run looks failed in CI or scripts), `extraCleanup` (for example stopping device log capture, run-local.ts:512/619/773) is skipped, and the log-path summary never prints.
+
+### Reproduction
+On Windows, with no MQTT broker running, run a `run:local` command so ensureBroker starts the embedded aedes broker and writes reportDir/broker.pid. Let the producer exit with code 0, or press Ctrl+C. Check `echo %ERRORLEVEL%`: it is non-zero, and the 'log paths' output after 'Shutting down...' is missing.
+
+### Suggested fix
+Don't write the CLI's own PID to a `.pid` file that killTracked reads. Drop the broker.pid write, since `cleanup()` already stops the in-process broker, or give it a name or extension killTracked skips. Another option is for killTracked to skip `pid === process.pid`.
+
+### Adversarial verification (agent)
+I read the code and the claim holds. local-broker.ts:178 writes `process.pid` to `<reportDir>/broker.pid` after starting the embedded aedes broker in-process (lines 162-176). This is the CLI's own PID, not a child process. killTracked (process-manager.ts:90-116) reads every `*.pid` file in reportDir. On win32 it runs `execSync('taskkill /PID <pid> /F /T')`. Its catch only swallows errors from taskkill, and nothing excludes `process.pid`. setupCleanup (run-local.ts:221-230) calls killTracked(reportDir) first, then extraCleanup, brokerHandle.cleanup(), printLogPaths and process.exit(exitCode). On Windows, taskkill /F /T against the parent of the execSync child force-terminates the CLI and its tree, so none of the later steps run. The exit code becomes taskkill's forced-termination code (1) instead of the producer's code.
+
+The path is reachable. Every run:local:* command goes through setupLocalRun → ensureBroker(brokerUrl, reportDir) (run-local.ts:208). The PID file is written whenever no broker is already running, which is the default case on a dev machine. run:local:desktop and run:local:electron are realistic on Windows: the repo has win32 handling in run-consumer-electron.ts:79 and build-consumer-electron.ts:59.
+
+Nothing guards against it. No filter skips broker.pid or the current PID. No comment or test shows it is intentional. The embedded broker is already shut down in-process by brokerHandle.cleanup(), so the pid file does nothing useful. On POSIX the self-SIGTERM is queued and process.exit runs synchronously first. The cleaningUp guard also stops the handler from re-entering, so POSIX is largely unaffected, as the claim says.
+
+One point in the claim is overstated. Tracked child processes still die, because /T kills the CLI's whole tree, so there are no orphans. The real impact is a wrong exit code (a passing run can look failed in CI), skipped extraCleanup (device log capture, which only matters for the mobile commands), and a missing log-path summary. That is Windows-only, with no data loss, so medium-to-low. I keep it at medium because a wrong exit code from a test runner breaks CI signal.
+
+### Human verification
+Read test-suite/src/cli/utils/local-broker.ts:178 (writes process.pid, the CLI itself, to broker.pid in the report dir) and process-manager.ts:90-115 (killTracked signals every *.pid in that dir), called from run-local.ts:225 during cleanup. On Windows that is `taskkill /PID <self> /F /T`, which force-kills the CLI and its children before extraCleanup, broker cleanup, log printing and process.exit(code) run, so the producer's exit code is lost. On POSIX the self-SIGTERM is queued and process.exit wins, so it is mostly harmless there. Windows-only, not executed (no Windows host). Re-rated low: Windows-only and limited to the test tooling.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue broker.pid contains CLI own PID` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request broker.pid contains CLI own PID` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue killTracked taskkill kills CLI itself on Windows` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request killTracked taskkill kills CLI itself on Windows` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue run:local wrong exit code on Windows` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request run:local wrong exit code on Windows` on 2026-11-18: 2 results: [chore[notask]: release @qvac/test-suite 0.13.0](https://github.com/tetherto/qvac/pull/5390) (closed), [QVAC-24545 infra: build inference+sdk+e2e locally in one command](https://github.com/tetherto/qvac/pull/4341) (closed)
+- `repo:tetherto/qvac is:issue embedded broker pid file self-kill` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request embedded broker pid file self-kill` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue local-broker` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request local-broker` on 2026-11-18: 9 results: [QVAC-26835 test: run the shared e2e catalog on the Kotlin SDK on Android](https://github.com/tetherto/qvac/pull/5322) (closed), [QVAC-25346 feat[api]: run non-JS clients over a stdin/stdout bridge](https://github.com/tetherto/qvac/pull/4620) (closed), [QVAC-23342 fix: validate bounded MQTT sessions in SDK E2E](https://github.com/tetherto/qvac/pull/3717) (closed)
+
+<sub>fingerprint `qr2:ee5e04c40d926e1b` · first seen at 0c8a1510ab4f</sub>
 
 ### close() returns early on a background-stop promise without bumping generation, so a pending getRPC starts a new worker after close() resolved
 
@@ -855,6 +919,21 @@ Keep a separate promise for background stops (e.g. `stoppingPromise`), which `en
 I traced the code and the path is real. `stopInBackground` (l.333-344) sets the shared `closePromise` to the terminate promise. It is called from `notifyChannelClosed` (l.447), which the RPC layer calls in rpc-client.ts:142, and from the `ensureRPC` failure path (l.427). After `resetModuleState()`, a later `getRPC()` waits at l.356-358 and then calls `ensureRPC()` again. If `close()` runs during that window, l.482-485 only awaits `closePromise` and returns. It does not run `generation++`, and since `rpcPromise` is null there is no pending start to cancel. When the terminate promise settles, its `.finally` clears `closePromise`. The waiting caller then finds `rpcPromise` and `closePromise` both null, takes `startGeneration` equal to the unchanged `generation`, and spawns a new worker. Nothing at l.364, 373, 378 or 411 stops it, because no bump happened. I found no guard in a caller or wrapper and no test covering this. expo-rpc-client.ts:153/250 has the same pattern.
 
 The impact is overstated. `close()` is not a terminal shutdown by design: any `getRPC()` after `close()` starts a worker again. On the normal path (l.487+), a call that arrives *while* `close()` runs also waits on `closePromise` and then restarts a worker. So "a working client after shutdown" is partly how the code behaves anyway. The real inconsistency is narrower. A start that was already waiting before `close()` was called escapes the generation cancel that an in-flight launch would get (l.364/373/378). Triggering it needs three things at once: a worker crash or channel close, a concurrent `getRPC` caught in the short terminate window, and an app shutdown at that moment. The orphaned worker would keep the Node process alive, so the bug is real but rare. Severity: low.
+
+### Human verification
+Read sdk/src/client/rpc/node-rpc-client.ts:333-358, 427, 447, 481-485: stopInBackground stores its promise in the shared closePromise; close() awaits any non-null closePromise and returns without generation++, so ensureRPC callers parked on that promise relaunch a worker after close() resolved. Needs a worker crash followed by close() with a pending call. Low.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue close() does not bump generation after worker crash` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request close() does not bump generation after worker crash` on 2026-11-18: 10 results: [QVAC-27287 feat[api]: prime system prompts and tools through completion](https://github.com/tetherto/qvac/pull/5312) (closed), [QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow](https://github.com/tetherto/qvac/pull/5186) (closed), [feat[bc]: full-history prompt cache for llm-llamacpp](https://github.com/tetherto/qvac/pull/4570) (closed)
+- `repo:tetherto/qvac is:issue worker restarts after close resolves` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request worker restarts after close resolves` on 2026-11-18: 5 results: [feat[notask]: move mobile bundles to current Bare with JavaScriptCore on iOS](https://github.com/tetherto/qvac/pull/5751) (open), [QVAC-26968 feat[api|bc]: SDK caller sessions, model leases and scoped cancellation](https://github.com/tetherto/qvac/pull/5541) (closed), [QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow](https://github.com/tetherto/qvac/pull/5186) (closed)
+- `repo:tetherto/qvac is:issue stopInBackground closePromise close race` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request stopInBackground closePromise close race` on 2026-11-18: 1 results: [QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow](https://github.com/tetherto/qvac/pull/5186) (closed)
+- `repo:tetherto/qvac is:issue pending getRPC spawns worker after close` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request pending getRPC spawns worker after close` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue node-rpc-client` on 2026-11-18: 15 results: [[Feature]: Flutter Port](https://github.com/tetherto/qvac/issues/4713) (open), [[Bug]: first loadModel() after a fresh install times out on Windows; the same call succeeds on the second run](https://github.com/tetherto/qvac/issues/4394) (closed), [[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2](https://github.com/tetherto/qvac/issues/4612) (closed)
+- `repo:tetherto/qvac is:pull-request node-rpc-client` on 2026-11-18: 69 results: [QVAC-26838 feat[api]: run the SDK in the browser over a Web Worker transport](https://github.com/tetherto/qvac/pull/5375) (open), [fix[notask]: retry the worker connection after a failed init](https://github.com/tetherto/qvac/pull/5620) (open), [chore[notask]: move @qvac/sdk and @qvac/inference to bare-rpc ^2.0.0](https://github.com/tetherto/qvac/pull/5717) (closed)
 
 <sub>fingerprint `qr2:39ee0d0f8ba18c3b` · first seen at 0c8a1510ab4f</sub>
 
@@ -879,6 +958,21 @@ Wrap the drive.ready() call in try/catch and `await corestore.close()` before re
 The structural defect holds up. In setupHyperdrive (hyperdrive.ts:81-85) the Corestore is created and `await corestore.ready()` runs before `new Hyperdrive(...)` / `await drive.ready()`. Nothing wraps these lines in a try/catch or finally. registerCorestore only runs at line 109, after the swarm setup. Both callers do `const setup = await setupHyperdrive(...)` (lines 304 and 589) before their own try/finally starts, and cleanupHyperdrive(setup) needs the returned object, so if drive.ready() throws, nothing closes or unregisters the opened corestore. The lifecycle registry (runtime-lifecycle.ts:78) only tracks stores that were registered explicitly, so the shutdown sweep never sees this one.
 
 Mitigation that lowers the impact: the "invalid key length" trigger the reviewer gives is mostly blocked on the public path. resolve.ts:246 parses pear:// sources with hyperdriveUrlSchema (schemas/load-model.ts:884), which requires exactly 64 hex characters. What is left as a trigger is an I/O or corruption failure inside drive.ready() (its Hyperbee/core open) that happens after corestore.ready() has succeeded. That is rare, but it is realistic on a persistent on-disk store that survives crashes. Callers that pass a raw hyperdriveKey (download-asset schema `hyperdriveKey: z.string()`) are a second, less-guarded way in. The claim that "every retry fails" depends on how Corestore locks its storage, which I can't see from here. It is plausible, given the comment at line 372 about the Windows EBUSY on LOCK. No test or comment suggests the leak is intentional. The fix is easy: wrap the lines after corestore.ready() in try/catch and close the corestore (and the drive) on failure. Severity stays low because the trigger is rare and needs local storage corruption.
+
+### Human verification
+Read hyperdrive.ts:81-109 and callers 304, 589: the corestore is opened before drive.ready() with no try/catch and registered only at 109, so a throw from ready() (corrupt storage) leaks an open corestore that no caller can reach. Low; same resource-on-error-path class as qr2:4facb8033b0fee0e.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue setupHyperdrive corestore leak` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request setupHyperdrive corestore leak` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue corestore not closed when drive.ready fails` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request corestore not closed when drive.ready fails` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue hyperdrive download retry storage lock` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request hyperdrive download retry storage lock` on 2026-11-18: 1 results: [QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads](https://github.com/tetherto/qvac/pull/5689) (closed)
+- `repo:tetherto/qvac is:issue corestore LOCK held after failed download` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request corestore LOCK held after failed download` on 2026-11-18: 2 results: [QVAC-28122 fix[api]: let QVAC processes share the model registry store](https://github.com/tetherto/qvac/pull/5707) (closed), [QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads](https://github.com/tetherto/qvac/pull/5689) (closed)
+- `repo:tetherto/qvac is:issue hyperdrive` on 2026-11-18: 6 results: [[Bug]: Arbitrary file write via sharded HTTP model URLs on Windows (path traversal)](https://github.com/tetherto/qvac/issues/5802) (open), [[Bug]: unloadModel({ clearStorage: true }) deletes the whole folder of a local sharded model](https://github.com/tetherto/qvac/issues/5593) (open), [[Bug]: @qvac/diffusion-cpp still DT_NEEDED-links libvulkan.so.1 on linux-arm64; eager addon load blocks all CPU inference (follow-up to #1823)](https://github.com/tetherto/qvac/issues/3853) (closed)
+- `repo:tetherto/qvac is:pull-request hyperdrive` on 2026-11-18: 96 results: [fix[notask]: prevent arbitrary file write via sharded HTTP model URLs on Windows](https://github.com/tetherto/qvac/pull/5801) (open), [QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads](https://github.com/tetherto/qvac/pull/5689) (closed), [QVAC-26838 feat[api]: run the SDK in the browser over a Web Worker transport](https://github.com/tetherto/qvac/pull/5375) (open)
 
 <sub>fingerprint `qr2:aace28e701173f4a` · first seen at 0c8a1510ab4f</sub>
 
@@ -918,6 +1012,21 @@ Reachability: the bug needs the first load to happen while a bundle is only part
 
 Impact: the missing bundle silently falls back to ggml or a degraded path rather than failing outright. The fix is a cache delete, so the impact is overstated as "forever", but it is a real staleness bug. I'm downgrading it to low.
 
+### Human verification
+Read coreml-sidecars.ts:145-149, 202-222, 280-283 and registry.ts:461: a partly ingested companion set is cached as a subset, isValidCachedSet accepts it, and the cached set wins over catalog and registry lookups on every later load, so bundles ingested later are never staged. Uncertainty: whether published models are ever ingested in stages; the upstream tests (coreml-sidecars.test.ts:350+) show partial sets are an expected state. Low.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue Core ML companion set cache stale missing bundle` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request Core ML companion set cache stale missing bundle` on 2026-11-18: 3 results: [QVAC-28032 fix: stop staging the Parakeet TDT v3 Core ML encoder on macOS and iOS](https://github.com/tetherto/qvac/pull/5753) (open), [QVAC-27969 feat[api]: expose ACE-Step backend selection and the audiogen Core ML sidecars](https://github.com/tetherto/qvac/pull/5673) (closed), [QVAC-27543 infra[api]: cache SDK e2e models per model and restore only what each leg runs](https://github.com/tetherto/qvac/pull/5556) (closed)
+- `repo:tetherto/qvac is:issue cached coreml set never refreshed` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request cached coreml set never refreshed` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue Sortformer AOSC bundle not downloaded` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request Sortformer AOSC bundle not downloaded` on 2026-11-18: 1 results: [QVAC-25438 feat[mod]: load Parakeet Core ML sidecars through SDK](https://github.com/tetherto/qvac/pull/4776) (closed)
+- `repo:tetherto/qvac is:issue coreml sidecar metadata partial set` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request coreml sidecar metadata partial set` on 2026-11-18: 1 results: [QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow](https://github.com/tetherto/qvac/pull/5186) (closed)
+- `repo:tetherto/qvac is:issue coreml-sidecars` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request coreml-sidecars` on 2026-11-18: 23 results: [QVAC-28032 fix: stop staging the EOU Core ML sidecar and correct the Core ML docs](https://github.com/tetherto/qvac/pull/5697) (open), [QVAC-28032 fix: stop staging the Parakeet TDT v3 Core ML encoder on macOS and iOS](https://github.com/tetherto/qvac/pull/5753) (open), [QVAC-27306 doc[tts-ggml]: document the Chatterbox Core ML sidecars](https://github.com/tetherto/qvac/pull/5517) (closed)
+
 <sub>fingerprint `qr2:536196803de7c5f2` · first seen at 0c8a1510ab4f</sub>
 
 ### Deleting a model leaves its Core ML sidecar blobs in storage when any staged sidecar file is missing or partial
@@ -946,6 +1055,21 @@ Nothing else guards this. Other layouts (shards, the catalog `companionSet`, the
 
 Impact: the leaked data is limited to blocks already fetched for the sidecars, and a later download of the same sidecars would reuse them rather than duplicate them. On top of that, when there is no metadata, the catalog fallback only works if the sidecars are in the catalog, so for registry-only sidecars the leak happens no matter what this gate does. That makes it a real but minor storage leak with no correctness or security effect. Severity: low.
 
+### Human verification
+Read registry-delete.ts:173-185 and coreml-sidecars.ts:202-222: delete collects sidecar blob bindings only via findLocallyCachedCoremlCompanionSet, which returns undefined if any staged file is missing or the wrong size; the sets dir is removed but the hypercore blob ranges are not cleared. Low: disk space leak on iOS/macOS after an interrupted staging.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue deleteCache leaves Core ML sidecar blobs` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request deleteCache leaves Core ML sidecar blobs` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue coreml sidecar clearBlob partial download` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request coreml sidecar clearBlob partial download` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue registry delete coreml companion set blob leak` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request registry delete coreml companion set blob leak` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue findLocallyCachedCoremlCompanionSet delete` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request findLocallyCachedCoremlCompanionSet delete` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue coreml-sidecars` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request coreml-sidecars` on 2026-11-18: 23 results: [QVAC-28032 fix: stop staging the EOU Core ML sidecar and correct the Core ML docs](https://github.com/tetherto/qvac/pull/5697) (open), [QVAC-28032 fix: stop staging the Parakeet TDT v3 Core ML encoder on macOS and iOS](https://github.com/tetherto/qvac/pull/5753) (open), [QVAC-27306 doc[tts-ggml]: document the Chatterbox Core ML sidecars](https://github.com/tetherto/qvac/pull/5517) (closed)
+
 <sub>fingerprint `qr2:94de8f3872ba4b36` · first seen at 0c8a1510ab4f</sub>
 
 ### An IPv6 serveHost builds an invalid health URL, so every start times out
@@ -967,6 +1091,21 @@ Format the URL host separately from the bind host: `const urlHost = host.include
 
 ### Adversarial verification (agent)
 The claim holds. In serve-process.ts:305, `host` is `options.host ?? DEFAULT_SERVE_HOST`. It is passed unchanged to `--host` (line 327) and placed into `baseURL = \`http://${host}:${port}/v1\`` (line 361) without IPv6 brackets. Nothing validates or normalizes it on the way in: types.ts:60 and README:204 declare `serveHost?: string` with no constraint, and managed/index.ts:162 passes it straight through. With `serveHost: '::1'`, `http://::1:PORT/v1` is not a valid WHATWG URL, so `fetchImpl(healthUrl)` throws TypeError on every attempt. The bare `catch {}` at lines 211-213 swallows that as 'not listening yet', and the loop ends in ServeStartTimeoutError at line 216 even though the serve is up. The bracketed form is no workaround: the CLI hands `options.host` straight to fastify `app.listen({ host })` (cli/src/serve/index.ts:180). Node cannot resolve '[::1]' as a bind address, so the serve exits (ServeExitedError). The CLI clearly means to support IPv6 binds: server.ts:244-245 adds brackets itself when building origins, and cors.ts and host-check.ts strip them. The provider's registry.ts:121-122 also strips brackets. No test covers an IPv6 serveHost (no '::1' hits in ai-sdk-provider). I rate it below medium. The default is 127.0.0.1, and IPv6 loopback or '::' is an uncommon explicit opt-in. A user who sets it does get a total failure after the full 180s default timeout with a misleading error, but there are easy workarounds (an IPv4 host or 'localhost'). Fix: bracket the host when it contains ':' while building the URL (lines 359 and 361, plus index.ts:270/283), and/or stop the catch from hiding non-network TypeErrors.
+
+### Human verification
+Read ai-sdk-provider/src/managed/serve-process.ts:305-361 and index.ts:162: the host is interpolated as `http://${host}:${port}/v1` with no IPv6 brackets. `new URL('http://::1:8080/v1')` throws ERR_INVALID_URL in Node, waitForHealth (199-213) swallows every fetch error as 'not listening yet', so a serveHost of '::1' always ends in ServeStartTimeoutError after the full timeout, although the serve is up. The CLI server itself supports IPv6 binds (serve/core/cors.ts isLoopbackHost). Low severity: only IPv6 hosts.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue IPv6 serveHost health check timeout` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request IPv6 serveHost health check timeout` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue serveHost ::1 invalid URL` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request serveHost ::1 invalid URL` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue managed serve IPv6 baseURL brackets` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request managed serve IPv6 baseURL brackets` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue ServeStartTimeoutError IPv6 host` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request ServeStartTimeoutError IPv6 host` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue serve-process` on 2026-11-18: 11 results: [[Bug]: A cached model is downloaded again on start, and a failed download leaves a truncated file in ~/.qvac/models](https://github.com/tetherto/qvac/issues/5677) (open), [[Bug]: SDK config rejects `threads`, so the LLM addon is stuck with fabric's default thread count (4 of 8 P-cores on Arrow Lake, 15 vs 22 tok/s)](https://github.com/tetherto/qvac/issues/4433) (closed), [[Feature]: LLM modelConfig strict schema rejects threads / override-tensor / n-cpu-moe / fit-target / batch-size that the addon already supports (4.7 vs 22 tok/s on a 103 GB MoE)](https://github.com/tetherto/qvac/issues/4431) (closed)
+- `repo:tetherto/qvac is:pull-request serve-process` on 2026-11-18: 85 results: [QVAC-27679 feat: add the qvac entry point as @qvac/cli](https://github.com/tetherto/qvac/pull/5600) (open), [feat[notask]: Move CLI to TUI](https://github.com/tetherto/qvac/pull/5387) (open), [QVAC-27548 fix[api]: use LAN multicast for local RPC discovery](https://github.com/tetherto/qvac/pull/5497) (open)
 
 <sub>fingerprint `qr2:0c0f18400b05cf7d` · first seen at 0c8a1510ab4f</sub>
 
@@ -990,70 +1129,73 @@ Make the steal atomic. Rename the stale lock to a unique temp name (rename is at
 ### Adversarial verification (agent)
 The code matches the claim. In tryLock (index.ts:88-111), when the 'wx' open fails with EEXIST, the function reads the owner pid (readLockOwner, line 97). If that process is dead (line 99), it does an unconditional `rm(lockPath(key))` (line 100) and calls itself again. Nothing checks that the file being removed is the one whose pid was read: there is no inode or content compare, no rename-to-claim and no atomic link-based steal. Two waiters can both read the dead pid. A removes the lock and re-creates it with 'wx', then B's rm deletes A's fresh lock and B's 'wx' open succeeds. Both return true and both reach the spawn branch (lines 230-256). The mtime fallback (lines 105-107) has the same problem. Nothing downstream stops a second runner. The winner's re-check `findReusableServe` (line 233) runs before either side has written a record, so it can't see the other. runner.ts only uses 'wx' at line 45, for its own file, and writes the record with writeRecordSync, so the last writer wins and one serve becomes orphaned. In the finally block, `releaseLock` (line 273) also does an unconditional rm, so it can delete another client's lock. The path is reachable through the public startManagedQvac whenever reuse is true. Waiters loop back to tryLock every 5s slice (lines 279-281), so after a spawner crashes every waiter on that fleet key contends for the lock. The comment at lines 80-86 shows that preventing a duplicate serve is the lock's stated purpose, so this is not intended behaviour. On impact: the race window is small, from the readFile to the rm, a few ms of async fs work. The waiters' 5s slices are also not synchronized, since each starts when that client's previous tryLock returned. And the trigger needs a spawner to crash mid-start while two or more clients wait. The cost is a wasted duplicate model load, plus one serve that only gets reaped by its idle timeout or the sweep. Data stays intact. So the defect is real but rare; I rate it low rather than medium.
 
+### Human verification
+Read index.ts:88-111: steal is readLockOwner -> dead -> unconditional rm -> retry open('wx'). Two waiters that both saw the dead pid can interleave so the second rm deletes the first waiter's fresh lock; both return true and both spawn a serve (230-256). Narrow window, low severity; fix is rename-to-tombstone or compare the pid before rm. Same lock code as qr2:7ddcab2e4784b597.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue stale spawn lock steal race duplicate serve` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request stale spawn lock steal race duplicate serve` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue tryLock rm dead owner lock race` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request tryLock rm dead owner lock race` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue managed qvac serve spawned twice` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request managed qvac serve spawned twice` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue releaseLock deletes another client's lock` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request releaseLock deletes another client's lock` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue index` on 2026-11-18: 28 results: [[Feature]: Vector index: 4-bit adds are ~28× slower than f32, and a loaded index slows the next model load](https://github.com/tetherto/qvac/issues/5419) (open), [[Bug]: LLM cpu-mask leaks caller affinity into subsequent embedding loads](https://github.com/tetherto/qvac/issues/5537) (open), [[Bug]: duck TUI on Windows fails with "worker closed before ready" (harness entry path built with URL.pathname)](https://github.com/tetherto/qvac/issues/5655) (closed)
+- `repo:tetherto/qvac is:pull-request index` on 2026-11-18: 754 results: [fix[notask]: apply the findBy name filter with every index](https://github.com/tetherto/qvac/pull/5621) (open), [QVAC-28496 feat[bc|api]: make IdMapIndex async and cancellable](https://github.com/tetherto/qvac/pull/5790) (open), [chore[notask]: DO NOT MERGE, overlay-validate fabric against qvac-fabric 11739.4.0](https://github.com/tetherto/qvac/pull/5810) (open)
+
 <sub>fingerprint `qr2:5aacd12f083712b5` · first seen at 0c8a1510ab4f</sub>
 
-### Live spec fetch fails outright when the cache directory isn't writable, even though the download succeeded
+### A lock whose dead owner's pid gets reused is never stolen, so starts on that fleet key time out until that unrelated process exits
 
-**File:** `packages/cli/src/openai/coverage/parse-spec.ts:129`  
-**Category:** error-handling · **Severity:** low · **Confidence:** medium · **Status:** confirmed
-
-### Evidence
-fetchSpecLive calls mkdirSync(cacheDir) at parse-spec.ts:129 before fetching, and calls writeFileAtomically at :168-:172 after parsing. Neither call is wrapped. The cache is only an optimisation for the ETag and --offline paths, but any EACCES/EROFS/ENOSPC from these calls rejects parseSpecWithDependencies, so build-report.ts:100 never gets the entries it needed. The default CACHE_DIR is join(homedir(), '.cache', 'qvac') (:18).
-
-### Impact
-`qvac openai coverage` without --offline crashes with EACCES/EROFS in sandboxed CI, read-only HOME containers, or non-root Docker images with HOME=/. The spec was downloadable and parseable, and the cache isn't needed for a live run.
-
-### Reproduction
-Call parseSpecWithDependencies({}, { cacheDir: '/proc/qvac-cache', fetch: () => Promise.resolve(new Response(fixtureYaml, { status: 200 })), timeoutMs: 100 }). It rejects with an mkdir error instead of returning entries with sourceMode 'live'.
-
-### Suggested fix
-Make cache I/O best-effort in live mode: wrap the mkdirSync and the three writeFileAtomically/rmSync calls in try/catch (optionally logging a warning) and still return { yaml, entries, source, sourceMode: 'live' }.
-
-### Adversarial verification (agent)
-I read the code and the claim is correct. The live path is reached from a public command: `qvac openai coverage` without `--offline` goes from openai/command.ts to runOpenAiCoverage (coverage.ts:16), then buildCoverageReport (build-report.ts:100), then parseSpec, then fetchSpecLive.
-
-In fetchSpecLive (parse-spec.ts:123-177), the call `mkdirSync(dependencies.cacheDir, { recursive: true })` at :129 runs before the fetch and is not wrapped in try/catch. The etag read at :132-137 is guarded, but this mkdir is not. After a successful 200 and a successful parseSpecYaml at :167, the code calls writeFileAtomically for the spec, sha256 and etag files (:168-172). Each of those calls mkdirSync, mkdtempSync, writeFileSync and renameSync (:110-121), and none of them is guarded. If any of them throws EACCES, EROFS or ENOSPC, the whole promise rejects and the entries that were already parsed are thrown away. The 304 fallback path (:144-158) also hits the same unguarded writes after its refetch.
-
-Nothing upstream catches this. buildCoverageReport awaits parseSpec directly, and runOpenAiCoverage awaits buildCoverageReport directly.
-
-There is no way around it from the CLI. CACHE_DIR is hardcoded to `join(homedir(), '.cache', 'qvac')` (:18), with no XDG_CACHE_HOME or environment override. The command offers only `--offline`, and that needs a cache which is already populated, so it doesn't help. buildCoverageReport does accept `specPath`, but the CLI never sets it: coverage.ts passes only `offline`.
-
-None of the tests in openai-spec-fetch.test.ts cover an unwritable cache directory. Every test uses a writable mkdtemp directory, and nothing suggests the hard failure is intentional.
-
-The impact is real but narrow. It needs a read-only or unwritable HOME, for example a container running with HOME=/ as non-root, a read-only rootfs, or a full disk. It affects one diagnostic or developer-facing command, it fails loudly instead of corrupting anything, and it doesn't touch the main runtime. Severity stays low.
-
-<sub>fingerprint `qr2:500f49063c45e269` · first seen at 0c8a1510ab4f</sub>
-
-### Spec, SHA and ETag cache files are updated separately, so an interrupted or concurrent run leaves a hash-mismatched cache
-
-**File:** `packages/cli/src/openai/coverage/parse-spec.ts:169`  
-**Category:** concurrency · **Severity:** low · **Confidence:** medium · **Status:** confirmed
+**File:** `packages/ai-sdk-provider/src/managed/index.ts:99`  
+**Category:** correctness · **Severity:** low · **Confidence:** medium · **Status:** confirmed
 
 ### Evidence
-parse-spec.ts:168-175 renames openai-spec.yaml, then openai-spec.sha256, then openai-spec.etag, each in its own atomic step. Each file is atomic on its own, but the set is not. If the process dies or the write throws (e.g. ENOSPC) between :168 and :169, the new spec sits next to the old SHA. If two CLI runs overlap across an upstream spec change, the writes can interleave (A.spec, B.spec, B.sha, A.sha). After that, validateCachedSpecHash (:56) throws 'cached OpenAI specification hash mismatch' for the --offline path (:200), and the ETag/304 path silently does a full re-download.
+The lock lives in ~/.qvac/managed-serves (registry.ts:20-21, 50-51), so it survives crashes and reboots. A client killed while holding it (SIGKILL, OOM, power loss, or the `process.exit(0)` at index.ts:201, which skips the `finally releaseLock`) leaves `<key>.lock` holding its pid. Liveness is only `kill(pid,0)` (registry.ts:57-65), and EPERM also counts as alive. Once any unrelated process reuses that pid, which is common after a reboot, tryLock returns false forever. The mtime fallback (lines 105-108) only covers locks with no readable pid. sweepServes never touches lock files. Every later startManagedQvac for that fleet key then loops in waitForHealthyRecord until overallDeadline and throws ServeStartTimeoutError (lines 279-284), without ever spawning.
 
 ### Impact
-After a Ctrl-C during the cache write, or two coverage runs at once (e.g. parallel CI jobs sharing HOME), `--offline` refuses a cache that holds a perfectly valid spec until someone runs online again.
+The user cannot start the managed provider for that model set. Every attempt waits the full serveStartTimeout+10s (minutes) and then fails, until the unrelated pid exits, which may be never for a system daemon. The only fix is to delete the lock file by hand.
 
 ### Reproduction
-Stub writeFileSync so the second writeFileAtomically call throws, run parseSpecWithDependencies({}, deps-with-200), then run parseSpecWithDependencies({ offline: true }, deps). It rejects with 'hash mismatch' even though openai-spec.yaml holds the newly fetched, valid spec.
+Write `~/.qvac/managed-serves/<fleetKey>.lock` containing the pid of a long-lived process, e.g. `1` or the shell's pid. Call startManagedQvac with models that hash to that fleetKey: it times out and never spawns.
 
 ### Suggested fix
-Store spec, sha256 and etag together in one file (e.g. a JSON envelope or a header line), or write the SHA file first and the spec last so a partial update always fails toward a refetch. A per-cacheDir lock would cover concurrent runs.
+Record a start time, boot id, or nonce with the pid and check it. At a minimum, treat a lock as stealable when its mtime is older than serveStartTimeout plus a margin, even if the pid looks alive. The owner could also refresh the lock's mtime as a heartbeat while it waits.
 
 ### Adversarial verification (agent)
-The code matches the claim. In fetchSpecLive (parse-spec.ts:168-175) the spec, sha256 and etag files are written by three separate writeFileAtomically calls. Each call does a temp write and then renameSync (:110-121), so each file is replaced atomically, but nothing makes the three together atomic. There is no lock, no versioned directory and no combined manifest. The offline path (:197-213) reads the spec and calls validateCachedSpecHash(yaml, sha256Path, false). If the sha file exists but belongs to another spec, :56 throws 'cached OpenAI specification hash mismatch', which comes back as 'Offline mode requires a valid cached spec...'. The ETag path (:143-158) catches the same mismatch and silently fetches the whole spec again.
+I read the code and the claim holds up.
 
-How reachable it is:
-(1) Process death between :168 and :169. Lines 168-175 run synchronously, so a JS-level handler can't run in between. But Node installs no default SIGINT handler, so the OS can kill the process at any instruction. The window is microseconds, so this is possible but rare.
-(2) An error between the writes, such as ENOSPC or EACCES on the second mkdtemp or write. This leaves the new spec next to the old sha. It is plausible but uncommon.
-(3) Two processes sharing ~/.cache/qvac, for example parallel CI jobs. Their writes can interleave across processes. Only interleavings that span an upstream spec change produce a mismatch, so this is rare too.
+1. tryLock (index.ts:97-101) steals a lock only when `isProcessAlive(owner)` is false. isProcessAlive (registry.ts:57-65) is just `kill(pid,0)`, and it treats EPERM as alive. Nothing else is checked: no process start time, no boot ID, no hostname.
+2. The mtime fallback (index.ts:103-108) runs only when the lock has no readable pid. The test managed-spawn-lock.test.ts:37-42 confirms on purpose that a lock with a live owner and an old mtime is never stolen. So a live pid always wins, including a reused one.
+3. Nothing else removes `<key>.lock`. The only caller of releaseLock is the finally block at index.ts:273. sweepServes and sweepRunnerParams never touch .lock files. The lock lives in ~/.qvac/managed-serves, so it survives a reboot.
+4. A lock can be left behind on reachable paths:
+   - SIGKILL, OOM or power loss during the spawn window, which can last minutes of model download.
+   - The `closeOnParentExit` watcher calls `process.exit(0)` (index.ts:201). That can fire while resolveServe holds the lock, and the code comment says the watcher is armed for exactly this long first-run download. process.exit skips the async finally, so releaseLock never runs.
+5. Once the dead owner's pid belongs to any other process, every caller with that fleet key gets false from tryLock. They loop in 5s slices (index.ts:279-284) until overallDeadline and then throw ServeStartTimeoutError without spawning. The fallback mtime is 30s, but it does not apply here.
 
-Nothing else guards against it, and no comment says the behaviour is intended.
+There is also a worse variant: the new client can get the same pid itself. This is common in a container whose home directory is a persistent volume, where pids are small and deterministic. Then `kill(own pid,0)` succeeds and the client waits on its own stale lock.
 
-The impact is overstated in one way. The failure is loud and fixes itself: the error message tells the user to run without --offline once, and the online path fetches again and repairs the cache. No wrong data is used, since the hash check does its job. There is also a related variant the reviewer didn't mention: if the etag is newer than a matching spec+sha pair (writes interleaved as A.spec, A.sha, B.etag), a later 304 would serve spec A as 'not modified' even though the etag belongs to B. That is a silent stale-but-hash-valid result. The defect survives the checks, but given how narrow the windows are and how easy recovery is, severity stays low.
+What makes it less likely: it needs an abnormal exit inside the spawn-lock window, and then a pid reuse. Linux usually has a large pid_max, so reuse during normal uptime is rare. It is more plausible after a reboot or in containers.
 
-<sub>fingerprint `qr2:e8ac00cc3dc7ad4d` · first seen at 0c8a1510ab4f</sub>
+What makes it worse: once it happens, the state lasts until the unrelated process exits or someone deletes the lock file by hand. Each attempt costs serveStartTimeout+10s. The claimed impact is accurate but uncommon. I rate it medium, borderline low.
+
+### Human verification
+Read ai-sdk-provider/src/managed/index.ts:88-111 and registry.ts:20-65: the lock is stolen only if kill(pid,0) fails, with no start-time or boot-id check, and the lock dir (~/.qvac/managed-serves) survives reboots. A crashed owner whose pid is reused by an unrelated process blocks starts on that key until the mtime fallback or that process exits. Re-rated low: needs a crash plus pid reuse.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue stale spawn lock pid reuse` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request stale spawn lock pid reuse` on 2026-11-18: 1 results: [QVAC-24535 feat[api]: move Kotlin SDK into the monorepo](https://github.com/tetherto/qvac/pull/4491) (closed)
+- `repo:tetherto/qvac is:issue managed serve start timeout lock file` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request managed serve start timeout lock file` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue tryLock never steals lock reused pid` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request tryLock never steals lock reused pid` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue closeOnParentExit leaves lock` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request closeOnParentExit leaves lock` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue index` on 2026-11-18: 28 results: [[Feature]: Vector index: 4-bit adds are ~28× slower than f32, and a loaded index slows the next model load](https://github.com/tetherto/qvac/issues/5419) (open), [[Bug]: LLM cpu-mask leaks caller affinity into subsequent embedding loads](https://github.com/tetherto/qvac/issues/5537) (open), [[Bug]: duck TUI on Windows fails with "worker closed before ready" (harness entry path built with URL.pathname)](https://github.com/tetherto/qvac/issues/5655) (closed)
+- `repo:tetherto/qvac is:pull-request index` on 2026-11-18: 754 results: [fix[notask]: apply the findBy name filter with every index](https://github.com/tetherto/qvac/pull/5621) (open), [QVAC-28496 feat[bc|api]: make IdMapIndex async and cancellable](https://github.com/tetherto/qvac/pull/5790) (open), [chore[notask]: DO NOT MERGE, overlay-validate fabric against qvac-fabric 11739.4.0](https://github.com/tetherto/qvac/pull/5810) (open)
+
+<sub>fingerprint `qr2:7ddcab2e4784b597` · first seen at 0c8a1510ab4f</sub>
 
 ### Scratch folder is visible before its owner.pid is written, so a concurrent removeStaleScratch can delete a live bundle's scratch
 
@@ -1074,6 +1216,21 @@ Make the folder appear to removeStaleScratch only once it is owned. Create it un
 
 ### Adversarial verification (agent)
 The window the reviewer describes is real in the code. scratchFolderFor (scratch.ts:26-28) runs mkdir on `.<name>-<uuid>` first and writes owner.pid afterwards with a separate, non-atomic writeFile. removeStaleScratch (scratch.ts:58-63) matches every `.<name>-<uuid>` entry and calls ownerRunning. ownerRunning (67-74) returns false when readFile throws (ENOENT) or when parseInt gives NaN (an empty file). The `.previous` guard does not protect a fresh folder, so `rm -r` deletes it. Nothing else guards this. There is no lock anywhere in commands/bundle; I grepped for "lock" and found none. Callers run removeStaleScratch on the same dir just before scratchFolderFor (index.ts:544-545, 587; link.ts:117-118). The worker-scan scratch at index.ts:567 also runs after another run may be sweeping scanOutputDir. The ownerRunning/EPERM logic and the doc comment ("A folder whose process is still running belongs to a bundle in progress ... stay") show the authors meant to protect concurrent live bundles, so this is a hole in that intended guarantee, not something they accepted on purpose. The impact is overstated, though: (1) The window is tiny, a single mkdir→writeFile gap of microseconds to milliseconds. The other run's readdir→readFile has to land exactly inside it. (2) Two concurrent `qvac bundle` runs on the same project already clobber each other regardless. Both write entryPath (index.ts:598) and both replaceAll the same outputDir. So the scenario is not well supported to begin with. (3) The likely result is a loud ENOENT failure in run A, not silent corruption. A partial-tree output would need the rm to race the stow and then the rename to succeed, which is unlikely. Fix: write owner.pid atomically before the folder becomes visible. One way is to mkdir a temp name without the uuid pattern, write the pid, then rename it. Another is to treat a missing or empty owner.pid as live when the folder's mtime is recent.
+
+### Human verification
+Read sdk/src/commands/bundle/scratch.ts:26-28, 58-74: mkdir then a separate writeFile(owner.pid); a concurrent removeStaleScratch in that window sees ENOENT or an empty file, treats the owner as dead and rm -rf's a live scratch folder. Needs two bundle commands at once on the same project. Low.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue removeStaleScratch deletes live scratch folder` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request removeStaleScratch deletes live scratch folder` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue owner.pid race scratchFolderFor` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request owner.pid race scratchFolderFor` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue concurrent qvac bundle ENOENT scratch` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request concurrent qvac bundle ENOENT scratch` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue stale scratch cleanup race` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request stale scratch cleanup race` on 2026-11-18: 1 results: [QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow](https://github.com/tetherto/qvac/pull/5186) (closed)
+- `repo:tetherto/qvac is:issue scratch` on 2026-11-18: 4 results: [[Feature]: Flutter Port](https://github.com/tetherto/qvac/issues/4713) (open), [[Bug]: Android Vulkan GPU offload crashes during llama.cpp backend tensor allocation](https://github.com/tetherto/qvac/issues/2399) (closed), [[Docs] [Discussion]: (Suggestion) For Beginner Path, Clarify when to use QVAC-managed RAG workspaces vs bring-your-own vector DB](https://github.com/tetherto/qvac/issues/2144) (closed)
+- `repo:tetherto/qvac is:pull-request scratch` on 2026-11-18: 61 results: [QVAC-28223 chore: use RuntimeStatValue in bci-whispercpp stats tests](https://github.com/tetherto/qvac/pull/5730) (open), [QVAC-28223 chore: use RuntimeStatValue in tts-ggml stats tests](https://github.com/tetherto/qvac/pull/5729) (open), [QVAC-27256 feat[api]: report the selected backend in VLA stats](https://github.com/tetherto/qvac/pull/5502) (open)
 
 <sub>fingerprint `qr2:d190bf684e64c7ff` · first seen at 0c8a1510ab4f</sub>
 
@@ -1103,6 +1260,21 @@ The child then exits by signal with code null, and the parent runs `process.exit
 
 The impact is somewhat overstated. Grandchildren with inherited stdio (the bridge interpreter and the mqtt-mode client) are in the same process group, so they get the terminal's SIGINT directly, and orphaning is less likely than the claim says. What is really lost is the consumer's MQTT forceShutdown/cleanup, plus a misleading exit code 0. This only affects interactive Ctrl+C in a dev/test CLI, so the severity stays low. One detail depends on runtime timing (whether the two signals merge), but in practice they usually don't.
 
+### Human verification
+Reproduced with verification/test-suite-double-sigint.repro.mjs, which mirrors run-consumer-external.ts:33-48 and the runner's process.once('SIGINT'): a process-group SIGINT (what Ctrl+C sends) kills the runner before its graceful shutdown completes (child exit signal=SIGINT) and, through #8, the command exits 0. Fix: spawn the runner detached or stop forwarding SIGINT that the child already received. Low: interactive Ctrl+C only.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue Ctrl+C double SIGINT external consumer` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request Ctrl+C double SIGINT external consumer` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue SIGINT forwarded twice kills runner during shutdown` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request SIGINT forwarded twice kills runner during shutdown` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue process.once SIGINT graceful shutdown cut off` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request process.once SIGINT graceful shutdown cut off` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue external consumer exits 0 on Ctrl+C` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request external consumer exits 0 on Ctrl+C` on 2026-11-18: 1 results: [QVAC-19900 feat[api]: add managed mode to @qvac/ai-sdk-provider](https://github.com/tetherto/qvac/pull/2408) (closed)
+- `repo:tetherto/qvac is:issue run-consumer-external` on 2026-11-18: 3 results: [[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2](https://github.com/tetherto/qvac/issues/4612) (closed), [[Bug]: RAG search()/infer() throw a raw TypeError for a non-string query instead of QvacErrorRAG INVALID_INPUT](https://github.com/tetherto/qvac/issues/3727) (closed), [[Feature]: expose text-to-text translation (Bergamot NMT) on the OpenAI-compatible HTTP server](https://github.com/tetherto/qvac/issues/3889) (closed)
+- `repo:tetherto/qvac is:pull-request run-consumer-external` on 2026-11-18: 54 results: [QVAC-28195 feat[api]: add DSpark speculative decoding and spec-type auto to llm-llamacpp](https://github.com/tetherto/qvac/pull/5694) (open), [QVAC-26835 feat[api]: mqtt-mode external consumers, a prepare step and run:local:<name>](https://github.com/tetherto/qvac/pull/5357) (closed), [chore[notask]: release @qvac/test-suite 0.15.0](https://github.com/tetherto/qvac/pull/5714) (closed)
+
 <sub>fingerprint `qr2:59e0a7ed358e79c6` · first seen at 0c8a1510ab4f</sub>
 
 ### Server 'error' listener left as a stale promise reject, so runtime server errors are swallowed
@@ -1125,43 +1297,20 @@ In the listen callback, swap the handler: `this._server.off('error', reject); th
 ### Adversarial verification (agent)
 metrics-server.js:39-51 attaches `this._server.on('error', reject)` inside the listen promise and never removes it or replaces it with a logging handler. Nothing else attaches one: grep finds no other `_server.on(` in the package, and bin.js:137-142 just constructs the server and awaits `ready()`. Once listen resolves, any later server-level 'error' goes to an already-settled promise's `reject`, which does nothing. The path is reachable: in Node, net.Server's onconnection emits 'error' on the server when accept fails (for example EMFILE/ENFILE under fd exhaustion), and this is a long-running daemon. Only per-request collection errors are logged (line 28). No test or comment shows the behaviour is intentional. The impact is somewhat overstated, though. The leftover listener also stops Node from crashing the whole registry process on an unhandled 'error', which is arguably better than the alternative. The lost data is only a log line for a secondary metrics endpoint, and the accept errors are usually transient. The defect is real (diagnostics are silently lost) and the severity stays low. Fix: after listen succeeds, swap `reject` for a handler that logs the error, e.g. `this._server.off('error', reject); this._server.on('error', err => this._logger.error({ err }, 'MetricsServer: server error'))`.
 
+### Human verification
+Read metrics-server.js:39-51 and bin.js:137-142: the only server 'error' listener is the listen promise's reject, never replaced after listen, so later server errors (accept EMFILE/ENFILE in a long-running daemon) are silently dropped instead of logged. Low: observability only, the main RPC is unaffected.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue metrics server error listener swallows errors` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request metrics server error listener swallows errors` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue MetricsServer error event not logged after listen` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request MetricsServer error event not logged after listen` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue registry-server metrics EMFILE silent` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request registry-server metrics EMFILE silent` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue metrics-server` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request metrics-server` on 2026-11-18: 25 results: [fix[notask]: resume registry downloads and prevent socket-error crashes](https://github.com/tetherto/qvac/pull/5682) (closed), [QVAC-26957 test: drop the multi-GPU e2e tests](https://github.com/tetherto/qvac/pull/5060) (closed), [QVAC-24215 doc: assessModelFit support matrix, unknown reasons, and demo detail panels](https://github.com/tetherto/qvac/pull/4274) (closed)
+
 <sub>fingerprint `qr2:d48fcd8ca331abcd` · first seen at 0c8a1510ab4f</sub>
-
-### runFfmpeg has no cancellation path: aborted requests/jobs leave ffmpeg running until exit or the 5-minute timeout
-
-**File:** `packages/cli/src/serve/lib/ffmpeg.ts:38`  
-**Category:** resource-leak · **Severity:** low · **Confidence:** medium · **Status:** confirmed
-
-### Evidence
-FfmpegRunOptions (ffmpeg.ts:3-10) only has ffmpegPath/timeoutMs/maxStderrBytes, and there is no AbortSignal. The only kill path is the timeout handler (ffmpeg.ts:61-68). Callers have cancellation signals they cannot pass on: music.ts:491 has job.controller.signal and still calls transcodeWav at music.ts:583 without one. videos.ts:235/257 checks job.controller.signal, but transcodeAviToMp4 at videos.ts:379 cannot be cancelled. The HTTP routes (audio.ts:534, videos.ts:379) never observe client disconnect for the transcode, even though require-model.ts:134 shows the server already builds disconnect signals for model loads.
-
-### Impact
-If a client disconnects, a job is cancelled or a client retries GET /v1/videos/{id}/content, ffmpeg keeps running at full CPU for up to 5 minutes (DEFAULT_TIMEOUT_MS) per request. Its whole output is buffered in memory and then thrown away. Repeated retries pile up concurrent ffmpeg processes on the local machine.
-
-### Reproduction
-Generate a long video, request /v1/videos/{id}/content?format=mp4, then abort the HTTP request right away. `ps` shows ffmpeg still running until the transcode finishes or 5 minutes pass. Repeat the request N times and N ffmpeg processes run concurrently.
-
-### Suggested fix
-Add `signal?: AbortSignal` to FfmpegRunOptions. In runFfmpeg, if signal.aborted, reject at once. Otherwise add an 'abort' listener that calls child.kill('SIGKILL') and settles with an abort error, and remove the listener in settle(). Thread the request disconnect signal or job.controller.signal through transcodeWav/transcodeAviToMp4.
-
-### Adversarial verification (agent)
-The core claim holds, but the impact is overstated.
-
-What holds:
-- `runFfmpeg` (ffmpeg.ts:38-113) accepts no AbortSignal. Its only kill path is the `timeoutMs` SIGKILL (61-68, default 5 minutes).
-- Neither HTTP caller listens for client disconnect. These are videos.ts:379, which calls `transcodeAviToMp4(aviRecord.data)`, and audio.ts:534 plus music.ts:583, which call `transcodeWav`. The server does have a disconnect helper, `disconnectSignal` in require-model.ts:134, but it is not used here.
-- A client that disconnects mid-transcode leaves ffmpeg running until it finishes, and the output buffer is then thrown away.
-- videos.ts:370-379 has no in-flight dedup. Only a completed MP4 is cached (`mp4FileId`, set at line 414). So concurrent or retried GETs on `/v1/videos/{id}/content` while a transcode is running each spawn their own ffmpeg.
-
-What is overstated or wrong:
-1. The "cancelled job" path does not exist. Both music.ts:583 and videos.ts:379 run only in the content-GET handler, after `job.status === 'completed'` (music.ts:557, videos.ts:~327). The job's generation work is already finished by then, so `job.controller.signal` has nothing to cancel during a transcode.
-2. Each ffmpeg normally exits once it finishes the input. The inputs are bounded buffers already in memory: a model-generated WAV or a short AVI. A typical transcode takes seconds, so "up to 5 minutes at full CPU" is the worst case, not the usual one.
-3. After one transcode succeeds, the MP4 is cached and later retries skip ffmpeg. For audio, each request re-encodes, but the cost is small.
-4. This is the local `qvac serve` model server. Piling up processes needs a client that keeps re-requesting while a transcode is still running.
-
-The cleanup gap is real but the impact is modest. I rate it low, not medium.
-
-<sub>fingerprint `qr2:dcefbe60f4f31d7e` · first seen at 0c8a1510ab4f</sub>
 
 ### Stale .pid files are never removed, so killTracked can SIGTERM unrelated processes that reused those PIDs
 
@@ -1195,6 +1344,21 @@ A side note: broker.pid holds the CLI's own PID, so killTracked SIGTERMs itself.
 
 Re-rated low: not the default path, and it needs PID reuse.
 
+### Human verification
+Read process-manager.ts:68-115, 187-193 and run-local.ts:214-254: .pid files are never deleted, killTracked SIGTERMs (taskkill /F /T on Windows) every *.pid in the report dir without ownership checks, and --report-dir is reused as given. A rerun with the same --report-dir or --runId signals PIDs from the previous run, which may now belong to unrelated processes. Low; same pid-file design as #10.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue stale pid files killTracked` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request stale pid files killTracked` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue report-dir reuse kills unrelated process` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request report-dir reuse kills unrelated process` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue pid file not removed on child exit` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request pid file not removed on child exit` on 2026-11-18: 3 results: [QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow](https://github.com/tetherto/qvac/pull/5186) (closed), [QVAC-25039 fix: run the qvac-fabric fit on both on-disk load paths](https://github.com/tetherto/qvac/pull/4447) (closed), [QVAC-23977 feat(ggml-rpc-server): add managed cross-platform RPC server](https://github.com/tetherto/qvac/pull/4516) (closed)
+- `repo:tetherto/qvac is:issue killTracked PID reuse` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request killTracked PID reuse` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue process-manager` on 2026-11-18: 3 results: [[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2](https://github.com/tetherto/qvac/issues/4612) (closed), [@qvac/sdk: 3.7 GB node_modules footprint + bare-runtime compatibility issues](https://github.com/tetherto/qvac/issues/2444) (closed), [[Bug]: Error on Windows: No binaries found for target 'win32-x64' on qvac serve openai](https://github.com/tetherto/qvac/issues/1492) (closed)
+- `repo:tetherto/qvac is:pull-request process-manager` on 2026-11-18: 22 results: [ci(diffusion-cpp): capture native CUDA parity diagnostics](https://github.com/tetherto/qvac/pull/5264) (open), [QVAC-28120 fix: let deleteCache wait for a download this process just cancelled](https://github.com/tetherto/qvac/pull/5750) (closed), [QVAC-26819 doc: turn system requirements into a platform support page](https://github.com/tetherto/qvac/pull/5778) (open)
+
 <sub>fingerprint `qr2:0d264caeed8ed992` · first seen at 0c8a1510ab4f</sub>
 
 ### spawnTracked has no 'error' listener, so a failed spawn crashes the CLI and skips cleanup
@@ -1221,32 +1385,19 @@ Caller check: in run-local.ts:260-294 (and the other run:local:* variants) the t
 
 Impact is overstated in one respect: the trigger is unlikely. The command is 'node', which the user is already running the CLI with. cwd is configDir, which loadConfig has just read successfully. The env is inherited unless a caller overrides it. That leaves fd or process exhaustion (EMFILE/EAGAIN) or an unusual PATH or runtime (for example the CLI running under bun without a node binary on PATH). It is a real but rare robustness gap in a dev/test CLI that leaves orphaned processes, so I rate it low rather than medium.
 
+### Human verification
+Reproduced with verification/test-suite-spawn-error.repro.mjs (same code shape as process-manager.ts:61-82): spawning a missing binary returns pid=undefined, writes the string 'undefined' to the .pid file, and the ENOENT surfaces as an uncaught exception after the caller's try/catch has returned, so run-local.ts cleanup never runs. Low: test tooling, but a missing broker/bare binary is the common setup error.
+
+### Duplicate search (upstream issues and PRs, open and closed)
+- `repo:tetherto/qvac is:issue spawnTracked missing error handler` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request spawnTracked missing error handler` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue run:local crash unhandled error event spawn` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request run:local crash unhandled error event spawn` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue orphaned producer broker when spawn fails` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request orphaned producer broker when spawn fails` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue child.pid undefined pid file` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:pull-request child.pid undefined pid file` on 2026-11-18: 0 results
+- `repo:tetherto/qvac is:issue process-manager` on 2026-11-18: 3 results: [[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2](https://github.com/tetherto/qvac/issues/4612) (closed), [@qvac/sdk: 3.7 GB node_modules footprint + bare-runtime compatibility issues](https://github.com/tetherto/qvac/issues/2444) (closed), [[Bug]: Error on Windows: No binaries found for target 'win32-x64' on qvac serve openai](https://github.com/tetherto/qvac/issues/1492) (closed)
+- `repo:tetherto/qvac is:pull-request process-manager` on 2026-11-18: 22 results: [ci(diffusion-cpp): capture native CUDA parity diagnostics](https://github.com/tetherto/qvac/pull/5264) (open), [QVAC-28120 fix: let deleteCache wait for a download this process just cancelled](https://github.com/tetherto/qvac/pull/5750) (closed), [QVAC-26819 doc: turn system requirements into a platform support page](https://github.com/tetherto/qvac/pull/5778) (open)
+
 <sub>fingerprint `qr2:621f2d08e39c5ab8` · first seen at 0c8a1510ab4f</sub>
-
-### cleanupResources skips store close and temp-dir removal if swarm.destroy() rejects, and masks the original error
-
-**File:** `packages/registry-server/client/lib/profiler.js:185`  
-**Category:** error-handling · **Severity:** low · **Confidence:** medium · **Status:** uncertain
-
-### Evidence
-cleanupResources runs `await swarm.destroy(); await store.close();` and only then the guarded rmSync (lines 185-189). Any rejection from swarm.destroy() or store.close() aborts the remaining steps. Because the function is awaited inside `finally` (line 296), that rejection replaces whatever error the try block threw, for example a stream-timeout from pipeline.
-
-### Impact
-The downloaded model copy (download.bin, possibly multi-GB) stays in os.tmpdir(). The caller sees a teardown error instead of the real download failure it was profiling.
-
-### Reproduction
-Make swarm.destroy() reject (for example monkeypatch it) while pipeline throws a timeout. profileDownload rejects with the destroy error, the timeout is lost, and the qvac-profile-* directory with download.bin remains.
-
-### Suggested fix
-Run each teardown step in its own try/catch (or use Promise.allSettled), always run the rmSync, and do not let cleanup errors override an in-flight error from the try block.
-
-### Adversarial verification (agent)
-The code matches the claim. In profiler.js lines 184-190, cleanupResources runs `await swarm.destroy()` and then `await store.close()` with no guard. Only `fs.rmSync(tmpdir)` sits inside try/catch. The function is awaited in the outer `finally` at line 296. If either teardown call rejects, the temp-dir removal never runs, and under JS semantics that rejection replaces any error thrown in the try block (for example a pipeline timeout at line 266). The path is reachable through the public `profileDownload` export, which bin/cli.js and examples/profile-download.js both call.
-
-I could not show the trigger happens in practice. Hyperswarm and Corestore are not installed in this checkout, so I could not check whether `swarm.destroy()` or `store.close()` actually reject. Both are teardown methods built to be idempotent, and they rarely reject. Without a rejection the defect never shows. That is runtime behaviour I can't see, so the verdict is uncertain rather than confirmed.
-
-The impact is also smaller than claimed. This is a diagnostic profiler, not a production download path. The leftover file sits in os.tmpdir() under a uniquely named qvac-profile-* folder, and the OS eventually clears it.
-
-Separately, the code has a related gap the reviewer didn't mention. If `store.ready()` or `HypercoreStats.fromCorestore()` throws (lines 170-173), that happens before the try block, so the tmpdir leaks anyway. Low severity at most.
-
-<sub>fingerprint `qr2:dd02c9b9fb9c5dd7` · first seen at 0c8a1510ab4f</sub>

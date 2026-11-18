@@ -63,6 +63,11 @@ describe('score', () => {
     const f = base({ verdict: { verdict: 'confirmed', reasoning: '', severity: 'high', duplicateSearchTerms: [] }, human: { status: 'rejected', note: 'intended' } })
     expect(score(f, 0)).toBe(0)
   })
+  it('lets a human re-rate severity', () => {
+    const v = { verdict: 'confirmed' as const, reasoning: '', severity: 'high' as const, duplicateSearchTerms: [] }
+    const f = base({ verdict: v, human: { status: 'confirmed', note: '', severity: 'low' } })
+    expect(score(f, 0)).toBeLessThan(score(base({ verdict: v, human: { status: 'confirmed', note: '' } }), 0))
+  })
   it('uses the verified severity, not the reviewer one', () => {
     const lowered = score(base({ verdict: { verdict: 'confirmed', reasoning: '', severity: 'low', duplicateSearchTerms: [] } }), 0)
     const kept = score(base({ verdict: { verdict: 'confirmed', reasoning: '', severity: 'high', duplicateSearchTerms: [] } }), 0)

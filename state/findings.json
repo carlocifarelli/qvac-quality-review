@@ -49,7 +49,7 @@
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "presence": "present",
-      "score": 1.11,
+      "score": 0,
       "verdict": {
         "verdict": "confirmed",
         "reasoning": "I read the code and the claim is correct. The live path is reached from a public command: `qvac openai coverage` without `--offline` goes from openai/command.ts to runOpenAiCoverage (coverage.ts:16), then buildCoverageReport (build-report.ts:100), then parseSpec, then fetchSpecLive.\n\nIn fetchSpecLive (parse-spec.ts:123-177), the call `mkdirSync(dependencies.cacheDir, { recursive: true })` at :129 runs before the fetch and is not wrapped in try/catch. The etag read at :132-137 is guarded, but this mkdir is not. After a successful 200 and a successful parseSpecYaml at :167, the code calls writeFileAtomically for the spec, sha256 and etag files (:168-172). Each of those calls mkdirSync, mkdtempSync, writeFileSync and renameSync (:110-121), and none of them is guarded. If any of them throws EACCES, EROFS or ENOSPC, the whole promise rejects and the entries that were already parsed are thrown away. The 304 fallback path (:144-158) also hits the same unguarded writes after its refetch.\n\nNothing upstream catches this. buildCoverageReport awaits parseSpec directly, and runOpenAiCoverage awaits buildCoverageReport directly.\n\nThere is no way around it from the CLI. CACHE_DIR is hardcoded to `join(homedir(), '.cache', 'qvac')` (:18), with no XDG_CACHE_HOME or environment override. The command offers only `--offline`, and that needs a cache which is already populated, so it doesn't help. buildCoverageReport does accept `specPath`, but the CLI never sets it: coverage.ts passes only `offline`.\n\nNone of the tests in openai-spec-fetch.test.ts cover an unwritable cache directory. Every test uses a writable mkdtemp directory, and nothing suggests the hard failure is intentional.\n\nThe impact is real but narrow. It needs a read-only or unwritable HOME, for example a container running with HOME=/ as non-root, a read-only rootfs, or a full disk. It affects one diagnostic or developer-facing command, it fails loudly instead of corrupting anything, and it doesn't touch the main runtime. Severity stays low.",
@@ -61,7 +61,12 @@
           "qvac openai coverage EROFS"
         ]
       },
-      "churn": 4
+      "churn": 4,
+      "human": {
+        "status": "rejected",
+        "verifiedBy": "code reading",
+        "note": "Mechanism is correct (mkdirSync/writeFileAtomically unguarded in parse-spec.ts:129/168), but this is the internal `qvac openai coverage` report generator run by maintainers; an unwritable ~/.cache is an environment problem with a clear error. Below the bar."
+      }
     },
     "qr2:e8ac00cc3dc7ad4d": {
       "title": "Spec, SHA and ETag cache files are updated separately, so an interrupted or concurrent run leaves a hash-mismatched cache",
@@ -80,7 +85,7 @@
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "presence": "present",
-      "score": 1.11,
+      "score": 0,
       "verdict": {
         "verdict": "confirmed",
         "reasoning": "The code matches the claim. In fetchSpecLive (parse-spec.ts:168-175) the spec, sha256 and etag files are written by three separate writeFileAtomically calls. Each call does a temp write and then renameSync (:110-121), so each file is replaced atomically, but nothing makes the three together atomic. There is no lock, no versioned directory and no combined manifest. The offline path (:197-213) reads the spec and calls validateCachedSpecHash(yaml, sha256Path, false). If the sha file exists but belongs to another spec, :56 throws 'cached OpenAI specification hash mismatch', which comes back as 'Offline mode requires a valid cached spec...'. The ETag path (:143-158) catches the same mismatch and silently fetches the whole spec again.\n\nHow reachable it is:\n(1) Process death between :168 and :169. Lines 168-175 run synchronously, so a JS-level handler can't run in between. But Node installs no default SIGINT handler, so the OS can kill the process at any instruction. The window is microseconds, so this is possible but rare.\n(2) An error between the writes, such as ENOSPC or EACCES on the second mkdtemp or write. This leaves the new spec next to the old sha. It is plausible but uncommon.\n(3) Two processes sharing ~/.cache/qvac, for example parallel CI jobs. Their writes can interleave across processes. Only interleavings that span an upstream spec change produce a mismatch, so this is rare too.\n\nNothing else guards against it, and no comment says the behaviour is intended.\n\nThe impact is overstated in one way. The failure is loud and fixes itself: the error message tells the user to run without --offline once, and the online path fetches again and repairs the cache. No wrong data is used, since the hash check does its job. There is also a related variant the reviewer didn't mention: if the etag is newer than a matching spec+sha pair (writes interleaved as A.spec, A.sha, B.etag), a later 304 would serve spec A as 'not modified' even though the etag belongs to B. That is a silent stale-but-hash-valid result. The defect survives the checks, but given how narrow the windows are and how easy recovery is, severity stays low.",
@@ -92,7 +97,12 @@
           "concurrent coverage runs corrupt cache"
         ]
       },
-      "churn": 4
+      "churn": 4,
+      "human": {
+        "status": "rejected",
+        "verifiedBy": "code reading",
+        "note": "Correct that spec/sha/etag are replaced separately (parse-spec.ts:168-175), but the failure is loud ('cached OpenAI specification hash mismatch') and fixed by re-running online, in a maintainer-only coverage tool. Below the bar."
+      }
     },
     "qr2:bfcce14348173adb": {
       "title": "deviceDefaults entries for onnx-tts, bci, audiogen and classification models are silently dropped during config parsing",
@@ -460,7 +470,7 @@
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "presence": "present",
-      "score": 1.83,
+      "score": 0,
       "verdict": {
         "verdict": "confirmed",
         "reasoning": "client.js:753-769 adds an anonymous 'abort' listener with { once: true } to options.signal, and nothing ever removes it. The finally block (:771-778) destroys both streams, awaits the writer closing, destroys rangeDownload and turns off the core 'download' handler, but it never calls removeEventListener, and no AbortController is kept to remove the listener later. options.signal is the caller's signal passed straight through. The public download paths call _streamBlobToFile inside withRetry (:380, :490), so each attempt adds one more listener. Nothing wraps or derives the signal per download (a grep for AbortController in the file finds none). The path is reachable and nothing guards it: a caller that reuses one signal across downloads keeps one closure per attempt, holding stream, writeStream and reject. On Node, an AbortSignal with more than 10 listeners triggers the MaxListenersExceededWarning. The impact is overstated in one way. On a later abort, the stale listeners call destroy() on streams that are already destroyed, which does nothing, and reject() on promises that already settled, which also does nothing. So there is no wrong behaviour, only memory held until the signal is collected, plus the warning. This only happens when a long-lived signal is reused; with one signal per download it is garbage-collected together with the listeners. Severity stays low.",
@@ -472,7 +482,12 @@
           "signal listeners accumulate on retry"
         ]
       },
-      "churn": 9
+      "churn": 9,
+      "human": {
+        "status": "rejected",
+        "verifiedBy": "code reading",
+        "note": "Correct that the abort listener at client.js:760-768 is never removed. But every in-repo caller passes a per-operation signal (registry-download-utils.ts:100-136, model-fit/description/fetch.ts:176-195 with its own controller), so at most maxRetries+1 = 4 listeners hold already-destroyed streams until the signal is collected. Only a caller reusing one long-lived signal across many downloads would accumulate them. Worth a one-line fix (fetch.ts:195 shows the pattern), not a finding."
+      }
     },
     "qr2:ee5e04c40d926e1b": {
       "title": "broker.pid records the CLI's own PID, so shutdown on Windows force-kills the CLI before its own cleanup runs",
@@ -491,7 +506,7 @@
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "presence": "present",
-      "score": 3.75,
+      "score": 1.25,
       "verdict": {
         "verdict": "confirmed",
         "reasoning": "I read the code and the claim holds. local-broker.ts:178 writes `process.pid` to `<reportDir>/broker.pid` after starting the embedded aedes broker in-process (lines 162-176). This is the CLI's own PID, not a child process. killTracked (process-manager.ts:90-116) reads every `*.pid` file in reportDir. On win32 it runs `execSync('taskkill /PID <pid> /F /T')`. Its catch only swallows errors from taskkill, and nothing excludes `process.pid`. setupCleanup (run-local.ts:221-230) calls killTracked(reportDir) first, then extraCleanup, brokerHandle.cleanup(), printLogPaths and process.exit(exitCode). On Windows, taskkill /F /T against the parent of the execSync child force-terminates the CLI and its tree, so none of the later steps run. The exit code becomes taskkill's forced-termination code (1) instead of the producer's code.\n\nThe path is reachable. Every run:local:* command goes through setupLocalRun → ensureBroker(brokerUrl, reportDir) (run-local.ts:208). The PID file is written whenever no broker is already running, which is the default case on a dev machine. run:local:desktop and run:local:electron are realistic on Windows: the repo has win32 handling in run-consumer-electron.ts:79 and build-consumer-electron.ts:59.\n\nNothing guards against it. No filter skips broker.pid or the current PID. No comment or test shows it is intentional. The embedded broker is already shut down in-process by brokerHandle.cleanup(), so the pid file does nothing useful. On POSIX the self-SIGTERM is queued and process.exit runs synchronously first. The cleaningUp guard also stops the handler from re-entering, so POSIX is largely unaffected, as the claim says.\n\nOne point in the claim is overstated. Tracked child processes still die, because /T kills the CLI's whole tree, so there are no orphans. The real impact is a wrong exit code (a passing run can look failed in CI), skipped extraCleanup (device log capture, which only matters for the mobile commands), and a missing log-path summary. That is Windows-only, with no data loss, so medium-to-low. I keep it at medium because a wrong exit code from a test runner breaks CI signal.",
@@ -503,7 +518,113 @@
           "embedded broker pid file self-kill"
         ]
       },
-      "churn": 1
+      "churn": 1,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read test-suite/src/cli/utils/local-broker.ts:178 (writes process.pid, the CLI itself, to broker.pid in the report dir) and process-manager.ts:90-115 (killTracked signals every *.pid in that dir), called from run-local.ts:225 during cleanup. On Windows that is `taskkill /PID <self> /F /T`, which force-kills the CLI and its children before extraCleanup, broker cleanup, log printing and process.exit(code) run, so the producer's exit code is lost. On POSIX the self-SIGTERM is queued and process.exit wins, so it is mostly harmless there. Windows-only, not executed (no Windows host). Re-rated low: Windows-only and limited to the test tooling.",
+        "severity": "low"
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue broker.pid contains CLI own PID",
+          "searchedAt": "2026-11-18T08:47:18.875Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request broker.pid contains CLI own PID",
+          "searchedAt": "2026-11-18T08:47:18.876Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue killTracked taskkill kills CLI itself on Windows",
+          "searchedAt": "2026-11-18T08:47:24.885Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request killTracked taskkill kills CLI itself on Windows",
+          "searchedAt": "2026-11-18T08:47:24.885Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue run:local wrong exit code on Windows",
+          "searchedAt": "2026-11-18T08:47:30.998Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request run:local wrong exit code on Windows",
+          "searchedAt": "2026-11-18T08:47:30.998Z",
+          "total": 2,
+          "top": [
+            {
+              "title": "chore[notask]: release @qvac/test-suite 0.13.0",
+              "url": "https://github.com/tetherto/qvac/pull/5390",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-24545 infra: build inference+sdk+e2e locally in one command",
+              "url": "https://github.com/tetherto/qvac/pull/4341",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue embedded broker pid file self-kill",
+          "searchedAt": "2026-11-18T08:47:36.992Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request embedded broker pid file self-kill",
+          "searchedAt": "2026-11-18T08:47:36.992Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue local-broker",
+          "searchedAt": "2026-11-18T08:47:43.702Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request local-broker",
+          "searchedAt": "2026-11-18T08:47:43.703Z",
+          "total": 9,
+          "top": [
+            {
+              "title": "QVAC-26835 test: run the shared e2e catalog on the Kotlin SDK on Android",
+              "url": "https://github.com/tetherto/qvac/pull/5322",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-25346 feat[api]: run non-JS clients over a stdin/stdout bridge",
+              "url": "https://github.com/tetherto/qvac/pull/4620",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-23342 fix: validate bounded MQTT sessions in SDK E2E",
+              "url": "https://github.com/tetherto/qvac/pull/3717",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-25475 infra: run the Python client as its own e2e leg",
+              "url": "https://github.com/tetherto/qvac/pull/4694",
+              "state": "closed"
+            },
+            {
+              "title": "infra[notask]: move the SDK pod onto the package CI contract",
+              "url": "https://github.com/tetherto/qvac/pull/5466",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/10"
     },
     "qr2:24eae57b164cac27": {
       "title": "A mismatch in the inner addon is blamed on the platform package, which leads to a wrong message and a pin that cannot fix it",
@@ -534,7 +655,200 @@
           "verify prebuilds platform package already installed same version"
         ]
       },
-      "churn": 10
+      "churn": 10,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read sdk/src/commands/verify/prebuilds.ts:89-106 and 203-207: the inner addon/ version is stored in the same mismatchedVersion field as the platform package's own version, so the hint tells the user to pin the platform package to a version it already has. Low: wrong remediation message in a verify command."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue inner addon version mismatch blamed on platform package",
+          "searchedAt": "2026-11-18T08:55:52.984Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request inner addon version mismatch blamed on platform package",
+          "searchedAt": "2026-11-18T08:55:52.985Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue host-prebuilds still not installed under node_modules after install",
+          "searchedAt": "2026-11-18T08:55:59.199Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request host-prebuilds still not installed under node_modules after install",
+          "searchedAt": "2026-11-18T08:55:59.199Z",
+          "total": 8,
+          "top": [
+            {
+              "title": "feat[notask|bc]: reduce split addons' binding.js to require('#host-addon')",
+              "url": "https://github.com/tetherto/qvac/pull/4938",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-24884 chore[api]: update @qvac/tts-ggml to 0.9.1",
+              "url": "https://github.com/tetherto/qvac/pull/4428",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-24552 feat[bc]: split @qvac/fabric into per-platform packages",
+              "url": "https://github.com/tetherto/qvac/pull/4268",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-24552 chore[api]: bump npm consumers to @qvac/fabric 0.18.0",
+              "url": "https://github.com/tetherto/qvac/pull/4733",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-23995: migrate vla-ggml to shared @qvac/fabric runtime",
+              "url": "https://github.com/tetherto/qvac/pull/3998",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue mismatchedVersion nested addon wrong pin message",
+          "searchedAt": "2026-11-18T08:56:05.278Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request mismatchedVersion nested addon wrong pin message",
+          "searchedAt": "2026-11-18T08:56:05.278Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue verify prebuilds platform package already installed same version",
+          "searchedAt": "2026-11-18T08:56:11.632Z",
+          "total": 4,
+          "top": [
+            {
+              "title": "[Bug]: rocksdb-native prebuilds DT_NEEDED-link libatomic.so.1; worker cannot start on slim Linux images (follow-up to #3853)",
+              "url": "https://github.com/tetherto/qvac/issues/4290",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: translation-nmtcpp prebuild SIGILL on ARMv8.0-A (Cortex-A53) kills the default worker; request ARMv8.0-A baseline for engine prebuilds",
+              "url": "https://github.com/tetherto/qvac/issues/3364",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: @qvac/diffusion-cpp still DT_NEEDED-links libvulkan.so.1 on linux-arm64; eager addon load blocks all CPU inference (follow-up to #1823)",
+              "url": "https://github.com/tetherto/qvac/issues/3853",
+              "state": "closed"
+            },
+            {
+              "title": "[Feature]: expose text-to-text translation (Bergamot NMT) on the OpenAI-compatible HTTP server",
+              "url": "https://github.com/tetherto/qvac/issues/3889",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request verify prebuilds platform package already installed same version",
+          "searchedAt": "2026-11-18T08:56:11.632Z",
+          "total": 44,
+          "top": [
+            {
+              "title": "QVAC-26667 feat: @qvac/decision-ggml addon for Laya and upstream decision models",
+              "url": "https://github.com/tetherto/qvac/pull/5628",
+              "state": "open"
+            },
+            {
+              "title": "chore[notask]: lock the bare toolchain and drop the bare-make 1.8.0 pin",
+              "url": "https://github.com/tetherto/qvac/pull/5457",
+              "state": "closed"
+            },
+            {
+              "title": "infra[notask]: move fabric, diffusion-cpp and inference-addon-cpp onto the package CI contract",
+              "url": "https://github.com/tetherto/qvac/pull/5455",
+              "state": "closed"
+            },
+            {
+              "title": "feat[notask]: check Linux native prerequisites in doctor --deep",
+              "url": "https://github.com/tetherto/qvac/pull/5172",
+              "state": "closed"
+            },
+            {
+              "title": "infra[notask]: move vla-ggml onto the package CI contract (pilot)",
+              "url": "https://github.com/tetherto/qvac/pull/5265",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue prebuilds",
+          "searchedAt": "2026-11-18T08:56:17.885Z",
+          "total": 17,
+          "top": [
+            {
+              "title": "bare toolchain update available",
+              "url": "https://github.com/tetherto/qvac/issues/5552",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: speech addons' Linux CUDA module needs libstdc++ without linking it, so it fails to load under bare-sidecar",
+              "url": "https://github.com/tetherto/qvac/issues/5461",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: fabric-linux-x64 CUDA backend needs libstdc++ but does not link it, so it fails to load under bare-sidecar and inference falls back to CPU",
+              "url": "https://github.com/tetherto/qvac/issues/5352",
+              "state": "closed"
+            },
+            {
+              "title": "[Feature]: Check Linux native-library prerequisites across the resolved SDK dependency tree",
+              "url": "https://github.com/tetherto/qvac/issues/4337",
+              "state": "closed"
+            },
+            {
+              "title": "bare toolchain update available",
+              "url": "https://github.com/tetherto/qvac/issues/5530",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request prebuilds",
+          "searchedAt": "2026-11-18T08:56:17.885Z",
+          "total": 664,
+          "top": [
+            {
+              "title": "Sync all addons with fabric b12032 prebuilds",
+              "url": "https://github.com/tetherto/qvac/pull/5773",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-26838 feat: add a browser (WebAssembly + WebGPU) build of @qvac/llm-llamacpp",
+              "url": "https://github.com/tetherto/qvac/pull/5410",
+              "state": "open"
+            },
+            {
+              "title": "infra[notask]: add fabric nightly consumer tests",
+              "url": "https://github.com/tetherto/qvac/pull/5720",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27302 feat(asr-ggml): run on the shared @qvac/fabric runtime",
+              "url": "https://github.com/tetherto/qvac/pull/5764",
+              "state": "open"
+            },
+            {
+              "title": "infra[notask]: build addon iOS mobile test apps on macos-26 with its default Xcode",
+              "url": "https://github.com/tetherto/qvac/pull/5643",
+              "state": "open"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/19"
     },
     "qr2:7733cb156d083b6d": {
       "title": "Shards inside a top-level folder are extracted but never found, so the load fails",
@@ -869,7 +1183,133 @@
           "killTracked PID reuse"
         ]
       },
-      "churn": 1
+      "churn": 1,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read process-manager.ts:68-115, 187-193 and run-local.ts:214-254: .pid files are never deleted, killTracked SIGTERMs (taskkill /F /T on Windows) every *.pid in the report dir without ownership checks, and --report-dir is reused as given. A rerun with the same --report-dir or --runId signals PIDs from the previous run, which may now belong to unrelated processes. Low; same pid-file design as #10."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue stale pid files killTracked",
+          "searchedAt": "2026-11-18T08:56:23.782Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request stale pid files killTracked",
+          "searchedAt": "2026-11-18T08:56:23.782Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue report-dir reuse kills unrelated process",
+          "searchedAt": "2026-11-18T08:56:29.600Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request report-dir reuse kills unrelated process",
+          "searchedAt": "2026-11-18T08:56:29.600Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue pid file not removed on child exit",
+          "searchedAt": "2026-11-18T08:56:35.613Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request pid file not removed on child exit",
+          "searchedAt": "2026-11-18T08:56:35.613Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow",
+              "url": "https://github.com/tetherto/qvac/pull/5186",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-25039 fix: run the qvac-fabric fit on both on-disk load paths",
+              "url": "https://github.com/tetherto/qvac/pull/4447",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-23977 feat(ggml-rpc-server): add managed cross-platform RPC server",
+              "url": "https://github.com/tetherto/qvac/pull/4516",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue killTracked PID reuse",
+          "searchedAt": "2026-11-18T08:56:41.561Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request killTracked PID reuse",
+          "searchedAt": "2026-11-18T08:56:41.561Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue process-manager",
+          "searchedAt": "2026-11-18T08:56:47.826Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2",
+              "url": "https://github.com/tetherto/qvac/issues/4612",
+              "state": "closed"
+            },
+            {
+              "title": "@qvac/sdk: 3.7 GB node_modules footprint + bare-runtime compatibility issues",
+              "url": "https://github.com/tetherto/qvac/issues/2444",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: Error on Windows: No binaries found for target 'win32-x64' on qvac serve openai",
+              "url": "https://github.com/tetherto/qvac/issues/1492",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request process-manager",
+          "searchedAt": "2026-11-18T08:56:47.826Z",
+          "total": 22,
+          "top": [
+            {
+              "title": "ci(diffusion-cpp): capture native CUDA parity diagnostics",
+              "url": "https://github.com/tetherto/qvac/pull/5264",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: let deleteCache wait for a download this process just cancelled",
+              "url": "https://github.com/tetherto/qvac/pull/5750",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26819 doc: turn system requirements into a platform support page",
+              "url": "https://github.com/tetherto/qvac/pull/5778",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            },
+            {
+              "title": "fix[notask]: fix the full-suite SDK e2e failures",
+              "url": "https://github.com/tetherto/qvac/pull/5748",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/30"
     },
     "qr2:621f2d08e39c5ab8": {
       "title": "spawnTracked has no 'error' listener, so a failed spawn crashes the CLI and skips cleanup",
@@ -900,7 +1340,117 @@
           "child.pid undefined pid file"
         ]
       },
-      "churn": 1
+      "churn": 1,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "reproduction",
+        "note": "Reproduced with verification/test-suite-spawn-error.repro.mjs (same code shape as process-manager.ts:61-82): spawning a missing binary returns pid=undefined, writes the string 'undefined' to the .pid file, and the ENOENT surfaces as an uncaught exception after the caller's try/catch has returned, so run-local.ts cleanup never runs. Low: test tooling, but a missing broker/bare binary is the common setup error."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue spawnTracked missing error handler",
+          "searchedAt": "2026-11-18T08:56:53.738Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request spawnTracked missing error handler",
+          "searchedAt": "2026-11-18T08:56:53.738Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue run:local crash unhandled error event spawn",
+          "searchedAt": "2026-11-18T08:56:59.587Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request run:local crash unhandled error event spawn",
+          "searchedAt": "2026-11-18T08:56:59.587Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue orphaned producer broker when spawn fails",
+          "searchedAt": "2026-11-18T08:57:05.370Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request orphaned producer broker when spawn fails",
+          "searchedAt": "2026-11-18T08:57:05.370Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue child.pid undefined pid file",
+          "searchedAt": "2026-11-18T08:57:11.201Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request child.pid undefined pid file",
+          "searchedAt": "2026-11-18T08:57:11.201Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue process-manager",
+          "searchedAt": "2026-11-18T08:57:17.312Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2",
+              "url": "https://github.com/tetherto/qvac/issues/4612",
+              "state": "closed"
+            },
+            {
+              "title": "@qvac/sdk: 3.7 GB node_modules footprint + bare-runtime compatibility issues",
+              "url": "https://github.com/tetherto/qvac/issues/2444",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: Error on Windows: No binaries found for target 'win32-x64' on qvac serve openai",
+              "url": "https://github.com/tetherto/qvac/issues/1492",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request process-manager",
+          "searchedAt": "2026-11-18T08:57:17.312Z",
+          "total": 22,
+          "top": [
+            {
+              "title": "ci(diffusion-cpp): capture native CUDA parity diagnostics",
+              "url": "https://github.com/tetherto/qvac/pull/5264",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: let deleteCache wait for a download this process just cancelled",
+              "url": "https://github.com/tetherto/qvac/pull/5750",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26819 doc: turn system requirements into a platform support page",
+              "url": "https://github.com/tetherto/qvac/pull/5778",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            },
+            {
+              "title": "fix[notask]: fix the full-suite SDK e2e failures",
+              "url": "https://github.com/tetherto/qvac/pull/5748",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/31"
     },
     "qr2:cfb072e2fcad7932": {
       "title": "Shell command built by interpolating the device serial and package name into execSync",
@@ -998,7 +1548,149 @@
           "swarm.suspend no-op because suspended set true first"
         ]
       },
-      "churn": 5
+      "churn": 5,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "reproduction",
+        "note": "Reproduced on Bare with a stub drive (verification/inference-hyperdrive-abort.repro.test.ts): aborting at 50 ms, while drive.entry() is still resolving, leaves downloadAndValidateFile pending 2 s later; the control that aborts at 300 ms, after the lookup, rejects with DownloadCancelledError at once. Cause: the abort listener is added at hyperdrive.ts:481 on a signal that may already be aborted, with no `signal.aborted` check before it. Uncertainty: the stub models the suspended swarm as a read stream that never ends; with real peers the stream could still end or error, in which case the symptom is a slow cancel rather than a hang. Either way the background download keeps its lock and corestore until then."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue hyperdrive download cancel hangs during file lookup",
+          "searchedAt": "2026-11-18T08:47:49.625Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request hyperdrive download cancel hangs during file lookup",
+          "searchedAt": "2026-11-18T08:47:49.625Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue abort listener registered after signal already aborted",
+          "searchedAt": "2026-11-18T08:47:55.691Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request abort listener registered after signal already aborted",
+          "searchedAt": "2026-11-18T08:47:55.691Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "QVAC-26968 feat[api|bc]: SDK caller sessions, model leases and scoped cancellation",
+              "url": "https://github.com/tetherto/qvac/pull/5541",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-18183 feat[bc]: CLI cancel bridge + cancelHandler retirement",
+              "url": "https://github.com/tetherto/qvac/pull/2074",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-19082 feat[api]: add text-to-video support with WAN models to the SDK",
+              "url": "https://github.com/tetherto/qvac/pull/2129",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue download lock not released after cancelling pear download",
+          "searchedAt": "2026-11-18T08:48:01.754Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request download lock not released after cancelling pear download",
+          "searchedAt": "2026-11-18T08:48:01.754Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow",
+              "url": "https://github.com/tetherto/qvac/pull/5186",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue swarm.suspend no-op because suspended set true first",
+          "searchedAt": "2026-11-18T08:48:07.782Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request swarm.suspend no-op because suspended set true first",
+          "searchedAt": "2026-11-18T08:48:07.782Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue hyperdrive",
+          "searchedAt": "2026-11-18T08:48:14.128Z",
+          "total": 6,
+          "top": [
+            {
+              "title": "[Bug]: Arbitrary file write via sharded HTTP model URLs on Windows (path traversal)",
+              "url": "https://github.com/tetherto/qvac/issues/5802",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: unloadModel({ clearStorage: true }) deletes the whole folder of a local sharded model",
+              "url": "https://github.com/tetherto/qvac/issues/5593",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: @qvac/diffusion-cpp still DT_NEEDED-links libvulkan.so.1 on linux-arm64; eager addon load blocks all CPU inference (follow-up to #1823)",
+              "url": "https://github.com/tetherto/qvac/issues/3853",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: rocksdb-native prebuilds DT_NEEDED-link libatomic.so.1; worker cannot start on slim Linux images (follow-up to #3853)",
+              "url": "https://github.com/tetherto/qvac/issues/4290",
+              "state": "closed"
+            },
+            {
+              "title": "@qvac/translation-nmtcpp@2.0.2: JsLogger JS-ref lifecycle crashes on Bare runtime teardown and on re-setLogger",
+              "url": "https://github.com/tetherto/qvac/issues/1709",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request hyperdrive",
+          "searchedAt": "2026-11-18T08:48:14.128Z",
+          "total": 96,
+          "top": [
+            {
+              "title": "fix[notask]: prevent arbitrary file write via sharded HTTP model URLs on Windows",
+              "url": "https://github.com/tetherto/qvac/pull/5801",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26838 feat[api]: run the SDK in the browser over a Web Worker transport",
+              "url": "https://github.com/tetherto/qvac/pull/5375",
+              "state": "open"
+            },
+            {
+              "title": "fix[notask|skiplog]: unset the temp variables the isolated-fit env test found unset",
+              "url": "https://github.com/tetherto/qvac/pull/5257",
+              "state": "closed"
+            },
+            {
+              "title": "test[notask]: unset the env keys the native-probe test set, so later tests keep a temp dir",
+              "url": "https://github.com/tetherto/qvac/pull/5269",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/11"
     },
     "qr2:781492aeff65c792": {
       "title": "Corestore dir is keyed per drive but the lock is per file, so concurrent downloads from one drive collide and one deletes the other's store",
@@ -1201,7 +1893,139 @@
           "cleanupHyperdrive skipped when seed true"
         ]
       },
-      "churn": 5
+      "churn": 5,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read hyperdrive.ts:367-391 and 711-726: cleanupHyperdrive runs only when `!seed`, whatever the outcome, so with seed=true a failed or aborted download keeps Corestore, Hyperdrive and a suspended swarm open. A retry reopens the same corestoreDir while the storage lock is held, and clearCache removes a directory that is still open. Same file as #11; seed is opt-in, so it affects seeding users only."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue seed corestore not closed on failed download",
+          "searchedAt": "2026-11-18T08:57:23.209Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request seed corestore not closed on failed download",
+          "searchedAt": "2026-11-18T08:57:23.209Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue hyperdrive seed retry fails corestore lock",
+          "searchedAt": "2026-11-18T08:57:29.202Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request hyperdrive seed retry fails corestore lock",
+          "searchedAt": "2026-11-18T08:57:29.202Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue clearCache EBUSY seeding corestore",
+          "searchedAt": "2026-11-18T08:57:35.243Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request clearCache EBUSY seeding corestore",
+          "searchedAt": "2026-11-18T08:57:35.243Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue cleanupHyperdrive skipped when seed true",
+          "searchedAt": "2026-11-18T08:57:41.254Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request cleanupHyperdrive skipped when seed true",
+          "searchedAt": "2026-11-18T08:57:41.254Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue hyperdrive",
+          "searchedAt": "2026-11-18T08:57:47.386Z",
+          "total": 6,
+          "top": [
+            {
+              "title": "[Bug]: Arbitrary file write via sharded HTTP model URLs on Windows (path traversal)",
+              "url": "https://github.com/tetherto/qvac/issues/5802",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: unloadModel({ clearStorage: true }) deletes the whole folder of a local sharded model",
+              "url": "https://github.com/tetherto/qvac/issues/5593",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: @qvac/diffusion-cpp still DT_NEEDED-links libvulkan.so.1 on linux-arm64; eager addon load blocks all CPU inference (follow-up to #1823)",
+              "url": "https://github.com/tetherto/qvac/issues/3853",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: rocksdb-native prebuilds DT_NEEDED-link libatomic.so.1; worker cannot start on slim Linux images (follow-up to #3853)",
+              "url": "https://github.com/tetherto/qvac/issues/4290",
+              "state": "closed"
+            },
+            {
+              "title": "@qvac/translation-nmtcpp@2.0.2: JsLogger JS-ref lifecycle crashes on Bare runtime teardown and on re-setLogger",
+              "url": "https://github.com/tetherto/qvac/issues/1709",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request hyperdrive",
+          "searchedAt": "2026-11-18T08:57:47.386Z",
+          "total": 96,
+          "top": [
+            {
+              "title": "fix[notask]: prevent arbitrary file write via sharded HTTP model URLs on Windows",
+              "url": "https://github.com/tetherto/qvac/pull/5801",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26838 feat[api]: run the SDK in the browser over a Web Worker transport",
+              "url": "https://github.com/tetherto/qvac/pull/5375",
+              "state": "open"
+            },
+            {
+              "title": "fix[notask|skiplog]: unset the temp variables the isolated-fit env test found unset",
+              "url": "https://github.com/tetherto/qvac/pull/5257",
+              "state": "closed"
+            },
+            {
+              "title": "test[notask]: unset the env keys the native-probe test set, so later tests keep a temp dir",
+              "url": "https://github.com/tetherto/qvac/pull/5269",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/14"
     },
     "qr2:aace28e701173f4a": {
       "title": "setupHyperdrive leaks an opened Corestore when Hyperdrive.ready() throws",
@@ -1232,7 +2056,144 @@
           "corestore LOCK held after failed download"
         ]
       },
-      "churn": 5
+      "churn": 5,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read hyperdrive.ts:81-109 and callers 304, 589: the corestore is opened before drive.ready() with no try/catch and registered only at 109, so a throw from ready() (corrupt storage) leaks an open corestore that no caller can reach. Low; same resource-on-error-path class as qr2:4facb8033b0fee0e."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue setupHyperdrive corestore leak",
+          "searchedAt": "2026-11-18T08:57:53.293Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request setupHyperdrive corestore leak",
+          "searchedAt": "2026-11-18T08:57:53.293Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue corestore not closed when drive.ready fails",
+          "searchedAt": "2026-11-18T08:57:59.224Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request corestore not closed when drive.ready fails",
+          "searchedAt": "2026-11-18T08:57:59.224Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue hyperdrive download retry storage lock",
+          "searchedAt": "2026-11-18T08:58:05.199Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request hyperdrive download retry storage lock",
+          "searchedAt": "2026-11-18T08:58:05.199Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue corestore LOCK held after failed download",
+          "searchedAt": "2026-11-18T08:58:11.168Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request corestore LOCK held after failed download",
+          "searchedAt": "2026-11-18T08:58:11.168Z",
+          "total": 2,
+          "top": [
+            {
+              "title": "QVAC-28122 fix[api]: let QVAC processes share the model registry store",
+              "url": "https://github.com/tetherto/qvac/pull/5707",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue hyperdrive",
+          "searchedAt": "2026-11-18T08:58:17.481Z",
+          "total": 6,
+          "top": [
+            {
+              "title": "[Bug]: Arbitrary file write via sharded HTTP model URLs on Windows (path traversal)",
+              "url": "https://github.com/tetherto/qvac/issues/5802",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: unloadModel({ clearStorage: true }) deletes the whole folder of a local sharded model",
+              "url": "https://github.com/tetherto/qvac/issues/5593",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: @qvac/diffusion-cpp still DT_NEEDED-links libvulkan.so.1 on linux-arm64; eager addon load blocks all CPU inference (follow-up to #1823)",
+              "url": "https://github.com/tetherto/qvac/issues/3853",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: rocksdb-native prebuilds DT_NEEDED-link libatomic.so.1; worker cannot start on slim Linux images (follow-up to #3853)",
+              "url": "https://github.com/tetherto/qvac/issues/4290",
+              "state": "closed"
+            },
+            {
+              "title": "@qvac/translation-nmtcpp@2.0.2: JsLogger JS-ref lifecycle crashes on Bare runtime teardown and on re-setLogger",
+              "url": "https://github.com/tetherto/qvac/issues/1709",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request hyperdrive",
+          "searchedAt": "2026-11-18T08:58:17.481Z",
+          "total": 96,
+          "top": [
+            {
+              "title": "fix[notask]: prevent arbitrary file write via sharded HTTP model URLs on Windows",
+              "url": "https://github.com/tetherto/qvac/pull/5801",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28120 fix: stop separate processes from corrupting or deleting each other's model downloads",
+              "url": "https://github.com/tetherto/qvac/pull/5689",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26838 feat[api]: run the SDK in the browser over a Web Worker transport",
+              "url": "https://github.com/tetherto/qvac/pull/5375",
+              "state": "open"
+            },
+            {
+              "title": "fix[notask|skiplog]: unset the temp variables the isolated-fit env test found unset",
+              "url": "https://github.com/tetherto/qvac/pull/5257",
+              "state": "closed"
+            },
+            {
+              "title": "test[notask]: unset the env keys the native-probe test set, so later tests keep a temp dir",
+              "url": "https://github.com/tetherto/qvac/pull/5269",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/22"
     },
     "qr2:5b003a69f0a7be69": {
       "title": "A consumer killed by a signal makes the CLI exit with code 0",
@@ -1298,7 +2259,128 @@
           "stale scratch cleanup race"
         ]
       },
-      "churn": 2
+      "churn": 2,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read sdk/src/commands/bundle/scratch.ts:26-28, 58-74: mkdir then a separate writeFile(owner.pid); a concurrent removeStaleScratch in that window sees ENOENT or an empty file, treats the owner as dead and rm -rf's a live scratch folder. Needs two bundle commands at once on the same project. Low."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue removeStaleScratch deletes live scratch folder",
+          "searchedAt": "2026-11-18T08:58:23.268Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request removeStaleScratch deletes live scratch folder",
+          "searchedAt": "2026-11-18T08:58:23.268Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue owner.pid race scratchFolderFor",
+          "searchedAt": "2026-11-18T08:58:29.097Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request owner.pid race scratchFolderFor",
+          "searchedAt": "2026-11-18T08:58:29.097Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue concurrent qvac bundle ENOENT scratch",
+          "searchedAt": "2026-11-18T08:58:34.944Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request concurrent qvac bundle ENOENT scratch",
+          "searchedAt": "2026-11-18T08:58:34.944Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue stale scratch cleanup race",
+          "searchedAt": "2026-11-18T08:58:40.814Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request stale scratch cleanup race",
+          "searchedAt": "2026-11-18T08:58:40.814Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow",
+              "url": "https://github.com/tetherto/qvac/pull/5186",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue scratch",
+          "searchedAt": "2026-11-18T08:58:46.930Z",
+          "total": 4,
+          "top": [
+            {
+              "title": "[Feature]: Flutter Port",
+              "url": "https://github.com/tetherto/qvac/issues/4713",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: Android Vulkan GPU offload crashes during llama.cpp backend tensor allocation",
+              "url": "https://github.com/tetherto/qvac/issues/2399",
+              "state": "closed"
+            },
+            {
+              "title": "[Docs] [Discussion]: (Suggestion) For Beginner Path, Clarify when to use QVAC-managed RAG workspaces vs bring-your-own vector DB",
+              "url": "https://github.com/tetherto/qvac/issues/2144",
+              "state": "closed"
+            },
+            {
+              "title": "[Feature]: expose text-to-text translation (Bergamot NMT) on the OpenAI-compatible HTTP server",
+              "url": "https://github.com/tetherto/qvac/issues/3889",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request scratch",
+          "searchedAt": "2026-11-18T08:58:46.930Z",
+          "total": 61,
+          "top": [
+            {
+              "title": "QVAC-28223 chore: use RuntimeStatValue in bci-whispercpp stats tests",
+              "url": "https://github.com/tetherto/qvac/pull/5730",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28223 chore: use RuntimeStatValue in tts-ggml stats tests",
+              "url": "https://github.com/tetherto/qvac/pull/5729",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27256 feat[api]: report the selected backend in VLA stats",
+              "url": "https://github.com/tetherto/qvac/pull/5502",
+              "state": "open"
+            },
+            {
+              "title": "fix[notask]: keep clearStorage on a local sharded model to its own files",
+              "url": "https://github.com/tetherto/qvac/pull/5594",
+              "state": "open"
+            },
+            {
+              "title": "chore[notask]: release inference-addon-cpp 1.6.0",
+              "url": "https://github.com/tetherto/qvac/pull/5798",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/27"
     },
     "qr2:80af97bd280b2fb2": {
       "title": "addModel can hang forever in reseedTracker.waitForComplete when two ingests overlap, or when the tracker is destroyed",
@@ -1619,7 +2701,7 @@
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "presence": "present",
-      "score": 3.84,
+      "score": 0,
       "verdict": {
         "verdict": "confirmed",
         "reasoning": "The code matches the claim. activeBlobCoreLabel becomes 'models-<generation>' when a generation is configured (registry-service.js:69-72). addModel (845-849) and fillFitBlobs (1427-1430) write to that core and call _mirrorBlobCore on it. _setupBlindPeering (427-464) runs at startup (278) and from reseed() (494). It clears _mirroredCoreIds (441), then calls _getOrCreateBlobsCore(BLOB_CORE_NAME) with the hard-coded 'models' (451). _getOrCreateBlobsCore (1165-1172) opens 'blobs-models' with writable:true. On a node that never used the legacy label, that creates an empty, unused local core and mirrors it.\n\nThe eager open at 286-303 does use activeBlobCoreLabel, but it runs after _setupBlindPeering and never calls _mirrorBlobCore. So the active core is not added to the blind peers or to the ReseedTracker, and _waitForInitialSeeding (463, 497-503) logs 'finished initial sync' without having checked it. The core is mirrored again only when the next addModel or fillFitBlobs runs.\n\nReachability: QVAC_BLOB_CORE_GENERATION or the blobCoreGeneration option at startup, or a public reseed() call. reseed() also accepts new blindPeerKeys, and in that case the new mirrors never receive the rotated core until the next ingest. Nothing else guards this path. The rotation test (blob-core-rotation.integration.test.js) does not use blind peers, so this case is untested. I found no comment saying the behaviour is intentional.\n\nThe impact is somewhat smaller than claimed. Blind peers that had already mirrored the rotated core through an earlier addModel probably keep it across a restart, so the worst case is a reseed to new or wiped mirrors, especially with --clear-after-reseed. There is also no data corruption: models stay readable locally until that local data is cleared. Medium severity stands.",
@@ -1631,7 +2713,150 @@
           "rotated blob core not mirrored to blind peers"
         ]
       },
-      "churn": 9
+      "churn": 9,
+      "human": {
+        "status": "rejected",
+        "verifiedBy": "duplicate search",
+        "note": "The code reads as described (registry-service.js:441-451 mirrors the hard-coded legacy 'models' core), but the duplicate search surfaced merged PR tetherto/qvac#4379, which introduced generations and says it \"leaves production blob distribution and reseeding to the separate operational workflow\". The runbook (packages/registry-server/docs/BLOB_CORE_ROTATION.md:59-67) tells operators to hand the new core keys to that workflow. So blind-peer coverage of a rotated core is a documented design choice, not an unknown defect. At most a docs/naming improvement for the in-service reseed RPC."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue blind peering mirrors legacy models blob core",
+          "searchedAt": "2026-11-18T08:58:52.889Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request blind peering mirrors legacy models blob core",
+          "searchedAt": "2026-11-18T08:58:52.889Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-21681 feat: add manual blob core rotation",
+              "url": "https://github.com/tetherto/qvac/pull/4379",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue reseed ignores blob core generation",
+          "searchedAt": "2026-11-18T08:58:58.851Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request reseed ignores blob core generation",
+          "searchedAt": "2026-11-18T08:58:58.851Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-24656 feat[api]: publish fit facts as a side blob with a pointer on the model record",
+              "url": "https://github.com/tetherto/qvac/pull/4445",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue _setupBlindPeering activeBlobCoreLabel",
+          "searchedAt": "2026-11-18T08:59:04.809Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request _setupBlindPeering activeBlobCoreLabel",
+          "searchedAt": "2026-11-18T08:59:04.809Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-21681 feat: add manual blob core rotation",
+              "url": "https://github.com/tetherto/qvac/pull/4379",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue rotated blob core not mirrored to blind peers",
+          "searchedAt": "2026-11-18T08:59:10.842Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request rotated blob core not mirrored to blind peers",
+          "searchedAt": "2026-11-18T08:59:10.842Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-24656 feat[api]: publish fit facts as a side blob with a pointer on the model record",
+              "url": "https://github.com/tetherto/qvac/pull/4445",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue registry-service",
+          "searchedAt": "2026-11-18T08:59:17.001Z",
+          "total": 5,
+          "top": [
+            {
+              "title": "[Bug]: A cached model is downloaded again on start, and a failed download leaves a truncated file in ~/.qvac/models",
+              "url": "https://github.com/tetherto/qvac/issues/5677",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: darwin-x64 — LLM loadModel hangs forever in Metal shader compilation (Intel Mac), even with device 'cpu'",
+              "url": "https://github.com/tetherto/qvac/issues/5378",
+              "state": "closed"
+            },
+            {
+              "title": "translation-nmtcpp: unvalidated model-file fields in nmt_model_load (ttype OOB read + unbounded vocab/SP length reads) — follow-up to #4590",
+              "url": "https://github.com/tetherto/qvac/issues/4593",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: @qvac/diffusion-cpp still DT_NEEDED-links libvulkan.so.1 on linux-arm64; eager addon load blocks all CPU inference (follow-up to #1823)",
+              "url": "https://github.com/tetherto/qvac/issues/3853",
+              "state": "closed"
+            },
+            {
+              "title": "registry-client: cancelled/failed downloads leak hypercore blocks in corestore (never cleared)",
+              "url": "https://github.com/tetherto/qvac/issues/3218",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request registry-service",
+          "searchedAt": "2026-11-18T08:59:17.001Z",
+          "total": 28,
+          "top": [
+            {
+              "title": "fix[notask]: resume registry downloads and prevent socket-error crashes",
+              "url": "https://github.com/tetherto/qvac/pull/5682",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26761 feat: publish ESRGAN checkpoint fit descriptions",
+              "url": "https://github.com/tetherto/qvac/pull/5341",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-25129 feat[api]: add ABot-World layer streaming to diffusion-cpp",
+              "url": "https://github.com/tetherto/qvac/pull/4483",
+              "state": "closed"
+            },
+            {
+              "title": "ci(diffusion-cpp): capture native CUDA parity diagnostics",
+              "url": "https://github.com/tetherto/qvac/pull/5264",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-23892 feat[api]: expose ggufMetadata on QVACModelEntry",
+              "url": "https://github.com/tetherto/qvac/pull/4044",
+              "state": "closed"
+            }
+          ]
+        }
+      ]
     },
     "qr2:85ed260bc5ebad8d": {
       "title": "addModel reports failure after the model is already committed when blind-peer replication stalls",
@@ -1662,7 +2887,127 @@
           "reseed timeout reports add-model failure"
         ]
       },
-      "churn": 9
+      "churn": 9,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read registry-service.js:845-866 and reseed-tracker.js:95-121: DISPATCH_PUT_MODEL is appended at 861, then waitForComplete() can reject after 30 s without progress; no try/catch, so the RPC reports failure for a model that is committed. A client retry then re-ingests. Low; same await as #2 (which is the hang, this is the false failure)."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue add-model fails after commit when blind peer replication stalls",
+          "searchedAt": "2026-11-18T08:59:22.852Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request add-model fails after commit when blind peer replication stalls",
+          "searchedAt": "2026-11-18T08:59:22.852Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue ReseedTracker stalled error after model added",
+          "searchedAt": "2026-11-18T08:59:28.655Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request ReseedTracker stalled error after model added",
+          "searchedAt": "2026-11-18T08:59:28.655Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue addModel retry duplicates blob orphaned storage",
+          "searchedAt": "2026-11-18T08:59:34.564Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request addModel retry duplicates blob orphaned storage",
+          "searchedAt": "2026-11-18T08:59:34.564Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue reseed timeout reports add-model failure",
+          "searchedAt": "2026-11-18T08:59:40.470Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request reseed timeout reports add-model failure",
+          "searchedAt": "2026-11-18T08:59:40.470Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue registry-service",
+          "searchedAt": "2026-11-18T08:59:46.668Z",
+          "total": 5,
+          "top": [
+            {
+              "title": "[Bug]: A cached model is downloaded again on start, and a failed download leaves a truncated file in ~/.qvac/models",
+              "url": "https://github.com/tetherto/qvac/issues/5677",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: darwin-x64 — LLM loadModel hangs forever in Metal shader compilation (Intel Mac), even with device 'cpu'",
+              "url": "https://github.com/tetherto/qvac/issues/5378",
+              "state": "closed"
+            },
+            {
+              "title": "translation-nmtcpp: unvalidated model-file fields in nmt_model_load (ttype OOB read + unbounded vocab/SP length reads) — follow-up to #4590",
+              "url": "https://github.com/tetherto/qvac/issues/4593",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: @qvac/diffusion-cpp still DT_NEEDED-links libvulkan.so.1 on linux-arm64; eager addon load blocks all CPU inference (follow-up to #1823)",
+              "url": "https://github.com/tetherto/qvac/issues/3853",
+              "state": "closed"
+            },
+            {
+              "title": "registry-client: cancelled/failed downloads leak hypercore blocks in corestore (never cleared)",
+              "url": "https://github.com/tetherto/qvac/issues/3218",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request registry-service",
+          "searchedAt": "2026-11-18T08:59:46.668Z",
+          "total": 28,
+          "top": [
+            {
+              "title": "fix[notask]: resume registry downloads and prevent socket-error crashes",
+              "url": "https://github.com/tetherto/qvac/pull/5682",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26761 feat: publish ESRGAN checkpoint fit descriptions",
+              "url": "https://github.com/tetherto/qvac/pull/5341",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-25129 feat[api]: add ABot-World layer streaming to diffusion-cpp",
+              "url": "https://github.com/tetherto/qvac/pull/4483",
+              "state": "closed"
+            },
+            {
+              "title": "ci(diffusion-cpp): capture native CUDA parity diagnostics",
+              "url": "https://github.com/tetherto/qvac/pull/5264",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-23892 feat[api]: expose ggufMetadata on QVACModelEntry",
+              "url": "https://github.com/tetherto/qvac/pull/4044",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/20"
     },
     "qr2:6b77a3edfe85576e": {
       "title": "Runner killed by a signal (OOM, SIGKILL, crash) is reported as exit code 0",
@@ -1866,7 +3211,123 @@
           "external consumer exits 0 on Ctrl+C"
         ]
       },
-      "churn": 2
+      "churn": 2,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "reproduction",
+        "note": "Reproduced with verification/test-suite-double-sigint.repro.mjs, which mirrors run-consumer-external.ts:33-48 and the runner's process.once('SIGINT'): a process-group SIGINT (what Ctrl+C sends) kills the runner before its graceful shutdown completes (child exit signal=SIGINT) and, through #8, the command exits 0. Fix: spawn the runner detached or stop forwarding SIGINT that the child already received. Low: interactive Ctrl+C only."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue Ctrl+C double SIGINT external consumer",
+          "searchedAt": "2026-11-18T08:59:52.478Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request Ctrl+C double SIGINT external consumer",
+          "searchedAt": "2026-11-18T08:59:52.478Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue SIGINT forwarded twice kills runner during shutdown",
+          "searchedAt": "2026-11-18T08:59:58.319Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request SIGINT forwarded twice kills runner during shutdown",
+          "searchedAt": "2026-11-18T08:59:58.319Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue process.once SIGINT graceful shutdown cut off",
+          "searchedAt": "2026-11-18T09:00:04.191Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request process.once SIGINT graceful shutdown cut off",
+          "searchedAt": "2026-11-18T09:00:04.191Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue external consumer exits 0 on Ctrl+C",
+          "searchedAt": "2026-11-18T09:00:10.313Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request external consumer exits 0 on Ctrl+C",
+          "searchedAt": "2026-11-18T09:00:10.313Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-19900 feat[api]: add managed mode to @qvac/ai-sdk-provider",
+              "url": "https://github.com/tetherto/qvac/pull/2408",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue run-consumer-external",
+          "searchedAt": "2026-11-18T09:00:16.669Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2",
+              "url": "https://github.com/tetherto/qvac/issues/4612",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: RAG search()/infer() throw a raw TypeError for a non-string query instead of QvacErrorRAG INVALID_INPUT",
+              "url": "https://github.com/tetherto/qvac/issues/3727",
+              "state": "closed"
+            },
+            {
+              "title": "[Feature]: expose text-to-text translation (Bergamot NMT) on the OpenAI-compatible HTTP server",
+              "url": "https://github.com/tetherto/qvac/issues/3889",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request run-consumer-external",
+          "searchedAt": "2026-11-18T09:00:16.669Z",
+          "total": 54,
+          "top": [
+            {
+              "title": "QVAC-28195 feat[api]: add DSpark speculative decoding and spec-type auto to llm-llamacpp",
+              "url": "https://github.com/tetherto/qvac/pull/5694",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-26835 feat[api]: mqtt-mode external consumers, a prepare step and run:local:<name>",
+              "url": "https://github.com/tetherto/qvac/pull/5357",
+              "state": "closed"
+            },
+            {
+              "title": "chore[notask]: release @qvac/test-suite 0.15.0",
+              "url": "https://github.com/tetherto/qvac/pull/5714",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26691 feat[api]: centralize error code reservations",
+              "url": "https://github.com/tetherto/qvac/pull/5234",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26835 test: run the shared e2e catalog on the Kotlin SDK on Android",
+              "url": "https://github.com/tetherto/qvac/pull/5322",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/28"
     },
     "qr2:536196803de7c5f2": {
       "title": "A cached Core ML set that is missing a bundle is reused forever, so bundles ingested later are never staged",
@@ -1897,7 +3358,129 @@
           "coreml sidecar metadata partial set"
         ]
       },
-      "churn": 5
+      "churn": 5,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read coreml-sidecars.ts:145-149, 202-222, 280-283 and registry.ts:461: a partly ingested companion set is cached as a subset, isValidCachedSet accepts it, and the cached set wins over catalog and registry lookups on every later load, so bundles ingested later are never staged. Uncertainty: whether published models are ever ingested in stages; the upstream tests (coreml-sidecars.test.ts:350+) show partial sets are an expected state. Low."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue Core ML companion set cache stale missing bundle",
+          "searchedAt": "2026-11-18T09:00:22.739Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request Core ML companion set cache stale missing bundle",
+          "searchedAt": "2026-11-18T09:00:22.739Z",
+          "total": 3,
+          "top": [
+            {
+              "title": "QVAC-28032 fix: stop staging the Parakeet TDT v3 Core ML encoder on macOS and iOS",
+              "url": "https://github.com/tetherto/qvac/pull/5753",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27969 feat[api]: expose ACE-Step backend selection and the audiogen Core ML sidecars",
+              "url": "https://github.com/tetherto/qvac/pull/5673",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-27543 infra[api]: cache SDK e2e models per model and restore only what each leg runs",
+              "url": "https://github.com/tetherto/qvac/pull/5556",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue cached coreml set never refreshed",
+          "searchedAt": "2026-11-18T09:00:28.656Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request cached coreml set never refreshed",
+          "searchedAt": "2026-11-18T09:00:28.656Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue Sortformer AOSC bundle not downloaded",
+          "searchedAt": "2026-11-18T09:00:34.631Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request Sortformer AOSC bundle not downloaded",
+          "searchedAt": "2026-11-18T09:00:34.632Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-25438 feat[mod]: load Parakeet Core ML sidecars through SDK",
+              "url": "https://github.com/tetherto/qvac/pull/4776",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue coreml sidecar metadata partial set",
+          "searchedAt": "2026-11-18T09:00:40.597Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request coreml sidecar metadata partial set",
+          "searchedAt": "2026-11-18T09:00:40.597Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow",
+              "url": "https://github.com/tetherto/qvac/pull/5186",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue coreml-sidecars",
+          "searchedAt": "2026-11-18T09:00:46.610Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request coreml-sidecars",
+          "searchedAt": "2026-11-18T09:00:46.610Z",
+          "total": 23,
+          "top": [
+            {
+              "title": "QVAC-28032 fix: stop staging the EOU Core ML sidecar and correct the Core ML docs",
+              "url": "https://github.com/tetherto/qvac/pull/5697",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28032 fix: stop staging the Parakeet TDT v3 Core ML encoder on macOS and iOS",
+              "url": "https://github.com/tetherto/qvac/pull/5753",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27306 doc[tts-ggml]: document the Chatterbox Core ML sidecars",
+              "url": "https://github.com/tetherto/qvac/pull/5517",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-28300 feat[api]: run the full TranscribePsy EU model on Core ML in asr-ggml",
+              "url": "https://github.com/tetherto/qvac/pull/5747",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-27969 feat[api]: expose ACE-Step backend selection and the audiogen Core ML sidecars",
+              "url": "https://github.com/tetherto/qvac/pull/5673",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/23"
     },
     "qr2:94de8f3872ba4b36": {
       "title": "Deleting a model leaves its Core ML sidecar blobs in storage when any staged sidecar file is missing or partial",
@@ -1928,7 +3511,101 @@
           "findLocallyCachedCoremlCompanionSet delete"
         ]
       },
-      "churn": 5
+      "churn": 5,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read registry-delete.ts:173-185 and coreml-sidecars.ts:202-222: delete collects sidecar blob bindings only via findLocallyCachedCoremlCompanionSet, which returns undefined if any staged file is missing or the wrong size; the sets dir is removed but the hypercore blob ranges are not cleared. Low: disk space leak on iOS/macOS after an interrupted staging."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue deleteCache leaves Core ML sidecar blobs",
+          "searchedAt": "2026-11-18T09:00:52.498Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request deleteCache leaves Core ML sidecar blobs",
+          "searchedAt": "2026-11-18T09:00:52.498Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue coreml sidecar clearBlob partial download",
+          "searchedAt": "2026-11-18T09:00:58.462Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request coreml sidecar clearBlob partial download",
+          "searchedAt": "2026-11-18T09:00:58.462Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue registry delete coreml companion set blob leak",
+          "searchedAt": "2026-11-18T09:01:04.419Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request registry delete coreml companion set blob leak",
+          "searchedAt": "2026-11-18T09:01:04.419Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue findLocallyCachedCoremlCompanionSet delete",
+          "searchedAt": "2026-11-18T09:01:10.404Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request findLocallyCachedCoremlCompanionSet delete",
+          "searchedAt": "2026-11-18T09:01:10.404Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue coreml-sidecars",
+          "searchedAt": "2026-11-18T09:01:16.775Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request coreml-sidecars",
+          "searchedAt": "2026-11-18T09:01:16.775Z",
+          "total": 23,
+          "top": [
+            {
+              "title": "QVAC-28032 fix: stop staging the EOU Core ML sidecar and correct the Core ML docs",
+              "url": "https://github.com/tetherto/qvac/pull/5697",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28032 fix: stop staging the Parakeet TDT v3 Core ML encoder on macOS and iOS",
+              "url": "https://github.com/tetherto/qvac/pull/5753",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27306 doc[tts-ggml]: document the Chatterbox Core ML sidecars",
+              "url": "https://github.com/tetherto/qvac/pull/5517",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-28300 feat[api]: run the full TranscribePsy EU model on Core ML in asr-ggml",
+              "url": "https://github.com/tetherto/qvac/pull/5747",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-27969 feat[api]: expose ACE-Step backend selection and the audiogen Core ML sidecars",
+              "url": "https://github.com/tetherto/qvac/pull/5673",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/24"
     },
     "qr2:378ffe3bc0f6b548": {
       "title": "ModelNotFoundError message is missing its opening quote around the model name",
@@ -1995,7 +3672,127 @@
           "ServeStartTimeoutError IPv6 host"
         ]
       },
-      "churn": 5
+      "churn": 5,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read ai-sdk-provider/src/managed/serve-process.ts:305-361 and index.ts:162: the host is interpolated as `http://${host}:${port}/v1` with no IPv6 brackets. `new URL('http://::1:8080/v1')` throws ERR_INVALID_URL in Node, waitForHealth (199-213) swallows every fetch error as 'not listening yet', so a serveHost of '::1' always ends in ServeStartTimeoutError after the full timeout, although the serve is up. The CLI server itself supports IPv6 binds (serve/core/cors.ts isLoopbackHost). Low severity: only IPv6 hosts."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue IPv6 serveHost health check timeout",
+          "searchedAt": "2026-11-18T08:48:20.291Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request IPv6 serveHost health check timeout",
+          "searchedAt": "2026-11-18T08:48:20.291Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue serveHost ::1 invalid URL",
+          "searchedAt": "2026-11-18T08:48:26.299Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request serveHost ::1 invalid URL",
+          "searchedAt": "2026-11-18T08:48:26.300Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue managed serve IPv6 baseURL brackets",
+          "searchedAt": "2026-11-18T08:48:32.241Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request managed serve IPv6 baseURL brackets",
+          "searchedAt": "2026-11-18T08:48:32.241Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue ServeStartTimeoutError IPv6 host",
+          "searchedAt": "2026-11-18T08:48:38.239Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request ServeStartTimeoutError IPv6 host",
+          "searchedAt": "2026-11-18T08:48:38.239Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue serve-process",
+          "searchedAt": "2026-11-18T08:48:44.500Z",
+          "total": 11,
+          "top": [
+            {
+              "title": "[Bug]: A cached model is downloaded again on start, and a failed download leaves a truncated file in ~/.qvac/models",
+              "url": "https://github.com/tetherto/qvac/issues/5677",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: SDK config rejects `threads`, so the LLM addon is stuck with fabric's default thread count (4 of 8 P-cores on Arrow Lake, 15 vs 22 tok/s)",
+              "url": "https://github.com/tetherto/qvac/issues/4433",
+              "state": "closed"
+            },
+            {
+              "title": "[Feature]: LLM modelConfig strict schema rejects threads / override-tensor / n-cpu-moe / fit-target / batch-size that the addon already supports (4.7 vs 22 tok/s on a 103 GB MoE)",
+              "url": "https://github.com/tetherto/qvac/issues/4431",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: llm-llamacpp never runs qvac-fabric --fit (sharded path skips it, single-file path aborts); >VRAM MoE model loads 78 GB onto a 24 GB GPU and runs at 2.5 tok/s",
+              "url": "https://github.com/tetherto/qvac/issues/4432",
+              "state": "closed"
+            },
+            {
+              "title": "OpenClaw upstream compatibility smoke failing",
+              "url": "https://github.com/tetherto/qvac/issues/4112",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request serve-process",
+          "searchedAt": "2026-11-18T08:48:44.500Z",
+          "total": 85,
+          "top": [
+            {
+              "title": "QVAC-27679 feat: add the qvac entry point as @qvac/cli",
+              "url": "https://github.com/tetherto/qvac/pull/5600",
+              "state": "open"
+            },
+            {
+              "title": "feat[notask]: Move CLI to TUI",
+              "url": "https://github.com/tetherto/qvac/pull/5387",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27548 fix[api]: use LAN multicast for local RPC discovery",
+              "url": "https://github.com/tetherto/qvac/pull/5497",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28122 fix[api]: let QVAC processes share the model registry store",
+              "url": "https://github.com/tetherto/qvac/pull/5707",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-24621 feat[api]: capture qvac serve output in the OpenCode compat smoke",
+              "url": "https://github.com/tetherto/qvac/pull/5445",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/13"
     },
     "qr2:9140daff910b4809": {
       "title": "stopServe returns early when the serve already exited, leaving the worker in its process group running",
@@ -2057,7 +3854,127 @@
           "releaseLock deletes another client's lock"
         ]
       },
-      "churn": 5
+      "churn": 5,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read index.ts:88-111: steal is readLockOwner -> dead -> unconditional rm -> retry open('wx'). Two waiters that both saw the dead pid can interleave so the second rm deletes the first waiter's fresh lock; both return true and both spawn a serve (230-256). Narrow window, low severity; fix is rename-to-tombstone or compare the pid before rm. Same lock code as qr2:7ddcab2e4784b597."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue stale spawn lock steal race duplicate serve",
+          "searchedAt": "2026-11-18T09:01:22.764Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request stale spawn lock steal race duplicate serve",
+          "searchedAt": "2026-11-18T09:01:22.764Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue tryLock rm dead owner lock race",
+          "searchedAt": "2026-11-18T09:01:28.636Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request tryLock rm dead owner lock race",
+          "searchedAt": "2026-11-18T09:01:28.636Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue managed qvac serve spawned twice",
+          "searchedAt": "2026-11-18T09:01:34.613Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request managed qvac serve spawned twice",
+          "searchedAt": "2026-11-18T09:01:34.613Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue releaseLock deletes another client's lock",
+          "searchedAt": "2026-11-18T09:01:40.519Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request releaseLock deletes another client's lock",
+          "searchedAt": "2026-11-18T09:01:40.519Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue index",
+          "searchedAt": "2026-11-18T09:01:46.823Z",
+          "total": 28,
+          "top": [
+            {
+              "title": "[Feature]: Vector index: 4-bit adds are ~28× slower than f32, and a loaded index slows the next model load",
+              "url": "https://github.com/tetherto/qvac/issues/5419",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: LLM cpu-mask leaks caller affinity into subsequent embedding loads",
+              "url": "https://github.com/tetherto/qvac/issues/5537",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: duck TUI on Windows fails with \"worker closed before ready\" (harness entry path built with URL.pathname)",
+              "url": "https://github.com/tetherto/qvac/issues/5655",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: EmbeddingGemma-300M registry models skip the two Dense layers, so their vectors are not EmbeddingGemma embeddings",
+              "url": "https://github.com/tetherto/qvac/issues/5508",
+              "state": "closed"
+            },
+            {
+              "title": "iOS: bare-ffmpeg addon (27 MB) is always linked, even when only the streaming PCM API is used",
+              "url": "https://github.com/tetherto/qvac/issues/4072",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request index",
+          "searchedAt": "2026-11-18T09:01:46.823Z",
+          "total": 754,
+          "top": [
+            {
+              "title": "fix[notask]: apply the findBy name filter with every index",
+              "url": "https://github.com/tetherto/qvac/pull/5621",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28496 feat[bc|api]: make IdMapIndex async and cancellable",
+              "url": "https://github.com/tetherto/qvac/pull/5790",
+              "state": "open"
+            },
+            {
+              "title": "chore[notask]: DO NOT MERGE, overlay-validate fabric against qvac-fabric 11739.4.0",
+              "url": "https://github.com/tetherto/qvac/pull/5810",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27469 feat[api]: spread search hits across documents and add citation fields",
+              "url": "https://github.com/tetherto/qvac/pull/5809",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28496 feat[api]: run JsAsyncTask work on an addon-owned executor",
+              "url": "https://github.com/tetherto/qvac/pull/5828",
+              "state": "open"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/25"
     },
     "qr2:7ddcab2e4784b597": {
       "title": "A lock whose dead owner's pid gets reused is never stolen, so starts on that fleet key time out until that unrelated process exits",
@@ -2076,7 +3993,7 @@
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "presence": "present",
-      "score": 3.46,
+      "score": 1.15,
       "verdict": {
         "verdict": "confirmed",
         "reasoning": "I read the code and the claim holds up.\n\n1. tryLock (index.ts:97-101) steals a lock only when `isProcessAlive(owner)` is false. isProcessAlive (registry.ts:57-65) is just `kill(pid,0)`, and it treats EPERM as alive. Nothing else is checked: no process start time, no boot ID, no hostname.\n2. The mtime fallback (index.ts:103-108) runs only when the lock has no readable pid. The test managed-spawn-lock.test.ts:37-42 confirms on purpose that a lock with a live owner and an old mtime is never stolen. So a live pid always wins, including a reused one.\n3. Nothing else removes `<key>.lock`. The only caller of releaseLock is the finally block at index.ts:273. sweepServes and sweepRunnerParams never touch .lock files. The lock lives in ~/.qvac/managed-serves, so it survives a reboot.\n4. A lock can be left behind on reachable paths:\n   - SIGKILL, OOM or power loss during the spawn window, which can last minutes of model download.\n   - The `closeOnParentExit` watcher calls `process.exit(0)` (index.ts:201). That can fire while resolveServe holds the lock, and the code comment says the watcher is armed for exactly this long first-run download. process.exit skips the async finally, so releaseLock never runs.\n5. Once the dead owner's pid belongs to any other process, every caller with that fleet key gets false from tryLock. They loop in 5s slices (index.ts:279-284) until overallDeadline and then throw ServeStartTimeoutError without spawning. The fallback mtime is 30s, but it does not apply here.\n\nThere is also a worse variant: the new client can get the same pid itself. This is common in a container whose home directory is a persistent volume, where pids are small and deterministic. Then `kill(own pid,0)` succeeds and the client waits on its own stale lock.\n\nWhat makes it less likely: it needs an abnormal exit inside the spawn-lock window, and then a pid reuse. Linux usually has a large pid_max, so reuse during normal uptime is rare. It is more plausible after a reboot or in containers.\n\nWhat makes it worse: once it happens, the state lasts until the unrelated process exits or someone deletes the lock file by hand. Each attempt costs serveStartTimeout+10s. The claimed impact is accurate but uncommon. I rate it medium, borderline low.",
@@ -2088,7 +4005,134 @@
           "closeOnParentExit leaves lock"
         ]
       },
-      "churn": 5
+      "churn": 5,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "severity": "low",
+        "note": "Read ai-sdk-provider/src/managed/index.ts:88-111 and registry.ts:20-65: the lock is stolen only if kill(pid,0) fails, with no start-time or boot-id check, and the lock dir (~/.qvac/managed-serves) survives reboots. A crashed owner whose pid is reused by an unrelated process blocks starts on that key until the mtime fallback or that process exits. Re-rated low: needs a crash plus pid reuse."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue stale spawn lock pid reuse",
+          "searchedAt": "2026-11-18T09:01:52.859Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request stale spawn lock pid reuse",
+          "searchedAt": "2026-11-18T09:01:52.859Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-24535 feat[api]: move Kotlin SDK into the monorepo",
+              "url": "https://github.com/tetherto/qvac/pull/4491",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue managed serve start timeout lock file",
+          "searchedAt": "2026-11-18T09:01:58.701Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request managed serve start timeout lock file",
+          "searchedAt": "2026-11-18T09:01:58.701Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue tryLock never steals lock reused pid",
+          "searchedAt": "2026-11-18T09:02:04.606Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request tryLock never steals lock reused pid",
+          "searchedAt": "2026-11-18T09:02:04.606Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue closeOnParentExit leaves lock",
+          "searchedAt": "2026-11-18T09:02:10.491Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request closeOnParentExit leaves lock",
+          "searchedAt": "2026-11-18T09:02:10.491Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue index",
+          "searchedAt": "2026-11-18T09:02:16.786Z",
+          "total": 28,
+          "top": [
+            {
+              "title": "[Feature]: Vector index: 4-bit adds are ~28× slower than f32, and a loaded index slows the next model load",
+              "url": "https://github.com/tetherto/qvac/issues/5419",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: LLM cpu-mask leaks caller affinity into subsequent embedding loads",
+              "url": "https://github.com/tetherto/qvac/issues/5537",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: duck TUI on Windows fails with \"worker closed before ready\" (harness entry path built with URL.pathname)",
+              "url": "https://github.com/tetherto/qvac/issues/5655",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: EmbeddingGemma-300M registry models skip the two Dense layers, so their vectors are not EmbeddingGemma embeddings",
+              "url": "https://github.com/tetherto/qvac/issues/5508",
+              "state": "closed"
+            },
+            {
+              "title": "iOS: bare-ffmpeg addon (27 MB) is always linked, even when only the streaming PCM API is used",
+              "url": "https://github.com/tetherto/qvac/issues/4072",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request index",
+          "searchedAt": "2026-11-18T09:02:16.786Z",
+          "total": 754,
+          "top": [
+            {
+              "title": "fix[notask]: apply the findBy name filter with every index",
+              "url": "https://github.com/tetherto/qvac/pull/5621",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28496 feat[bc|api]: make IdMapIndex async and cancellable",
+              "url": "https://github.com/tetherto/qvac/pull/5790",
+              "state": "open"
+            },
+            {
+              "title": "chore[notask]: DO NOT MERGE, overlay-validate fabric against qvac-fabric 11739.4.0",
+              "url": "https://github.com/tetherto/qvac/pull/5810",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27469 feat[api]: spread search hits across documents and add citation fields",
+              "url": "https://github.com/tetherto/qvac/pull/5809",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28496 feat[api]: run JsAsyncTask work on an addon-owned executor",
+              "url": "https://github.com/tetherto/qvac/pull/5828",
+              "state": "open"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/26"
     },
     "qr2:d391add6a74bbaec": {
       "title": "The closeOnParentExit interval is never cleared when startup fails and can later process.exit() the caller",
@@ -2119,7 +4163,133 @@
           "clearInterval parentWatch catch resolveServe"
         ]
       },
-      "churn": 5
+      "churn": 5,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read index.ts:193-205 and 291-297: parentWatch is armed before resolveServe; on startup failure the catch only removes the consumer and rethrows, never clearInterval. The unref'd interval keeps polling and calls process.exit(0) if the original parent goes away, killing a caller that handled the error and moved on. Low: needs closeOnParentExit and a failed start."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue closeOnParentExit interval not cleared on startup failure",
+          "searchedAt": "2026-11-18T09:02:22.672Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request closeOnParentExit interval not cleared on startup failure",
+          "searchedAt": "2026-11-18T09:02:22.672Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue parentWatch leak startManagedQvac error",
+          "searchedAt": "2026-11-18T09:02:28.592Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request parentWatch leak startManagedQvac error",
+          "searchedAt": "2026-11-18T09:02:28.592Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue managed provider process.exit after failed start",
+          "searchedAt": "2026-11-18T09:02:34.676Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request managed provider process.exit after failed start",
+          "searchedAt": "2026-11-18T09:02:34.676Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-23222 fix[bc]: harden serve CORS and managed authentication",
+              "url": "https://github.com/tetherto/qvac/pull/3744",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue clearInterval parentWatch catch resolveServe",
+          "searchedAt": "2026-11-18T09:02:40.572Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request clearInterval parentWatch catch resolveServe",
+          "searchedAt": "2026-11-18T09:02:40.572Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue index",
+          "searchedAt": "2026-11-18T09:02:46.979Z",
+          "total": 28,
+          "top": [
+            {
+              "title": "[Feature]: Vector index: 4-bit adds are ~28× slower than f32, and a loaded index slows the next model load",
+              "url": "https://github.com/tetherto/qvac/issues/5419",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: LLM cpu-mask leaks caller affinity into subsequent embedding loads",
+              "url": "https://github.com/tetherto/qvac/issues/5537",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: duck TUI on Windows fails with \"worker closed before ready\" (harness entry path built with URL.pathname)",
+              "url": "https://github.com/tetherto/qvac/issues/5655",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: EmbeddingGemma-300M registry models skip the two Dense layers, so their vectors are not EmbeddingGemma embeddings",
+              "url": "https://github.com/tetherto/qvac/issues/5508",
+              "state": "closed"
+            },
+            {
+              "title": "iOS: bare-ffmpeg addon (27 MB) is always linked, even when only the streaming PCM API is used",
+              "url": "https://github.com/tetherto/qvac/issues/4072",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request index",
+          "searchedAt": "2026-11-18T09:02:46.979Z",
+          "total": 754,
+          "top": [
+            {
+              "title": "fix[notask]: apply the findBy name filter with every index",
+              "url": "https://github.com/tetherto/qvac/pull/5621",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28496 feat[bc|api]: make IdMapIndex async and cancellable",
+              "url": "https://github.com/tetherto/qvac/pull/5790",
+              "state": "open"
+            },
+            {
+              "title": "chore[notask]: DO NOT MERGE, overlay-validate fabric against qvac-fabric 11739.4.0",
+              "url": "https://github.com/tetherto/qvac/pull/5810",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27469 feat[api]: spread search hits across documents and add citation fields",
+              "url": "https://github.com/tetherto/qvac/pull/5809",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-28496 feat[api]: run JsAsyncTask work on an addon-owned executor",
+              "url": "https://github.com/tetherto/qvac/pull/5828",
+              "state": "open"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/15"
     },
     "qr2:fbef8f97b8d025af": {
       "title": "port 0 (ephemeral) is silently replaced by fixed port 9210",
@@ -2274,7 +4444,89 @@
           "registry-server metrics EMFILE silent"
         ]
       },
-      "churn": 2
+      "churn": 2,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read metrics-server.js:39-51 and bin.js:137-142: the only server 'error' listener is the listen promise's reject, never replaced after listen, so later server errors (accept EMFILE/ENFILE in a long-running daemon) are silently dropped instead of logged. Low: observability only, the main RPC is unaffected."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue metrics server error listener swallows errors",
+          "searchedAt": "2026-11-18T09:02:52.827Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request metrics server error listener swallows errors",
+          "searchedAt": "2026-11-18T09:02:52.827Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue MetricsServer error event not logged after listen",
+          "searchedAt": "2026-11-18T09:02:58.797Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request MetricsServer error event not logged after listen",
+          "searchedAt": "2026-11-18T09:02:58.797Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue registry-server metrics EMFILE silent",
+          "searchedAt": "2026-11-18T09:03:04.622Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request registry-server metrics EMFILE silent",
+          "searchedAt": "2026-11-18T09:03:04.622Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue metrics-server",
+          "searchedAt": "2026-11-18T09:03:10.704Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request metrics-server",
+          "searchedAt": "2026-11-18T09:03:10.704Z",
+          "total": 25,
+          "top": [
+            {
+              "title": "fix[notask]: resume registry downloads and prevent socket-error crashes",
+              "url": "https://github.com/tetherto/qvac/pull/5682",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26957 test: drop the multi-GPU e2e tests",
+              "url": "https://github.com/tetherto/qvac/pull/5060",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-24215 doc: assessModelFit support matrix, unknown reasons, and demo detail panels",
+              "url": "https://github.com/tetherto/qvac/pull/4274",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-24488 feat[api]: close the SDK gaps against @qvac/bci-whispercpp 0.9.1",
+              "url": "https://github.com/tetherto/qvac/pull/4565",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-23370 fix[api]: expose streaming transcription stats",
+              "url": "https://github.com/tetherto/qvac/pull/3734",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/29"
     },
     "qr2:45c70474ce0b15ed": {
       "title": "Electron consumer killed by a signal (crash/OOM/timeout kill) exits the runner with code 0",
@@ -2328,7 +4580,7 @@
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "presence": "present",
-      "score": 0.98,
+      "score": 0,
       "verdict": {
         "verdict": "confirmed",
         "reasoning": "The core claim holds, but the impact is overstated.\n\nWhat holds:\n- `runFfmpeg` (ffmpeg.ts:38-113) accepts no AbortSignal. Its only kill path is the `timeoutMs` SIGKILL (61-68, default 5 minutes).\n- Neither HTTP caller listens for client disconnect. These are videos.ts:379, which calls `transcodeAviToMp4(aviRecord.data)`, and audio.ts:534 plus music.ts:583, which call `transcodeWav`. The server does have a disconnect helper, `disconnectSignal` in require-model.ts:134, but it is not used here.\n- A client that disconnects mid-transcode leaves ffmpeg running until it finishes, and the output buffer is then thrown away.\n- videos.ts:370-379 has no in-flight dedup. Only a completed MP4 is cached (`mp4FileId`, set at line 414). So concurrent or retried GETs on `/v1/videos/{id}/content` while a transcode is running each spawn their own ffmpeg.\n\nWhat is overstated or wrong:\n1. The \"cancelled job\" path does not exist. Both music.ts:583 and videos.ts:379 run only in the content-GET handler, after `job.status === 'completed'` (music.ts:557, videos.ts:~327). The job's generation work is already finished by then, so `job.controller.signal` has nothing to cancel during a transcode.\n2. Each ffmpeg normally exits once it finishes the input. The inputs are bounded buffers already in memory: a model-generated WAV or a short AVI. A typical transcode takes seconds, so \"up to 5 minutes at full CPU\" is the worst case, not the usual one.\n3. After one transcode succeeds, the MP4 is cached and later retries skip ffmpeg. For audio, each request re-encodes, but the cost is small.\n4. This is the local `qvac serve` model server. Piling up processes needs a client that keeps re-requesting while a transcode is still running.\n\nThe cleanup gap is real but the impact is modest. I rate it low, not medium.",
@@ -2340,7 +4592,12 @@
           "transcode cancellation"
         ]
       },
-      "churn": 2
+      "churn": 2,
+      "human": {
+        "status": "rejected",
+        "verifiedBy": "code reading",
+        "note": "True that runFfmpeg takes no AbortSignal (ffmpeg.ts:3-10, 38-113), but the work is bounded by the 5-minute SIGKILL timeout and its output is only discarded; no wrong result or leak beyond that bound. This is a cancellation feature request, not a defect; the verifier also called the impact overstated."
+      }
     },
     "qr2:39ee0d0f8ba18c3b": {
       "title": "close() returns early on a background-stop promise without bumping generation, so a pending getRPC starts a new worker after close() resolved",
@@ -2371,7 +4628,185 @@
           "pending getRPC spawns worker after close"
         ]
       },
-      "churn": 8
+      "churn": 8,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read sdk/src/client/rpc/node-rpc-client.ts:333-358, 427, 447, 481-485: stopInBackground stores its promise in the shared closePromise; close() awaits any non-null closePromise and returns without generation++, so ensureRPC callers parked on that promise relaunch a worker after close() resolved. Needs a worker crash followed by close() with a pending call. Low."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue close() does not bump generation after worker crash",
+          "searchedAt": "2026-11-18T09:03:16.877Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request close() does not bump generation after worker crash",
+          "searchedAt": "2026-11-18T09:03:16.877Z",
+          "total": 10,
+          "top": [
+            {
+              "title": "QVAC-27287 feat[api]: prime system prompts and tools through completion",
+              "url": "https://github.com/tetherto/qvac/pull/5312",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow",
+              "url": "https://github.com/tetherto/qvac/pull/5186",
+              "state": "closed"
+            },
+            {
+              "title": "feat[bc]: full-history prompt cache for llm-llamacpp",
+              "url": "https://github.com/tetherto/qvac/pull/4570",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-24535 feat[api]: move Kotlin SDK into the monorepo",
+              "url": "https://github.com/tetherto/qvac/pull/4491",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-23767 feat[api]: dynamic GPU backends (GGML_BACKEND_DL) on desktop Linux for diffusion",
+              "url": "https://github.com/tetherto/qvac/pull/3978",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue worker restarts after close resolves",
+          "searchedAt": "2026-11-18T09:03:23.027Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request worker restarts after close resolves",
+          "searchedAt": "2026-11-18T09:03:23.027Z",
+          "total": 5,
+          "top": [
+            {
+              "title": "feat[notask]: move mobile bundles to current Bare with JavaScriptCore on iOS",
+              "url": "https://github.com/tetherto/qvac/pull/5751",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-26968 feat[api|bc]: SDK caller sessions, model leases and scoped cancellation",
+              "url": "https://github.com/tetherto/qvac/pull/5541",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow",
+              "url": "https://github.com/tetherto/qvac/pull/5186",
+              "state": "closed"
+            },
+            {
+              "title": "feat[notask]: Move CLI to TUI",
+              "url": "https://github.com/tetherto/qvac/pull/5564",
+              "state": "closed"
+            },
+            {
+              "title": "feat[bc]: full-history prompt cache for llm-llamacpp",
+              "url": "https://github.com/tetherto/qvac/pull/4570",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue stopInBackground closePromise close race",
+          "searchedAt": "2026-11-18T09:03:28.945Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request stopInBackground closePromise close race",
+          "searchedAt": "2026-11-18T09:03:28.945Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow",
+              "url": "https://github.com/tetherto/qvac/pull/5186",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue pending getRPC spawns worker after close",
+          "searchedAt": "2026-11-18T09:03:34.757Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request pending getRPC spawns worker after close",
+          "searchedAt": "2026-11-18T09:03:34.757Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue node-rpc-client",
+          "searchedAt": "2026-11-18T09:03:41.064Z",
+          "total": 15,
+          "top": [
+            {
+              "title": "[Feature]: Flutter Port",
+              "url": "https://github.com/tetherto/qvac/issues/4713",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: first loadModel() after a fresh install times out on Windows; the same call succeeds on the second run",
+              "url": "https://github.com/tetherto/qvac/issues/4394",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: Upgrading to 0.19.x with an existing lockfile: Bare worker aborts at startup, @qvac/inference requires engines.bare ^1.30.3 but @qvac/sdk still declares bare-runtime ^1.24.2",
+              "url": "https://github.com/tetherto/qvac/issues/4612",
+              "state": "closed"
+            },
+            {
+              "title": "[Feature]: Improve errors handlling",
+              "url": "https://github.com/tetherto/qvac/issues/1821",
+              "state": "closed"
+            },
+            {
+              "title": "[Bug]: rocksdb-native prebuilds DT_NEEDED-link libatomic.so.1; worker cannot start on slim Linux images (follow-up to #3853)",
+              "url": "https://github.com/tetherto/qvac/issues/4290",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request node-rpc-client",
+          "searchedAt": "2026-11-18T09:03:41.064Z",
+          "total": 69,
+          "top": [
+            {
+              "title": "QVAC-26838 feat[api]: run the SDK in the browser over a Web Worker transport",
+              "url": "https://github.com/tetherto/qvac/pull/5375",
+              "state": "open"
+            },
+            {
+              "title": "fix[notask]: retry the worker connection after a failed init",
+              "url": "https://github.com/tetherto/qvac/pull/5620",
+              "state": "open"
+            },
+            {
+              "title": "chore[notask]: move @qvac/sdk and @qvac/inference to bare-rpc ^2.0.0",
+              "url": "https://github.com/tetherto/qvac/pull/5717",
+              "state": "closed"
+            },
+            {
+              "title": "chore[notask]: update registry networking dependencies",
+              "url": "https://github.com/tetherto/qvac/pull/5800",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-28332 feat[api]: add the Swift SDK for iOS and macOS",
+              "url": "https://github.com/tetherto/qvac/pull/5826",
+              "state": "open"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/21"
     },
     "qr2:6211347ee9db2601": {
       "title": "Cancelling with clearCache during a registry transfer leaves the partial file or shard directory on disk",
@@ -2596,7 +5031,101 @@
           "getModelByName returns non-undefined"
         ]
       },
-      "churn": 7
+      "churn": 7,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "reproduction",
+        "note": "Reproduced with verification/get-model-by-name-prototype.repro.ts: getModelByName('constructor') returns the Object function, 'toString' and 'hasOwnProperty' return functions and '__proto__' returns an object, while the JSDoc promises undefined for unknown names. Public via @qvac/inference/models. Low severity: callers get a confusing downstream error instead of 'not found'. Fix: Object.hasOwn check or a Map, in codegen.ts (models.ts is generated)."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue getModelByName prototype",
+          "searchedAt": "2026-11-18T08:48:50.382Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request getModelByName prototype",
+          "searchedAt": "2026-11-18T08:48:50.382Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue getModelByName constructor",
+          "searchedAt": "2026-11-18T08:48:56.313Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request getModelByName constructor",
+          "searchedAt": "2026-11-18T08:48:56.313Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue modelNameCompatibilityAliases hasOwn",
+          "searchedAt": "2026-11-18T08:49:02.206Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request modelNameCompatibilityAliases hasOwn",
+          "searchedAt": "2026-11-18T08:49:02.206Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue getModelByName returns non-undefined",
+          "searchedAt": "2026-11-18T08:49:08.234Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request getModelByName returns non-undefined",
+          "searchedAt": "2026-11-18T08:49:08.234Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue codegen",
+          "searchedAt": "2026-11-18T08:49:14.355Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request codegen",
+          "searchedAt": "2026-11-18T08:49:14.355Z",
+          "total": 36,
+          "top": [
+            {
+              "title": "QVAC-27808 feat[bc|mod]: point EmbeddingGemma-300M constants at the Dense-layer models",
+              "url": "https://github.com/tetherto/qvac/pull/5634",
+              "state": "closed"
+            },
+            {
+              "title": "chore[notask]: release @qvac/sdk 0.17.2 (lockstep inference/sdk/bare/python)",
+              "url": "https://github.com/tetherto/qvac/pull/3895",
+              "state": "closed"
+            },
+            {
+              "title": "fix[notask]: repair model drift detection in check-models",
+              "url": "https://github.com/tetherto/qvac/pull/3501",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-27970 feat[api]: expose the tts-ggml 0.15 backend, Core ML, sampling and replay controls",
+              "url": "https://github.com/tetherto/qvac/pull/5684",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-22515 chore[bc]: remove retired ocr-onnx addon from the monorepo",
+              "url": "https://github.com/tetherto/qvac/pull/3466",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/12"
     },
     "qr2:3fb004f1ff02a6bb": {
       "title": "An abort that fires during the state-dir await is lost: the fitter still starts and the caller waits up to 30 s instead of getting 'cancelled'",
@@ -2627,7 +5156,138 @@
           "bounded addEventListener aborted signal never fires"
         ]
       },
-      "churn": 3
+      "churn": 3,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read model-fit/run/run.ts:209-218 and fit-load.ts:48-51: signal.aborted is checked once before `await resolveStateDir()`, which in production does a dynamic import and yields. An abort in that window fires with no listener and is never re-checked, so the fitter starts and the caller waits up to the 30 s budget. Same 'abort between check and listen' class as #11. Low."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue runFit abort lost during resolveStateDir",
+          "searchedAt": "2026-11-18T09:03:46.971Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request runFit abort lost during resolveStateDir",
+          "searchedAt": "2026-11-18T09:03:46.971Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue model fit cancel ignored signal already aborted",
+          "searchedAt": "2026-11-18T09:03:53.014Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request model fit cancel ignored signal already aborted",
+          "searchedAt": "2026-11-18T09:03:53.014Z",
+          "total": 2,
+          "top": [
+            {
+              "title": "QVAC-26798 feat[bc|api]: run the SDK worker on bare-stow",
+              "url": "https://github.com/tetherto/qvac/pull/5186",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-23489 feat[api]: add ABot-World interactive world sessions to the SDK",
+              "url": "https://github.com/tetherto/qvac/pull/3812",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue fit check delays cancelled load 30s",
+          "searchedAt": "2026-11-18T09:03:58.880Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request fit check delays cancelled load 30s",
+          "searchedAt": "2026-11-18T09:03:58.880Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue bounded addEventListener aborted signal never fires",
+          "searchedAt": "2026-11-18T09:04:04.766Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request bounded addEventListener aborted signal never fires",
+          "searchedAt": "2026-11-18T09:04:04.766Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue run",
+          "searchedAt": "2026-11-18T09:04:10.899Z",
+          "total": 103,
+          "top": [
+            {
+              "title": "Weekend Mobile Tests (LLM) — 2026-11-15",
+              "url": "https://github.com/tetherto/qvac/issues/5770",
+              "state": "open"
+            },
+            {
+              "title": "OpenCode upstream compatibility smoke failing",
+              "url": "https://github.com/tetherto/qvac/issues/5768",
+              "state": "open"
+            },
+            {
+              "title": "OpenClaw upstream compatibility smoke failing",
+              "url": "https://github.com/tetherto/qvac/issues/5825",
+              "state": "open"
+            },
+            {
+              "title": "Weekend Mobile Tests (@qvac/llm-llamacpp) — 2026-11-17",
+              "url": "https://github.com/tetherto/qvac/issues/5813",
+              "state": "open"
+            },
+            {
+              "title": "[Bug]: 0.22.0 release notes pass `backend` as a string, but loadModel requires an array",
+              "url": "https://github.com/tetherto/qvac/issues/5345",
+              "state": "open"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request run",
+          "searchedAt": "2026-11-18T09:04:10.899Z",
+          "total": 3336,
+          "top": [
+            {
+              "title": "QVAC-28496 feat[api]: run JsAsyncTask work on an addon-owned executor",
+              "url": "https://github.com/tetherto/qvac/pull/5828",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-25197 feat: run the QV.AC app CLI with qvac app",
+              "url": "https://github.com/tetherto/qvac/pull/5780",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27302 feat(bci-whispercpp): run on the shared @qvac/fabric runtime",
+              "url": "https://github.com/tetherto/qvac/pull/5765",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27302 feat(asr-ggml): run on the shared @qvac/fabric runtime",
+              "url": "https://github.com/tetherto/qvac/pull/5764",
+              "state": "open"
+            },
+            {
+              "title": "infra[notask]: run merge gates on pull_request instead of pull_request_target",
+              "url": "https://github.com/tetherto/qvac/pull/5679",
+              "state": "open"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/16"
     },
     "qr2:6abb1d19cc841f3a": {
       "title": "Throughput rates divide swarm-lifetime byte counters by download-only elapsed time, inflating rx/tx per second",
@@ -2658,7 +5318,113 @@
           "registry profiler wrong bytes per second"
         ]
       },
-      "churn": 2
+      "churn": 2,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read registry-server/client/lib/profiler.js:29-46, 172, 241-244: rx/tx counters are cumulative since swarm creation (DHT bootstrap + metadata sync) but divided by blob-transfer time only, so reported throughput is inflated, most for small blobs. Low: diagnostic tool, but it is the tool operators use to judge peer throughput."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue profiler rxPerSec inflated",
+          "searchedAt": "2026-11-18T09:04:16.809Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request profiler rxPerSec inflated",
+          "searchedAt": "2026-11-18T09:04:16.809Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue profiler throughput includes metadata bytes",
+          "searchedAt": "2026-11-18T09:04:22.678Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request profiler throughput includes metadata bytes",
+          "searchedAt": "2026-11-18T09:04:22.678Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue udxBytesReceived baseline download start",
+          "searchedAt": "2026-11-18T09:04:28.576Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request udxBytesReceived baseline download start",
+          "searchedAt": "2026-11-18T09:04:28.576Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue registry profiler wrong bytes per second",
+          "searchedAt": "2026-11-18T09:04:34.582Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request registry profiler wrong bytes per second",
+          "searchedAt": "2026-11-18T09:04:34.582Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "QVAC-23728 feat[bc]: remove DHT delegated inference",
+              "url": "https://github.com/tetherto/qvac/pull/4042",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue profiler",
+          "searchedAt": "2026-11-18T09:04:40.759Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "[Bug]: Android Vulkan GPU offload crashes during llama.cpp backend tensor allocation",
+              "url": "https://github.com/tetherto/qvac/issues/2399",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request profiler",
+          "searchedAt": "2026-11-18T09:04:40.759Z",
+          "total": 46,
+          "top": [
+            {
+              "title": "QVAC-27624 doc: add Python code examples, part 3",
+              "url": "https://github.com/tetherto/qvac/pull/5462",
+              "state": "closed"
+            },
+            {
+              "title": "doc[notask|skiplog]: move SDK feature docs out of the README",
+              "url": "https://github.com/tetherto/qvac/pull/5367",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-27653 doc: publish the SDK v0.24 and CLI v0.19 documentation lines",
+              "url": "https://github.com/tetherto/qvac/pull/5758",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-27118 doc: publish the SDK v0.23 and CLI v0.18 documentation lines",
+              "url": "https://github.com/tetherto/qvac/pull/5444",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-24633 fix: restore profiler object entry in the api reference",
+              "url": "https://github.com/tetherto/qvac/pull/4427",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/17"
     },
     "qr2:d82789a0a393efdf": {
       "title": "Swarm, store and temp dir leak if setup fails before the try/finally",
@@ -2708,7 +5474,7 @@
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
       "presence": "present",
-      "score": 0.49,
+      "score": 0,
       "verdict": {
         "verdict": "uncertain",
         "reasoning": "The code matches the claim. In profiler.js lines 184-190, cleanupResources runs `await swarm.destroy()` and then `await store.close()` with no guard. Only `fs.rmSync(tmpdir)` sits inside try/catch. The function is awaited in the outer `finally` at line 296. If either teardown call rejects, the temp-dir removal never runs, and under JS semantics that rejection replaces any error thrown in the try block (for example a pipeline timeout at line 266). The path is reachable through the public `profileDownload` export, which bin/cli.js and examples/profile-download.js both call.\n\nI could not show the trigger happens in practice. Hyperswarm and Corestore are not installed in this checkout, so I could not check whether `swarm.destroy()` or `store.close()` actually reject. Both are teardown methods built to be idempotent, and they rarely reject. Without a rejection the defect never shows. That is runtime behaviour I can't see, so the verdict is uncertain rather than confirmed.\n\nThe impact is also smaller than claimed. This is a diagnostic profiler, not a production download path. The leftover file sits in os.tmpdir() under a uniquely named qvac-profile-* folder, and the OS eventually clears it.\n\nSeparately, the code has a related gap the reviewer didn't mention. If `store.ready()` or `HypercoreStats.fromCorestore()` throws (lines 170-173), that happens before the try block, so the tmpdir leaks anyway. Low severity at most.",
@@ -2720,7 +5486,12 @@
           "qvac-profile tmpdir leak"
         ]
       },
-      "churn": 2
+      "churn": 2,
+      "human": {
+        "status": "rejected",
+        "verifiedBy": "code reading",
+        "note": "The ordering is fragile (profiler.js:184-190, awaited in finally at 296), but it needs swarm.destroy() or store.close() to reject, which I could not show happens; the impact is a leftover temp dir in a diagnostic CLI. Speculative, below the bar."
+      }
     },
     "qr2:98c9a5b42189703d": {
       "title": "totalBytesDownloaded/downloadSpeedBps count bytes that were already on disk (resumed partials, cached shards)",
@@ -2751,7 +5522,107 @@
           "download metrics no baseline for already-present bytes"
         ]
       },
-      "churn": 2
+      "churn": 2,
+      "human": {
+        "status": "confirmed",
+        "verifiedBy": "code reading",
+        "note": "Read download-stats.ts:57-67, 102-108 and http.ts:230, 393-397: totalBytesDownloaded is the max of absolute progress counters, which start at the resume offset or include cached shards, so a resumed or partly cached download reports bytes and speed it never transferred. Low: telemetry only."
+      },
+      "duplicates": [
+        {
+          "query": "repo:tetherto/qvac is:issue download stats count cached shards as downloaded bytes",
+          "searchedAt": "2026-11-18T09:04:46.690Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request download stats count cached shards as downloaded bytes",
+          "searchedAt": "2026-11-18T09:04:46.690Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue totalBytesDownloaded includes resumed partial download",
+          "searchedAt": "2026-11-18T09:04:52.633Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request totalBytesDownloaded includes resumed partial download",
+          "searchedAt": "2026-11-18T09:04:52.633Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue downloadSpeedBps overstated on resume or partial cache",
+          "searchedAt": "2026-11-18T09:04:58.576Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request downloadSpeedBps overstated on resume or partial cache",
+          "searchedAt": "2026-11-18T09:04:58.576Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue download metrics no baseline for already-present bytes",
+          "searchedAt": "2026-11-18T09:05:04.476Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request download metrics no baseline for already-present bytes",
+          "searchedAt": "2026-11-18T09:05:04.476Z",
+          "total": 0,
+          "top": []
+        },
+        {
+          "query": "repo:tetherto/qvac is:issue download-stats",
+          "searchedAt": "2026-11-18T09:05:10.649Z",
+          "total": 1,
+          "top": [
+            {
+              "title": "audiogen: backend is reported as an undocumented number, and a CPU fallback gives no reason",
+              "url": "https://github.com/tetherto/qvac/issues/4060",
+              "state": "closed"
+            }
+          ]
+        },
+        {
+          "query": "repo:tetherto/qvac is:pull-request download-stats",
+          "searchedAt": "2026-11-18T09:05:10.649Z",
+          "total": 98,
+          "top": [
+            {
+              "title": "QVAC-26838 docs: replace the fabric-llm-web PoC with an SDK browser example",
+              "url": "https://github.com/tetherto/qvac/pull/5376",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27586 feat[api]: expose the tts-ggml controls and stats the SDK dropped",
+              "url": "https://github.com/tetherto/qvac/pull/5554",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-26884 feat[api]: expose llm-llamacpp speculative decoding in the SDK",
+              "url": "https://github.com/tetherto/qvac/pull/5261",
+              "state": "closed"
+            },
+            {
+              "title": "QVAC-28355 feat[mod]: add MOSS-Image model constants and load the examples and e2e from them",
+              "url": "https://github.com/tetherto/qvac/pull/5743",
+              "state": "open"
+            },
+            {
+              "title": "QVAC-27199 feat[api]: experimental world scene endpoints under /qvac/v1/world",
+              "url": "https://github.com/tetherto/qvac/pull/5421",
+              "state": "closed"
+            }
+          ]
+        }
+      ],
+      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/18"
     }
   },
   "runs": [

@@ -55,6 +55,18 @@ export type VerdictOut = z.infer<typeof VerdictOut>
 
 export type Status = 'candidate' | 'confirmed' | 'rejected' | 'uncertain'
 
+/** A person's decision on a finding (state/overrides.json). Always wins over the agents. */
+export interface HumanDecision {
+  status: Status
+  note: string
+  verifiedBy?: string
+  /** Optional severity re-rating */
+  severity?: z.infer<typeof Severity>
+}
+
+/** Severity after every review: human, then verifier, then reviewer. */
+export const severityOf = (f: Pick<Finding, 'human' | 'verdict' | 'severity'>) => f.human?.severity ?? f.verdict?.severity ?? f.severity
+
 /** A finding as stored in the state file; identity is the fingerprint, not the line. */
 export interface Finding extends CandidateOut {
   fingerprint: string
@@ -62,7 +74,7 @@ export interface Finding extends CandidateOut {
   status: Status
   verdict?: VerdictOut
   /** Human decision overrides the agent: set in state/overrides.json */
-  human?: { status: Status; note: string; verifiedBy?: string }
+  human?: HumanDecision
   firstSeenCommit: string
   lastSeenCommit: string
   /** present | moved (anchor found on another line) | gone (anchor no longer in file) */

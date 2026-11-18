@@ -66,5 +66,147 @@
     "status": "confirmed",
     "verifiedBy": "code reading",
     "note": "Read registry.ts:396 and :567 (cleanup only if `error instanceof DownloadCancelledError`), registry-download-utils.ts:134-143 (transfer awaited with no error mapping) and registry-server/client/lib/client.js:256/277/301/757/765 (client rejects with plain `new Error('Download cancelled')`). The lease wrapper maps only cancels during the lease wait (runtime/registry-client.ts:236-245). registry.ts:468 in the same file already checks `ctx.signal.aborted ||`, which is the fix pattern. Not reproduced at runtime (needs a registry peer). Dedupe check: merged PR #5689 states clearCache deletes the cancelled download's own .part, and its tests cover that for HTTP; the registry test (test/registry-client-cache.test.ts:30-50) stubs downloadBlob to throw exactly `new Error('Download cancelled')` and only asserts clearBlocksOnCancel, never that the .part file is removed. So the gap is consistent with the existing tests, not contradicted by them."
+  },
+  "qr2:d856f8e3fc6586be": {
+    "status": "confirmed",
+    "verifiedBy": "reproduction",
+    "note": "Reproduced on Bare with a stub drive (verification/inference-hyperdrive-abort.repro.test.ts): aborting at 50 ms, while drive.entry() is still resolving, leaves downloadAndValidateFile pending 2 s later; the control that aborts at 300 ms, after the lookup, rejects with DownloadCancelledError at once. Cause: the abort listener is added at hyperdrive.ts:481 on a signal that may already be aborted, with no `signal.aborted` check before it. Uncertainty: the stub models the suspended swarm as a read stream that never ends; with real peers the stream could still end or error, in which case the symptom is a slow cancel rather than a hang. Either way the background download keeps its lock and corestore until then."
+  },
+  "qr2:b9cb8c16bc51e7cb": {
+    "status": "confirmed",
+    "verifiedBy": "reproduction",
+    "note": "Reproduced with verification/get-model-by-name-prototype.repro.ts: getModelByName('constructor') returns the Object function, 'toString' and 'hasOwnProperty' return functions and '__proto__' returns an object, while the JSDoc promises undefined for unknown names. Public via @qvac/inference/models. Low severity: callers get a confusing downstream error instead of 'not found'. Fix: Object.hasOwn check or a Map, in codegen.ts (models.ts is generated)."
+  },
+  "qr2:0c0f18400b05cf7d": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read ai-sdk-provider/src/managed/serve-process.ts:305-361 and index.ts:162: the host is interpolated as `http://${host}:${port}/v1` with no IPv6 brackets. `new URL('http://::1:8080/v1')` throws ERR_INVALID_URL in Node, waitForHealth (199-213) swallows every fetch error as 'not listening yet', so a serveHost of '::1' always ends in ServeStartTimeoutError after the full timeout, although the serve is up. The CLI server itself supports IPv6 binds (serve/core/cors.ts isLoopbackHost). Low severity: only IPv6 hosts."
+  },
+  "qr2:ee5e04c40d926e1b": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read test-suite/src/cli/utils/local-broker.ts:178 (writes process.pid, the CLI itself, to broker.pid in the report dir) and process-manager.ts:90-115 (killTracked signals every *.pid in that dir), called from run-local.ts:225 during cleanup. On Windows that is `taskkill /PID <self> /F /T`, which force-kills the CLI and its children before extraCleanup, broker cleanup, log printing and process.exit(code) run, so the producer's exit code is lost. On POSIX the self-SIGTERM is queued and process.exit wins, so it is mostly harmless there. Windows-only, not executed (no Windows host). Re-rated low: Windows-only and limited to the test tooling.",
+    "severity": "low"
+  },
+  "qr2:dbcbe70076319611": {
+    "status": "rejected",
+    "verifiedBy": "duplicate search",
+    "note": "The code reads as described (registry-service.js:441-451 mirrors the hard-coded legacy 'models' core), but the duplicate search surfaced merged PR tetherto/qvac#4379, which introduced generations and says it \"leaves production blob distribution and reseeding to the separate operational workflow\". The runbook (packages/registry-server/docs/BLOB_CORE_ROTATION.md:59-67) tells operators to hand the new core keys to that workflow. So blind-peer coverage of a rotated core is a documented design choice, not an unknown defect. At most a docs/naming improvement for the in-service reseed RPC."
+  },
+  "qr2:4facb8033b0fee0e": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read hyperdrive.ts:367-391 and 711-726: cleanupHyperdrive runs only when `!seed`, whatever the outcome, so with seed=true a failed or aborted download keeps Corestore, Hyperdrive and a suspended swarm open. A retry reopens the same corestoreDir while the storage lock is held, and clearCache removes a directory that is still open. Same file as #11; seed is opt-in, so it affects seeding users only."
+  },
+  "qr2:7ddcab2e4784b597": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "severity": "low",
+    "note": "Read ai-sdk-provider/src/managed/index.ts:88-111 and registry.ts:20-65: the lock is stolen only if kill(pid,0) fails, with no start-time or boot-id check, and the lock dir (~/.qvac/managed-serves) survives reboots. A crashed owner whose pid is reused by an unrelated process blocks starts on that key until the mtime fallback or that process exits. Re-rated low: needs a crash plus pid reuse."
+  },
+  "qr2:5aacd12f083712b5": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read index.ts:88-111: steal is readLockOwner -> dead -> unconditional rm -> retry open('wx'). Two waiters that both saw the dead pid can interleave so the second rm deletes the first waiter's fresh lock; both return true and both spawn a serve (230-256). Narrow window, low severity; fix is rename-to-tombstone or compare the pid before rm. Same lock code as qr2:7ddcab2e4784b597."
+  },
+  "qr2:d391add6a74bbaec": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read index.ts:193-205 and 291-297: parentWatch is armed before resolveServe; on startup failure the catch only removes the consumer and rethrows, never clearInterval. The unref'd interval keeps polling and calls process.exit(0) if the original parent goes away, killing a caller that handled the error and moved on. Low: needs closeOnParentExit and a failed start."
+  },
+  "qr2:3fb004f1ff02a6bb": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read model-fit/run/run.ts:209-218 and fit-load.ts:48-51: signal.aborted is checked once before `await resolveStateDir()`, which in production does a dynamic import and yields. An abort in that window fires with no listener and is never re-checked, so the fitter starts and the caller waits up to the 30 s budget. Same 'abort between check and listen' class as #11. Low."
+  },
+  "qr2:6abb1d19cc841f3a": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read registry-server/client/lib/profiler.js:29-46, 172, 241-244: rx/tx counters are cumulative since swarm creation (DHT bootstrap + metadata sync) but divided by blob-transfer time only, so reported throughput is inflated, most for small blobs. Low: diagnostic tool, but it is the tool operators use to judge peer throughput."
+  },
+  "qr2:98c9a5b42189703d": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read download-stats.ts:57-67, 102-108 and http.ts:230, 393-397: totalBytesDownloaded is the max of absolute progress counters, which start at the resume offset or include cached shards, so a resumed or partly cached download reports bytes and speed it never transferred. Low: telemetry only."
+  },
+  "qr2:24eae57b164cac27": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read sdk/src/commands/verify/prebuilds.ts:89-106 and 203-207: the inner addon/ version is stored in the same mismatchedVersion field as the platform package's own version, so the hint tells the user to pin the platform package to a version it already has. Low: wrong remediation message in a verify command."
+  },
+  "qr2:85ed260bc5ebad8d": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read registry-service.js:845-866 and reseed-tracker.js:95-121: DISPATCH_PUT_MODEL is appended at 861, then waitForComplete() can reject after 30 s without progress; no try/catch, so the RPC reports failure for a model that is committed. A client retry then re-ingests. Low; same await as #2 (which is the hang, this is the false failure)."
+  },
+  "qr2:39ee0d0f8ba18c3b": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read sdk/src/client/rpc/node-rpc-client.ts:333-358, 427, 447, 481-485: stopInBackground stores its promise in the shared closePromise; close() awaits any non-null closePromise and returns without generation++, so ensureRPC callers parked on that promise relaunch a worker after close() resolved. Needs a worker crash followed by close() with a pending call. Low."
+  },
+  "qr2:aace28e701173f4a": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read hyperdrive.ts:81-109 and callers 304, 589: the corestore is opened before drive.ready() with no try/catch and registered only at 109, so a throw from ready() (corrupt storage) leaks an open corestore that no caller can reach. Low; same resource-on-error-path class as qr2:4facb8033b0fee0e."
+  },
+  "qr2:536196803de7c5f2": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read coreml-sidecars.ts:145-149, 202-222, 280-283 and registry.ts:461: a partly ingested companion set is cached as a subset, isValidCachedSet accepts it, and the cached set wins over catalog and registry lookups on every later load, so bundles ingested later are never staged. Uncertainty: whether published models are ever ingested in stages; the upstream tests (coreml-sidecars.test.ts:350+) show partial sets are an expected state. Low."
+  },
+  "qr2:94de8f3872ba4b36": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read registry-delete.ts:173-185 and coreml-sidecars.ts:202-222: delete collects sidecar blob bindings only via findLocallyCachedCoremlCompanionSet, which returns undefined if any staged file is missing or the wrong size; the sets dir is removed but the hypercore blob ranges are not cleared. Low: disk space leak on iOS/macOS after an interrupted staging."
+  },
+  "qr2:d190bf684e64c7ff": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read sdk/src/commands/bundle/scratch.ts:26-28, 58-74: mkdir then a separate writeFile(owner.pid); a concurrent removeStaleScratch in that window sees ENOENT or an empty file, treats the owner as dead and rm -rf's a live scratch folder. Needs two bundle commands at once on the same project. Low."
+  },
+  "qr2:500f49063c45e269": {
+    "status": "rejected",
+    "verifiedBy": "code reading",
+    "note": "Mechanism is correct (mkdirSync/writeFileAtomically unguarded in parse-spec.ts:129/168), but this is the internal `qvac openai coverage` report generator run by maintainers; an unwritable ~/.cache is an environment problem with a clear error. Below the bar."
+  },
+  "qr2:e8ac00cc3dc7ad4d": {
+    "status": "rejected",
+    "verifiedBy": "code reading",
+    "note": "Correct that spec/sha/etag are replaced separately (parse-spec.ts:168-175), but the failure is loud ('cached OpenAI specification hash mismatch') and fixed by re-running online, in a maintainer-only coverage tool. Below the bar."
+  },
+  "qr2:59e0a7ed358e79c6": {
+    "status": "confirmed",
+    "verifiedBy": "reproduction",
+    "note": "Reproduced with verification/test-suite-double-sigint.repro.mjs, which mirrors run-consumer-external.ts:33-48 and the runner's process.once('SIGINT'): a process-group SIGINT (what Ctrl+C sends) kills the runner before its graceful shutdown completes (child exit signal=SIGINT) and, through #8, the command exits 0. Fix: spawn the runner detached or stop forwarding SIGINT that the child already received. Low: interactive Ctrl+C only."
+  },
+  "qr2:d48fcd8ca331abcd": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read metrics-server.js:39-51 and bin.js:137-142: the only server 'error' listener is the listen promise's reject, never replaced after listen, so later server errors (accept EMFILE/ENFILE in a long-running daemon) are silently dropped instead of logged. Low: observability only, the main RPC is unaffected."
+  },
+  "qr2:dcefbe60f4f31d7e": {
+    "status": "rejected",
+    "verifiedBy": "code reading",
+    "note": "True that runFfmpeg takes no AbortSignal (ffmpeg.ts:3-10, 38-113), but the work is bounded by the 5-minute SIGKILL timeout and its output is only discarded; no wrong result or leak beyond that bound. This is a cancellation feature request, not a defect; the verifier also called the impact overstated."
+  },
+  "qr2:621f2d08e39c5ab8": {
+    "status": "confirmed",
+    "verifiedBy": "reproduction",
+    "note": "Reproduced with verification/test-suite-spawn-error.repro.mjs (same code shape as process-manager.ts:61-82): spawning a missing binary returns pid=undefined, writes the string 'undefined' to the .pid file, and the ENOENT surfaces as an uncaught exception after the caller's try/catch has returned, so run-local.ts cleanup never runs. Low: test tooling, but a missing broker/bare binary is the common setup error."
+  },
+  "qr2:dd02c9b9fb9c5dd7": {
+    "status": "rejected",
+    "verifiedBy": "code reading",
+    "note": "The ordering is fragile (profiler.js:184-190, awaited in finally at 296), but it needs swarm.destroy() or store.close() to reject, which I could not show happens; the impact is a leftover temp dir in a diagnostic CLI. Speculative, below the bar."
+  },
+  "qr2:a60fa6edffc5508f": {
+    "status": "rejected",
+    "verifiedBy": "code reading",
+    "note": "Correct that the abort listener at client.js:760-768 is never removed. But every in-repo caller passes a per-operation signal (registry-download-utils.ts:100-136, model-fit/description/fetch.ts:176-195 with its own controller), so at most maxRetries+1 = 4 listeners hold already-destroyed streams until the signal is collected. Only a caller reusing one long-lived signal across many downloads would accumulate them. Worth a one-line fix (fetch.ts:195 shows the pattern), not a finding."
+  },
+  "qr2:0d264caeed8ed992": {
+    "status": "confirmed",
+    "verifiedBy": "code reading",
+    "note": "Read process-manager.ts:68-115, 187-193 and run-local.ts:214-254: .pid files are never deleted, killTracked SIGTERMs (taskkill /F /T on Windows) every *.pid in the report dir without ownership checks, and --report-dir is reused as given. A rerun with the same --report-dir or --runId signals PIDs from the previous run, which may now belong to unrelated processes. Low; same pid-file design as #10."
   }
 }

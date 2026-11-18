@@ -5,8 +5,9 @@ QVAC=$(cd "$1" && pwd)
 HERE=$(cd "$(dirname "$0")" && pwd)
 PKG="$QVAC/packages/inference"
 cp "$HERE/inference-archive.repro.test.ts" "$PKG/test/zz-qr-repro.test.ts"
-trap 'rm -f "$PKG/test/zz-qr-repro.test.ts"' EXIT
+cp "$HERE/inference-hyperdrive-abort.repro.test.ts" "$PKG/test/zz-qr-repro-hd.test.ts"
+trap 'rm -f "$PKG/test/zz-qr-repro.test.ts" "$PKG/test/zz-qr-repro-hd.test.ts"' EXIT
 cd "$PKG"
 npx tsc -p test/tsconfig.build.json >/dev/null || true   # noEmitOnError=false: emits despite unrelated type errors
 npx tsc-alias -p test/tsconfig.alias.json
-npx brittle-bare test/dist/test/zz-qr-repro.test.js
+npx brittle-bare test/dist/test/zz-qr-repro.test.js test/dist/test/zz-qr-repro-hd.test.js

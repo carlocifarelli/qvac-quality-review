@@ -2,6 +2,7 @@ import type { Config } from '../config.js'
 import { ghApi } from '../github.js'
 import type { State } from '../state.js'
 import { issueBody } from '../report.js'
+import { severityOf } from '../types.js'
 
 /**
  * Files human-confirmed findings (status set in overrides.json: an agent
@@ -17,7 +18,7 @@ export async function publish(cfg: Config, state: State, opts: { dryRun: boolean
     .filter((f) => f.human?.status === 'confirmed' && f.presence !== 'gone' && !f.issue)
     .sort((a, b) => b.score - a.score)
   for (const f of ranked) {
-    const title = `[${f.verdict?.severity ?? f.severity}] ${f.title}`
+    const title = `[${severityOf(f)}] ${f.title}`
     if (opts.dryRun) {
       out.push(`would file: ${title}`)
       continue

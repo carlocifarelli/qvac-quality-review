@@ -1,5 +1,5 @@
 import { effectiveStatus, type State } from './state.js'
-import type { Finding } from './types.js'
+import { severityOf, type Finding } from './types.js'
 
 const link = (repo: string, commit: string, f: Finding) =>
   `https://github.com/${repo}/blob/${commit}/${f.file}#L${f.line}`
@@ -12,7 +12,7 @@ export function issueBody(f: Finding): string {
   })
   return [
     `**File:** \`${f.file}:${f.line}\`  `,
-    `**Category:** ${f.category} · **Severity:** ${f.verdict?.severity ?? f.severity} · **Confidence:** ${f.confidence} · **Status:** ${effectiveStatus(f)}`,
+    `**Category:** ${f.category} · **Severity:** ${severityOf(f)} · **Confidence:** ${f.confidence} · **Status:** ${effectiveStatus(f)}`,
     '',
     '### Evidence',
     f.evidence,
@@ -46,7 +46,7 @@ export function toMarkdown(state: State, repo: string, commit: string): string {
   const gone = all.filter((f) => f.presence === 'gone')
   const fresh = all.filter((f) => f.firstSeenCommit === commit && f.presence !== 'gone')
   const row = (f: Finding, i: number) =>
-    `| ${i + 1} | ${f.score} | ${f.verdict?.severity ?? f.severity} | ${f.category} | [${f.file}:${f.line}](${link(repo, commit, f)}) | ${cell(f.title)} | ${f.issue ? `[issue](${f.issue})` : '-'} |`
+    `| ${i + 1} | ${f.score} | ${severityOf(f)} | ${f.category} | [${f.file}:${f.line}](${link(repo, commit, f)}) | ${cell(f.title)} | ${f.issue ? `[issue](${f.issue})` : '-'} |`
   const head = '| # | Score | Severity | Category | Location | Finding | Tracked |\n|---|---|---|---|---|---|---|'
   return (
     [

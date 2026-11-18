@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { Finding, Status } from './types.js'
+import { severityOf, type Finding, type HumanDecision, type Status } from './types.js'
 import { normalizeLine, readJson, sha256, writeJson } from './util.js'
 
 /**
@@ -28,7 +28,7 @@ export class Store {
   cacheGet = <T>(key: string) => readJson<T | null>(this.path(`cache/${key}.json`), null)
   cachePut = (key: string, v: unknown) => writeJson(this.path(`cache/${key}.json`), v)
   /** Human decisions: { "<fingerprint>": { "status": "rejected", "note": "...", "verifiedBy": "..." } } */
-  overrides = () => readJson<Record<string, { status: Status; note: string; verifiedBy?: string }>>(this.path('overrides.json'), {})
+  overrides = () => readJson<Record<string, HumanDecision>>(this.path('overrides.json'), {})
 }
 
 /** Re-locates each known finding in the current checkout. */
@@ -61,6 +61,6 @@ export function effectiveStatus(f: Finding): Status {
 
 /** Ranking score: verified severity x confidence x verification state, nudged by churn. */
 export function score(f: Finding, churn = f.churn ?? 0): number {
-  const sev = SEV[f.verdict?.severity ?? f.severity]
+  const sev = SEV[severityOf(f)]
   return +(sev * CONF[f.confidence] * STAT[effectiveStatus(f)] * (1 + Math.log2(1 + churn) / 4)).toFixed(2)
 }

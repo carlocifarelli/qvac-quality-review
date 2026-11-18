@@ -1,0 +1,37 @@
+{
+  "name": "qvac-quality-review",
+  "version": "0.1.0",
+  "description": "Starter for a code-quality assessment CLI: deterministic collectors + scoring + LLM reviewer + report",
+  "type": "module",
+  "bin": {
+    "qc": "./dist/cli.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "tsx src/cli.ts",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "format": "prettier --write .",
+    "lint": "prettier --check ."
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "@types/picomatch": "^4.0.3",
+    "commander": "^15.1.0",
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0",
+    "picomatch": "^4.0.7",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.73.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "vitest": "^5.1.0"
+  }
+}

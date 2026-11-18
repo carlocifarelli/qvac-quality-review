@@ -1,0 +1,15 @@
+{
+  "include": [
+    "packages/*/src/**/*.{ts,tsx,js,mjs,cjs}",
+    "packages/registry-server/{lib,utils,shared,client/lib,client/bin}/**/*.js",
+    "packages/registry-server/index.js"
+  ],
+  "churnSince": "6 months ago",
+  "reviewTop": 25,
+  "minLoc": 40,
+  "concurrency": 5,
+  "reviewModel": "claude-opus-5-5",
+  "verifyModel": "claude-opus-5-5",
+  "upstreamRepo": "tetherto/qvac",
+  "findingsRepo": "carlocifarelli/qvac-quality-review"
+}

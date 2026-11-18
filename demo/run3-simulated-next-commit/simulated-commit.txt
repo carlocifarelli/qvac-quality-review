@@ -1,0 +1,19 @@
+371487381e7dbb6c523e08fda02f4151bdf010a2 SIMULATED: fix signal exit code in run-consumer-external (local only, never pushed)
+
+ packages/test-suite/src/cli/commands/run-consumer-external.ts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+diff --git a/packages/test-suite/src/cli/commands/run-consumer-external.ts b/packages/test-suite/src/cli/commands/run-consumer-external.ts
+index b124954a..9bd71f67 100644
+--- a/packages/test-suite/src/cli/commands/run-consumer-external.ts
++++ b/packages/test-suite/src/cli/commands/run-consumer-external.ts
+@@ -43,8 +43,8 @@ export async function runConsumerExternal(options: ExternalConsumerOptions) {
+     process.on('SIGINT', () => child.kill('SIGINT' as never))
+     process.on('SIGTERM', () => child.kill('SIGTERM' as never))
+ 
+-    child.on('exit', (code) => {
+-      process.exit(code || 0)
++    child.on('exit', (code, signal) => {
++      process.exit(code ?? (signal ? 1 : 0))
+     })
+   } catch (error: unknown) {
+     const errorMessage = error instanceof Error ? error.message : String(error)

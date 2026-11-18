@@ -2,7 +2,7 @@
 
 **Target:** `tetherto/qvac@0c8a1510ab4f` · **Scope:** JS/TS sources of all packages + registry server (1,013 files, top 40 by risk reviewed) · **Date:** 2026-11-18
 
-This is the human-written summary. The generated report is [`results/FINDINGS.md`](results/FINDINGS.md). Every one of the 47 candidates the pipeline produced has a human decision: **31 confirmed** (each tracked as an issue in this repository, #1 to #31) and **16 rejected** (listed below with reasons). Each issue carries the full evidence, the verifier's reasoning, my verification note and the duplicate searches.
+This is the human-written summary. The generated report is [`results/FINDINGS.md`](results/FINDINGS.md). Every one of the 47 candidates the pipeline produced has a human decision: **31 confirmed** (each tracked as an issue in this repository, #1 to #31) and **16 rejected** (listed below with reasons). One more finding, **#32**, was found afterwards by the deterministic `qvac-quality` rules written from these findings (see the README, "Deterministic rules"); all 22 rule hits are triaged in `state/rules-baseline.json`. Each issue carries the full evidence, the verifier's reasoning, my verification note and the duplicate searches.
 
 **Evidence levels:** **R** = reproduced by an executed script in [`verification/`](verification/) (outputs in [`verification/outputs.md`](verification/outputs.md)) · **C** = verified by reading the cited code paths and callers, not executed.
 
@@ -63,6 +63,7 @@ Each row gives the impact and the next action in one line; the issue has the evi
 | 29 | Metrics server's only `error` listener is a settled promise's `reject` | `registry-server/lib/metrics-server.js:50` | C | Runtime server errors vanish → swap in a logging listener after listen | [#29](https://github.com/carlocifarelli/qvac-quality-review/issues/29) |
 | 30 | Stale `.pid` files are never removed; a rerun signals reused PIDs | `test-suite/src/cli/utils/process-manager.ts:106` | C | Can SIGTERM unrelated processes → delete on child exit | [#30](https://github.com/carlocifarelli/qvac-quality-review/issues/30) |
 | 31 | `spawnTracked` has no `error` listener; a missing binary crashes the CLI | `test-suite/src/cli/utils/process-manager.ts:67` | R | Cleanup skipped, pid file says "undefined" → add an `error` listener that rejects | [#31](https://github.com/carlocifarelli/qvac-quality-review/issues/31) |
+| 32 | Fit-stub fetch ignores a signal that is already aborted (found by rule `abort-signal-race`) | `inference/src/model-fit/description/fetch.ts:181` | C | A cancelled load waits up to 40 s → `if (options.signal?.aborted) onAbort()` after adding the listener | [#32](https://github.com/carlocifarelli/qvac-quality-review/issues/32) |
 
 ## Investigated and rejected
 
@@ -84,7 +85,7 @@ Each row gives the impact and the next action in one line; the issue has the evi
 
 ## Duplicate searches (2026-11-18)
 
-326 GitHub searches over `tetherto/qvac` issues and pull requests, open and closed (`is:issue` and `is:pull-request` per phrase), using the verifier's suggested phrases plus the file name. Every query, its timestamp, hit count and top results are stored per finding in `state/findings.json` and printed in each issue. I read the hits that looked related:
+334 GitHub searches over `tetherto/qvac` issues and pull requests, open and closed (`is:issue` and `is:pull-request` per phrase), using the verifier's suggested phrases plus the file name. Every query, its timestamp, hit count and top results are stored per finding in `state/findings.json` (for #32, which did not come from the agent, in the issue itself) and printed in each issue. I read the hits that looked related:
 
 - **PR #5689** (merged): download locking. Explains the rejected Hyperdrive item above; its tests cover `clearCache` for HTTP but not mid-transfer registry cancels (relevant to #4, not a duplicate).
 - **PR #4379** (merged): blob-core rotation. Explains the rejected blind-peering item above.

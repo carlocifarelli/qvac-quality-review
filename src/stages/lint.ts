@@ -1,5 +1,6 @@
 import { ESLint, type Linter } from 'eslint'
 import tseslint from 'typescript-eslint'
+import { RULES as QVAC_RULES, plugin as qvacQuality } from '../rules/index.js'
 
 /**
  * Correctness-only ESLint pass. Style is out of scope (QVAC lints with lunte
@@ -41,7 +42,8 @@ export async function runLint(root: string, files: string[], typed: boolean): Pr
     errorOnUnmatchedPattern: false,
     overrideConfig: [
       { linterOptions: { reportUnusedDisableDirectives: 'off', noInlineConfig: true } },
-      { files: ['**/*.{js,mjs,cjs,ts,tsx}'], languageOptions: { ecmaVersion: 'latest', sourceType: 'module' }, rules: CORE_RULES },
+      // The qvac-quality rules also feed the risk signals, so files with known bug patterns are reviewed first.
+      { files: ['**/*.{js,mjs,cjs,ts,tsx}'], languageOptions: { ecmaVersion: 'latest', sourceType: 'module' }, plugins: { 'qvac-quality': qvacQuality }, rules: { ...CORE_RULES, ...QVAC_RULES } },
       {
         files: ['**/*.{ts,tsx}'],
         languageOptions: {

@@ -15,11 +15,16 @@ export interface Selection {
 }
 
 /** Deterministic stage: scope -> per-file signals -> ranked review units. No network, no LLM. */
-export async function select(root: string, cfg: Config, opts: { typedLint: boolean }): Promise<Selection> {
-  const commit = (await git(root, ['rev-parse', 'HEAD'])).trim()
+/** Tracked files matching include and not exclude. */
+export async function scopeFiles(root: string, cfg: Config): Promise<string[]> {
   const isIn = picomatch(cfg.include, { dot: false })
   const isOut = picomatch(cfg.exclude, { dot: true })
-  const files = (await git(root, ['ls-files'])).split('\n').filter((f) => f && isIn(f) && !isOut(f))
+  return (await git(root, ['ls-files'])).split('\n').filter((f) => f && isIn(f) && !isOut(f))
+}
+
+export async function select(root: string, cfg: Config, opts: { typedLint: boolean }): Promise<Selection> {
+  const commit = (await git(root, ['rev-parse', 'HEAD'])).trim()
+  const files = await scopeFiles(root, cfg)
 
   const churn = new Map<string, number>()
   const log = await git(root, ['log', `--since=${cfg.churnSince}`, '--name-only', '--pretty=format:'])

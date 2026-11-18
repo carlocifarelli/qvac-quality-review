@@ -16,6 +16,8 @@ npx tsx src/cli.ts run /path/to/qvac --select-only   # deterministic stage only,
 npx tsx src/cli.ts dedupe --human-confirmed     # search upstream issues + PRs (open/closed), log queries with dates
 npx tsx src/cli.ts publish --dry-run             # then without --dry-run: file human-confirmed findings here (idempotent)
 npx tsx src/cli.ts report /path/to/qvac         # re-render after editing state/overrides.json
+npx tsx src/cli.ts rules /path/to/qvac          # deterministic qvac-quality rules, ~9 s, $0; exit 1 on untriaged hits (CI gate)
+npx tsx src/cli.ts rules /path/to/qvac --changed origin/main   # same, only files changed in a PR
 npm test
 ```
 
@@ -32,6 +34,7 @@ The design follows from that:
 1. **Spend deterministic effort on *where* to look, and model effort on *what is wrong*.**
 2. **Never trust a single model pass.** Every candidate gets an adversarial second pass, and the top findings get a human-run reproduction.
 3. **State, not reports.** Findings have stable identities, so a re-run tells you what is new, what persists and what was fixed, and never re-pays for unchanged code.
+4. **The agent discovers, deterministic rules prevent.** Running a model on every commit is too expensive to be the long-term answer. Each confirmed defect class that has a syntactic shape becomes an ESLint rule; the rules run on every file in seconds for free and gate PRs, and the agent's budget goes to finding the next class.
 
 ## Pipeline
 
@@ -95,6 +98,40 @@ Both runs below are recorded in `demo/` (state and reports), so they can be insp
 
 Run 3 also exposed a defect in my own design, which I fixed and kept here as evidence: the re-review of the changed file found the *other* known finding in that file again, and classified it `correctness` instead of `concurrency`. Category was part of the v1 fingerprint, so it became a duplicate. The fix (v2): the fingerprint is `file + anchor` only, and the reviewer prompt now lists the findings already recorded for that file so it does not re-report them. `scripts/migrate-fingerprints-v2.ts` migrated the state and the human overrides.
 
+## Deterministic rules: the agent discovers, the rules prevent (demonstrated)
+
+After every candidate had a human decision, I looked for confirmed findings whose defect has a *shape* a parser can see, and wrote a local ESLint plugin, `qvac-quality` ([`src/rules/`](src/rules/)), with one rule per class. Each rule's header names the findings it generalises; [`test/rules.test.ts`](test/rules.test.ts) runs ESLint's `RuleTester` on reduced copies of those findings (invalid cases) and on the correct patterns QVAC already uses elsewhere (valid cases).
+
+| Rule | Generalises | What it flags |
+|---|---|---|
+| `abort-signal-race` | #11, #16 | an `'abort'` listener added after an await without re-checking `signal.aborted`; a signal handed to a same-file function that never checks it, when the caller checked only before an await |
+| `close-on-error` | #22 | a Corestore/Hyperdrive/Hyperswarm/… created locally, then an await that can throw before the resource is handed off or closed in catch/finally |
+| `exit-code-ignores-signal` | #8 | `process.exit(code \|\| 0)` in a child's `exit`/`close` handler that ignores `signal` |
+| `spawn-without-error-listener` | #31 | `spawn`/`fork` whose child gets no `'error'` listener (nor is returned or handed off) |
+| `stale-error-reject` | #29 | `server.on('error', reject)` in a listen/connect promise, never removed |
+| `throw-in-promise-listener` | #6 | `*Sync` calls, `JSON.parse` or `throw` inside an event listener registered in a `new Promise` executor, outside a try |
+
+**Result on the analysed commit** ([`results/RULES.md`](results/RULES.md), triage in [`state/rules-baseline.json`](state/rules-baseline.json)): 1,013 files in about 9 s, no model calls, 22 hits.
+
+- **Recall on the source findings:** all 9 code locations of the 7 findings above are flagged.
+- **13 hits beyond those 9**, each triaged by me:
+  - 1 **new finding** the agent had not reported: [#32](https://github.com/carlocifarelli/qvac-quality-review/issues/32). The fit-stub fetch ignores a signal that is already aborted, so a cancelled load waits up to 40 s.
+  - 2 are the caller side of #11 and #16.
+  - 8 have the pattern but are not worth fixing, each with its reason (bounded at 250 ms, guarded by a `which`, diagnostic CLI, test-only broker).
+  - 2 are false positives. Both involve a check that lives in a caller the rule does not follow.
+- **Precision:** 20 of 22 hits are true instances of the pattern (91%). 13 of 22 are bugs tracked as issues.
+
+**Gate.** `qr rules` exits 1 when a hit is not in `state/rules-baseline.json`. Each baseline entry records status (`finding`, `accepted`, `false-positive`), reason and date, keyed by rule + file + message + normalised line text, so it survives line shifts. Two runs are recorded in [`demo/rules/`](demo/rules/):
+
+| Run | Target | Result |
+|---|---|---|
+| fixed | the simulated next commit that fixes #8 in one file | 21 hits, 0 untriaged, exit 0: the fixed instance simply disappears |
+| regression | a local commit adding a helper that repeats the #31 pattern, `--changed HEAD~1` | 1 file, 95 ms, 1 untriaged hit, exit 1, pointing at the new line |
+
+The rules also feed the selection stage: their hits count as lint signals, so files with known bug shapes are reviewed first.
+
+**What rules cannot replace.** 7 of the 32 findings became rules. The rest are semantic: a schema missing keys that another table defines (#1), docs contradicting code (#7), a lost update across an RPC (#3), a wrong field in a message (#19). These are exactly what the agent pass is for. The intended loop is: the agent finds a new class, a human confirms it, and if it has a shape it becomes a rule with the finding as its test case.
+
 ## Scope and verification for this submission
 
 - **Repository:** `tetherto/qvac` at the commit above, cloned fresh; `pnpm install --ignore-scripts` (no native builds needed for anything below).
@@ -136,7 +173,7 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 - Sensitive findings: `publish` files into a private repo only; nothing is sent upstream.
 
 ### Maintainability
-~900 lines of TypeScript, strict mode, zod at every boundary, unit tests for fingerprinting, presence tracking, ranking and signals (`npm test`). Prompts are versioned (`PROMPT_VERSION`) and part of the cache key. State format changes ship with a migration script (`scripts/migrate-fingerprints-v2.ts`). Each stage is one file with one exported function, so a stage can be replaced (e.g. another backend in `src/backends/`) without touching the others.
+~1,500 lines of TypeScript (about 500 of them the rules), strict mode, zod at every boundary, unit tests for fingerprinting, presence tracking, ranking and signals, and RuleTester cases for every rule (`npm test`, 54 tests). Prompts are versioned (`PROMPT_VERSION`) and part of the cache key. State format changes ship with a migration script (`scripts/migrate-fingerprints-v2.ts`). Each stage is one file with one exported function, so a stage can be replaced (e.g. another backend in `src/backends/`) without touching the others.
 
 ## Limitations (honest)
 
@@ -147,6 +184,7 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 - **Non-determinism.** Two reviews of the same file can word or classify a finding differently; fingerprints are anchored to code to absorb this, and the cache makes a given commit reproducible, but a cache-cold re-run can surface a slightly different set.
 - **Runtime-only findings** (lost updates in the registry, hyperdrive store collisions) were verified by reading, not executed; they need a HyperDB/Hyperdrive fixture.
 - **Prompt injection** from repository content is mitigated (read-only tools, schema, anchors, second pass, human gate), not eliminated.
+- **Rules are intra-file.** `abort-signal-race` follows checks into same-file callees only; both false positives are checks that live in a caller. `close-on-error` knows a fixed list of resource classes (configurable). The rules were written after seeing these findings, so their recall on *unseen* bugs is unmeasured: the 1 new finding and 8 same-shape instances are the only evidence so far.
 - **Dedupe is keyword search.** It cannot prove absence; it records what was searched so a reader can judge.
 
 ## Next priorities (proposed, not built)
@@ -157,11 +195,12 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 4. **Reproduction scaffolding:** let the agent draft the repro test in the package's own runner (brittle/Bare), with a human reviewing and running it.
 5. **Local model backend** (e.g. through QVAC itself) for code that must not leave the machine.
 6. **Feed QVAC's own `quality:audit` hotspots** into selection instead of my churn heuristic.
+7. **Upstream the rules:** propose the six rules to QVAC as a lint preset next to `lunte` (after the maintainers agree the classes are worth enforcing), and add a rule whenever a newly confirmed finding has a syntactic shape. Candidates already visible: `.part`-file cleanup keyed on `instanceof` instead of `signal.aborted` (#4), pid-file ownership (#10, #30).
 
 ## Demonstrated vs proposed
 
-- **Demonstrated** (ran, outputs committed): selection, review, verify, report, presence tracking across commits, cache reuse, dedupe with logged searches, idempotent publish to this repo's issues, the fingerprint migration, all reproductions in `verification/`.
-- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), a PR-scoped mode, any CI integration, a non-Claude backend. Everything under "Next priorities" is proposed only.
+- **Demonstrated** (ran, outputs committed): selection, review, verify, report, presence tracking across commits, cache reuse, dedupe with logged searches, idempotent publish to this repo's issues, the fingerprint migration, all reproductions in `verification/`, the `qvac-quality` rules with their baseline gate on a fix and on a regression, including the PR-scoped `--changed` mode for the rules.
+- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), a PR-scoped mode for the agent stages, a CI workflow file (the gate is a command that exits non-zero, not yet wired into GitHub Actions), a non-Claude backend. Everything under "Next priorities" is proposed only.
 
 ## AI use
 
@@ -172,3 +211,4 @@ See [AI_USAGE.md](AI_USAGE.md).
 Assessment received 09:07 CET on 2026-11-18; first complete version pushed at about 09:45 CET. Timestamps in `state/findings.json` (`runs`), `results/run-log.json` and the duplicate-search log are in UTC and back this up. The agent stages ran in parallel (49 minutes of agent time in about 10 minutes of wall-clock time), which is why the elapsed time is short. Further work, if any, is logged below.
 
 - **Assessment completed (same day):** human decision on all remaining 24 agent leads (18 confirmed, 6 rejected; one of the rejections came from the duplicate search, because PR #4379 documents the behaviour), 2 new executed reproductions, 188 more duplicate searches, 18 more issues filed (#14-#31).
+- **Deterministic rules (same day):** the `qvac-quality` ESLint plugin (6 rules, 42 RuleTester cases), the `qr rules` command with its triaged baseline and gate, a run over all 1,013 files with every hit triaged, one new finding filed (#32), and the fix and regression demos.

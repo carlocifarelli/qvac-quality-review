@@ -1,0 +1,2 @@
+packages/test-suite/src/cli/utils/process-manager.ts:265  qvac-quality/spawn-without-error-listener  qq:6b54e602f4e39e5e
+    The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.

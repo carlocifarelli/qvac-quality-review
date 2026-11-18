@@ -1,3 +1,4 @@
+import type { Baseline, RuleHit } from './stages/rules.js'
 import { effectiveStatus, type State } from './state.js'
 import { severityOf, type Finding } from './types.js'
 
@@ -80,4 +81,29 @@ export function toMarkdown(state: State, repo: string, commit: string): string {
       ...[...confirmed, ...agentOnly, ...uncertain].flatMap((f) => ['', `### ${f.title}`, '', issueBody(f)]),
     ].join('\n') + '\n'
   )
+}
+
+/** Report for the deterministic rules stage: new hits first, then the accepted baseline with its reasons. */
+export function rulesMarkdown(hits: RuleHit[], baseline: Baseline, commit: string, upstream: string, files: number): string {
+  const link = (h: RuleHit) => `[${h.file}:${h.line}](https://github.com/${upstream}/blob/${commit}/${h.file}#L${h.line})`
+  const fresh = hits.filter((h) => !baseline.accepted[h.id])
+  const known = hits.filter((h) => baseline.accepted[h.id])
+  const cell = (s: string) => s.replace(/\|/g, '\\|').replace(/`/g, "'")
+  const out = [
+    `# qvac-quality rules on ${upstream}@${commit.slice(0, 12)}`,
+    '',
+    `${files} files, ${hits.length} hits: ${fresh.length} new, ${known.length} in the accepted baseline.`,
+    '',
+    '## New (not in the baseline)',
+    '| Rule | Location | Code | Id |',
+    '|---|---|---|---|',
+    ...fresh.map((h) => `| ${h.rule.replace('qvac-quality/', '')} | ${link(h)} | \`${cell(h.code).slice(0, 100)}\` | ${h.id} |`),
+    '',
+    '## Triaged baseline',
+    '| Rule | Location | Status | Reason | Id |',
+    '|---|---|---|---|---|',
+    ...known.map((h) => `| ${h.rule.replace('qvac-quality/', '')} | ${link(h)} | ${baseline.accepted[h.id]!.status} | ${cell(baseline.accepted[h.id]!.reason)} | ${h.id} |`),
+    '',
+  ]
+  return out.join('\n')
 }

@@ -1,0 +1,39 @@
+{
+  "commit": "7fca50446e1c930a8bb4d5c155436ca3983b07a1",
+  "files": 1,
+  "ms": 94,
+  "hits": [
+    {
+      "id": "qq:29c82f8d771a1996",
+      "rule": "qvac-quality/spawn-without-error-listener",
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 61,
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
+      "code": "const child = spawn(command, args, {"
+    },
+    {
+      "id": "qq:2b205c9c05640d58",
+      "rule": "qvac-quality/spawn-without-error-listener",
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 219,
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
+      "code": "const child = spawn('idevicesyslog', ['-u', opts.udid, '--no-colors'], {"
+    },
+    {
+      "id": "qq:b6feec0f56eeb04f",
+      "rule": "qvac-quality/spawn-without-error-listener",
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 237,
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
+      "code": "const child = spawn('adb', args, {"
+    },
+    {
+      "id": "qq:6b54e602f4e39e5e",
+      "rule": "qvac-quality/spawn-without-error-listener",
+      "file": "packages/test-suite/src/cli/utils/process-manager.ts",
+      "line": 265,
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
+      "code": "const child = spawn(command, args, { stdio: 'ignore' })"
+    }
+  ]
+}

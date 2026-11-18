@@ -3,7 +3,9 @@ import { writeFile, mkdir } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { Command } from 'commander'
 import { loadConfig } from './config.js'
-import { select } from './stages/select.js'
+import { scopeFiles, select } from './stages/select.js'
+import { baselinePath, loadBaseline, runRules } from './stages/rules.js'
+import { rulesMarkdown } from './report.js'
 import { review, verify } from './stages/review.js'
 import { dedupe } from './stages/dedupe.js'
 import { publish } from './stages/publish.js'
@@ -80,6 +82,35 @@ program
     console.error(
       `usage: ${usage.calls} agent calls (${usage.cached} cached), $${usage.costUsd.toFixed(2)}, ${Math.round(usage.seconds)}s agent time`,
     )
+  })
+
+program
+  .command('rules')
+  .description('deterministic qvac-quality rules over the whole scope; exits 1 on hits not in the baseline (CI gate)')
+  .argument('<repo>', 'path to a git checkout of the target')
+  .option('-c, --config <file>', 'config file', 'qr.config.json')
+  .option('-s, --state <dir>', 'state directory (holds rules-baseline.json)', 'state')
+  .option('-o, --out <dir>', 'report directory', 'results')
+  .option('--changed <ref>', 'only files changed since this git ref (PR mode)')
+  .action(async (repo: string, o) => {
+    const root = resolve(repo)
+    const cfg = await loadConfig(o.config)
+    let files = await scopeFiles(root, cfg)
+    if (o.changed) {
+      const changed = new Set((await git(root, ['diff', '--name-only', `${o.changed}...HEAD`])).split('\n'))
+      files = files.filter((f) => changed.has(f))
+    }
+    const started = Date.now()
+    const hits = await runRules(root, files)
+    const baseline = await loadBaseline(baselinePath(o.state))
+    const fresh = hits.filter((h) => !baseline.accepted[h.id])
+    const commit = (await git(root, ['rev-parse', 'HEAD'])).trim()
+    await mkdir(o.out, { recursive: true })
+    await writeJson(join(o.out, 'rules.json'), { commit, files: files.length, ms: Date.now() - started, hits })
+    await writeFile(join(o.out, 'RULES.md'), rulesMarkdown(hits, baseline, commit, cfg.upstreamRepo, files.length))
+    console.error(`rules: ${files.length} files in ${Date.now() - started} ms, ${hits.length} hits, ${fresh.length} not in baseline`)
+    for (const h of fresh) console.log(`${h.file}:${h.line}  ${h.rule}  ${h.id}\n    ${h.message}`)
+    process.exitCode = fresh.length ? 1 : 0
   })
 
 program

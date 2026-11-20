@@ -1,0 +1,17 @@
+# Example: run qc on every pull request and fail the check below the threshold.
+name: code-quality
+on: pull_request
+jobs:
+  qc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: npx tsx src/cli.ts analyze . --out qc-report.md
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - if: always()
+        run: cat qc-report.md >> "$GITHUB_STEP_SUMMARY"

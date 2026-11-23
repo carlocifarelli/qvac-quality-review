@@ -1,7 +1,7 @@
 {
-  "commit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-  "files": 1013,
-  "ms": 9315,
+  "commit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
+  "files": 1036,
+  "ms": 15458,
   "hits": [
     {
       "id": "qq:6c7f57b3d86f247d",
@@ -178,6 +178,14 @@
       "line": 131,
       "message": "'abort' listener on `signal` with no `signal.aborted` check: a signal that is already aborted never fires it.",
       "code": "signal.addEventListener(\"abort\", onAbort, { once: true });"
+    },
+    {
+      "id": "qq:099df2e2ac576d9d",
+      "rule": "qvac-quality/abort-signal-race",
+      "file": "packages/turbovec-ggml/src/index.ts",
+      "line": 293,
+      "message": "'abort' listener on `signal` with no `signal.aborted` check: a signal that is already aborted never fires it.",
+      "code": "signal.addEventListener('abort', onAbort, { once: true })"
     }
   ]
 }

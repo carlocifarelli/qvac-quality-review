@@ -16,7 +16,7 @@
       "fingerprint": "qr2:7b2dd5c11dbc78ec",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -47,7 +47,7 @@
       "fingerprint": "qr2:500f49063c45e269",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -83,7 +83,7 @@
       "fingerprint": "qr2:e8ac00cc3dc7ad4d",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -109,7 +109,7 @@
       "category": "correctness",
       "severity": "medium",
       "confidence": "high",
-      "line": 54,
+      "line": 55,
       "anchor": "export const deviceConfigDefaultsSchema = z",
       "evidence": "deviceConfigDefaultsSchema (config.ts:54-81) is a plain z.object, so Zod strips unknown keys. It lists canonical keys for only 13 of the 17 ModelType values and only 9 aliases. ModelType (model-types.ts:10-42) also defines 'onnx-tts', 'bci-whispercpp-transcription', 'audiogen-ggml' and 'ggml-classification', plus the aliases 'bci', 'audiogen' and 'classification'. CANONICAL_TO_ALIAS (runtime/model-config-utils.ts:25-43) and MODEL_CONFIG_SCHEMAS (lines 45-60) resolve defaults for these types: audioGenConfigSchema has `device`/`backend` and bciConfigSchema has `gpu_device`/`backendsDir`. But both config loaders (inference/src/config/config-utils.ts:8 and sdk/src/client/config-loader/config-utils.ts:8) run qvacConfigSchema.safeParse, which removes these keys before they reach configRegistry.deviceDefaults (state.ts:145). getDefaultsFromPattern (model-config-utils.ts:120-135) then finds nothing for them.",
       "impact": "A user who writes `\"defaults\": { \"audiogen\": { \"device\": \"cpu\" } }` (or \"classification\", \"bci\", \"audiogen-ggml\", \"ggml-classification\", \"bci-whispercpp-transcription\") gets no error and no warning. The pattern is never applied, so on the target device the model loads with its normal backend/device, which is the problem the override was written to avoid (e.g. GPU crashes on specific Android devices).",
@@ -119,8 +119,8 @@
       "fingerprint": "qr2:bfcce14348173adb",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "presence": "present",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
+      "presence": "moved",
       "score": 5.93,
       "verdict": {
         "verdict": "confirmed",
@@ -272,7 +272,7 @@
       "category": "api-contract",
       "severity": "medium",
       "confidence": "high",
-      "line": 226,
+      "line": 228,
       "anchor": "* First matching pattern wins.",
       "evidence": "The deviceDefaults JSDoc (config.ts:222-227) says user patterns are checked before built-in ones and the first matching pattern wins. resolveModelConfigWithContext (model-config-utils.ts:151-174) does something else. It collects ALL matching built-in patterns, then ALL matching user patterns, and spreads each into mergedDefaults in array order (`mergedDefaults = { ...mergedDefaults, ...defaults }`). So the LAST matching user pattern overrides earlier ones for every shared key. The comment at model-config-utils.ts:62 also says 'later patterns override earlier'.",
       "impact": "A user following the documented rule puts the specific pattern first and the general fallback after it, e.g. [{ match: {platform:'android', deviceBrand:'samsung'}, defaults:{llm:{device:'gpu'}} }, { match:{platform:'android'}, defaults:{llm:{device:'cpu'}} }]. On a Samsung device both patterns match, and the general one, listed last, overrides the specific one, so the Samsung override never takes effect.",
@@ -282,8 +282,8 @@
       "fingerprint": "qr2:ccf5e961f2ad013e",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "presence": "present",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
+      "presence": "moved",
       "score": 1.98,
       "verdict": {
         "verdict": "confirmed",
@@ -437,7 +437,7 @@
       "fingerprint": "qr2:1c42408a93e14662",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -468,7 +468,7 @@
       "fingerprint": "qr2:a60fa6edffc5508f",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -504,7 +504,7 @@
       "fingerprint": "qr2:ee5e04c40d926e1b",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.25,
       "verdict": {
@@ -641,7 +641,7 @@
       "fingerprint": "qr2:24eae57b164cac27",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.31,
       "verdict": {
@@ -865,7 +865,7 @@
       "fingerprint": "qr2:7733cb156d083b6d",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 3.15,
       "verdict": {
@@ -1027,7 +1027,7 @@
       "fingerprint": "qr2:02c1335335f99ad5",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 3.15,
       "verdict": {
@@ -1169,7 +1169,7 @@
       "fingerprint": "qr2:0d264caeed8ed992",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0.88,
       "verdict": {
@@ -1326,7 +1326,7 @@
       "fingerprint": "qr2:621f2d08e39c5ab8",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0.88,
       "verdict": {
@@ -1467,7 +1467,7 @@
       "fingerprint": "qr2:cfb072e2fcad7932",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -1503,7 +1503,7 @@
       "fingerprint": "qr2:41967939200c2fff",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -1534,7 +1534,7 @@
       "fingerprint": "qr2:d856f8e3fc6586be",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 3.46,
       "verdict": {
@@ -1707,7 +1707,7 @@
       "fingerprint": "qr2:781492aeff65c792",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -1879,7 +1879,7 @@
       "fingerprint": "qr2:4facb8033b0fee0e",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 3.46,
       "verdict": {
@@ -2042,7 +2042,7 @@
       "fingerprint": "qr2:aace28e701173f4a",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.15,
       "verdict": {
@@ -2210,7 +2210,7 @@
       "fingerprint": "qr2:5b003a69f0a7be69",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -2245,7 +2245,7 @@
       "fingerprint": "qr2:d190bf684e64c7ff",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0.98,
       "verdict": {
@@ -2397,7 +2397,7 @@
       "fingerprint": "qr2:80af97bd280b2fb2",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 5.49,
       "verdict": {
@@ -2548,7 +2548,7 @@
       "fingerprint": "qr2:fee72a8bed423445",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 5.49,
       "verdict": {
@@ -2699,7 +2699,7 @@
       "fingerprint": "qr2:dbcbe70076319611",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -2873,7 +2873,7 @@
       "fingerprint": "qr2:85ed260bc5ebad8d",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.28,
       "verdict": {
@@ -3024,7 +3024,7 @@
       "fingerprint": "qr2:6b77a3edfe85576e",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.4,
       "verdict": {
@@ -3197,7 +3197,7 @@
       "fingerprint": "qr2:59e0a7ed358e79c6",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0.98,
       "verdict": {
@@ -3344,7 +3344,7 @@
       "fingerprint": "qr2:536196803de7c5f2",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.15,
       "verdict": {
@@ -3497,7 +3497,7 @@
       "fingerprint": "qr2:94de8f3872ba4b36",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.15,
       "verdict": {
@@ -3612,7 +3612,7 @@
       "category": "api-contract",
       "severity": "low",
       "confidence": "high",
-      "line": 41,
+      "line": 42,
       "anchor": "`${name}\" not found in catalog. Use model names from the catalog (e.g., \"WHISPER_TINY\", \"EMBEDDINGGEMMA_300M_Q4_0\")`",
       "evidence": "get-model-info.ts:40-42 builds the message from the template `${name}\" not found in catalog...`. It has a closing `\"` after the interpolated name but no opening one, unlike the quoted examples in the same string.",
       "impact": "Anyone calling getModelInfo with an unknown name gets a malformed error such as `FOO\" not found in catalog. ...`. Tests or callers that match on the message text see the wrong string.",
@@ -3622,8 +3622,8 @@
       "fingerprint": "qr2:378ffe3bc0f6b548",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "presence": "present",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
+      "presence": "moved",
       "score": 0,
       "verdict": {
         "verdict": "rejected",
@@ -3658,7 +3658,7 @@
       "fingerprint": "qr2:0c0f18400b05cf7d",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.15,
       "verdict": {
@@ -3809,7 +3809,7 @@
       "fingerprint": "qr2:9140daff910b4809",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -3840,7 +3840,7 @@
       "fingerprint": "qr2:5aacd12f083712b5",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.15,
       "verdict": {
@@ -3991,7 +3991,7 @@
       "fingerprint": "qr2:7ddcab2e4784b597",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.15,
       "verdict": {
@@ -4149,7 +4149,7 @@
       "fingerprint": "qr2:d391add6a74bbaec",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.65,
       "verdict": {
@@ -4306,7 +4306,7 @@
       "fingerprint": "qr2:fbef8f97b8d025af",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.4,
       "verdict": {
@@ -4431,7 +4431,7 @@
       "fingerprint": "qr2:d48fcd8ca331abcd",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0.98,
       "verdict": {
@@ -4543,7 +4543,7 @@
       "fingerprint": "qr2:45c70474ce0b15ed",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -4578,7 +4578,7 @@
       "fingerprint": "qr2:dcefbe60f4f31d7e",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -4614,7 +4614,7 @@
       "fingerprint": "qr2:39ee0d0f8ba18c3b",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.25,
       "verdict": {
@@ -4813,7 +4813,7 @@
       "category": "error-handling",
       "severity": "medium",
       "confidence": "high",
-      "line": 567,
+      "line": 387,
       "anchor": "if (error instanceof DownloadCancelledError && ctx.shouldClearCache()) {",
       "evidence": "The cleanup at registry.ts:567 (single file: unlink partialDownloadPath(modelPath)) and registry.ts:396 (sharded: rm getShardedModelCacheDir(cacheKey)) only runs when `error instanceof DownloadCancelledError`. When the abort fires during the transfer, the error comes from `lease.client.downloadBlob`/`downloadModel` (registry-download-utils.ts:139/142), and the registry client rejects with a plain `new Error('Download cancelled')` (packages/registry-server/client/lib/client.js:256, 277, 301, 757, 765). Nothing in registry-download-utils.ts or runtime/registry-client.ts maps that error to DownloadCancelledError; the lease wrapper only maps cancels that happen while waiting for the lease (runtime/registry-client.ts:236-245). So for the usual case, a cancel mid-download, the instanceof check is false and the cleanup is skipped. The same file already guards against this at line 468 (`ctx.signal.aborted || error instanceof DownloadCancelledError`), which shows the client error is known not to be a DownloadCancelledError.",
       "impact": "`cancel({ requestId, clearCache: true })` sets transfer.clearCache (download-manager.ts:333-343), which the docs there say deletes the partial download. Here it leaves the `.partial` file (for a single file) or every downloaded shard (for a sharded model) on disk. The client still clears the hypercore blocks because of clearBlocksOnCancel, so the user gets neither a resumable download nor the freed disk space. Multi-GB partial files stay in the cache until the user deletes them by hand. The caller also gets a plain Error instead of a DownloadCancelledError when the subscriber is settled by the transfer rejection.",
@@ -4823,8 +4823,8 @@
       "fingerprint": "qr2:6211347ee9db2601",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "presence": "present",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
+      "presence": "moved",
       "score": 5.25,
       "verdict": {
         "verdict": "confirmed",
@@ -5017,7 +5017,7 @@
       "fingerprint": "qr2:b9cb8c16bc51e7cb",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.75,
       "verdict": {
@@ -5142,7 +5142,7 @@
       "fingerprint": "qr2:3fb004f1ff02a6bb",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.5,
       "verdict": {
@@ -5304,7 +5304,7 @@
       "fingerprint": "qr2:6abb1d19cc841f3a",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.4,
       "verdict": {
@@ -5441,7 +5441,7 @@
       "fingerprint": "qr2:d82789a0a393efdf",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -5472,7 +5472,7 @@
       "fingerprint": "qr2:dd02c9b9fb9c5dd7",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 0,
       "verdict": {
@@ -5508,7 +5508,7 @@
       "fingerprint": "qr2:98c9a5b42189703d",
       "status": "candidate",
       "firstSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
-      "lastSeenCommit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
+      "lastSeenCommit": "e3f9ad8da6788e84e3a73befd64a1ceb5813e47c",
       "presence": "present",
       "score": 1.4,
       "verdict": {

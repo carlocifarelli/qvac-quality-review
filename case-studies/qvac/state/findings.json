@@ -265,7 +265,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/1"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/1"
     },
     "qr2:ccf5e961f2ad013e": {
       "title": "Documented 'first matching pattern wins' contradicts the implementation, where every match is merged and the last one wins",
@@ -420,7 +420,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/7"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/7"
     },
     "qr2:1c42408a93e14662": {
       "title": "Blob-core swarm topics are joined on every download and retry but never left, so DHT discovery sessions pile up",
@@ -624,7 +624,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/10"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/10"
     },
     "qr2:24eae57b164cac27": {
       "title": "A mismatch in the inner addon is blamed on the platform package, which leads to a wrong message and a pin that cannot fix it",
@@ -848,7 +848,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/19"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/19"
     },
     "qr2:7733cb156d083b6d": {
       "title": "Shards inside a top-level folder are extracted but never found, so the load fails",
@@ -1010,7 +1010,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/5"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/5"
     },
     "qr2:02c1335335f99ad5": {
       "title": "Synchronous mkdirSync throw inside tar-stream 'entry' listener escapes the promise as an uncaught exception",
@@ -1152,7 +1152,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/6"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/6"
     },
     "qr2:0d264caeed8ed992": {
       "title": "Stale .pid files are never removed, so killTracked can SIGTERM unrelated processes that reused those PIDs",
@@ -1309,7 +1309,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/30"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/30"
     },
     "qr2:621f2d08e39c5ab8": {
       "title": "spawnTracked has no 'error' listener, so a failed spawn crashes the CLI and skips cleanup",
@@ -1450,7 +1450,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/31"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/31"
     },
     "qr2:cfb072e2fcad7932": {
       "title": "Shell command built by interpolating the device serial and package name into execSync",
@@ -1690,7 +1690,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/11"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/11"
     },
     "qr2:781492aeff65c792": {
       "title": "Corestore dir is keyed per drive but the lock is per file, so concurrent downloads from one drive collide and one deletes the other's store",
@@ -2025,7 +2025,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/14"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/14"
     },
     "qr2:aace28e701173f4a": {
       "title": "setupHyperdrive leaks an opened Corestore when Hyperdrive.ready() throws",
@@ -2193,7 +2193,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/22"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/22"
     },
     "qr2:5b003a69f0a7be69": {
       "title": "A consumer killed by a signal makes the CLI exit with code 0",
@@ -2380,7 +2380,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/27"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/27"
     },
     "qr2:80af97bd280b2fb2": {
       "title": "addModel can hang forever in reseedTracker.waitForComplete when two ingests overlap, or when the tracker is destroyed",
@@ -2531,7 +2531,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/2"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/2"
     },
     "qr2:fee72a8bed423445": {
       "title": "fillFitBlobs writes back a stale model snapshot, overwriting concurrent metadata updates and re-ingests",
@@ -2682,7 +2682,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/3"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/3"
     },
     "qr2:dbcbe70076319611": {
       "title": "Blind-peering setup and reseed mirror the legacy 'models' core instead of the active generation's core",
@@ -3007,7 +3007,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/20"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/20"
     },
     "qr2:6b77a3edfe85576e": {
       "title": "Runner killed by a signal (OOM, SIGKILL, crash) is reported as exit code 0",
@@ -3180,7 +3180,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/8"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/8"
     },
     "qr2:59e0a7ed358e79c6": {
       "title": "Ctrl+C sends SIGINT to the runner twice, and the second one kills it during graceful shutdown",
@@ -3327,7 +3327,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/28"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/28"
     },
     "qr2:536196803de7c5f2": {
       "title": "A cached Core ML set that is missing a bundle is reused forever, so bundles ingested later are never staged",
@@ -3480,7 +3480,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/23"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/23"
     },
     "qr2:94de8f3872ba4b36": {
       "title": "Deleting a model leaves its Core ML sidecar blobs in storage when any staged sidecar file is missing or partial",
@@ -3605,7 +3605,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/24"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/24"
     },
     "qr2:378ffe3bc0f6b548": {
       "title": "ModelNotFoundError message is missing its opening quote around the model name",
@@ -3792,7 +3792,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/13"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/13"
     },
     "qr2:9140daff910b4809": {
       "title": "stopServe returns early when the serve already exited, leaving the worker in its process group running",
@@ -3974,7 +3974,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/25"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/25"
     },
     "qr2:7ddcab2e4784b597": {
       "title": "A lock whose dead owner's pid gets reused is never stolen, so starts on that fleet key time out until that unrelated process exits",
@@ -4132,7 +4132,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/26"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/26"
     },
     "qr2:d391add6a74bbaec": {
       "title": "The closeOnParentExit interval is never cleared when startup fails and can later process.exit() the caller",
@@ -4289,7 +4289,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/15"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/15"
     },
     "qr2:fbef8f97b8d025af": {
       "title": "port 0 (ephemeral) is silently replaced by fixed port 9210",
@@ -4414,7 +4414,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/9"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/9"
     },
     "qr2:d48fcd8ca331abcd": {
       "title": "Server 'error' listener left as a stale promise reject, so runtime server errors are swallowed",
@@ -4526,7 +4526,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/29"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/29"
     },
     "qr2:45c70474ce0b15ed": {
       "title": "Electron consumer killed by a signal (crash/OOM/timeout kill) exits the runner with code 0",
@@ -4806,7 +4806,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/21"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/21"
     },
     "qr2:6211347ee9db2601": {
       "title": "Cancelling with clearCache during a registry transfer leaves the partial file or shard directory on disk",
@@ -5000,7 +5000,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/4"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/4"
     },
     "qr2:b9cb8c16bc51e7cb": {
       "title": "getModelByName returns Object.prototype members for names like \"constructor\", \"toString\" or \"__proto__\" instead of undefined",
@@ -5125,7 +5125,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/12"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/12"
     },
     "qr2:3fb004f1ff02a6bb": {
       "title": "An abort that fires during the state-dir await is lost: the fitter still starts and the caller waits up to 30 s instead of getting 'cancelled'",
@@ -5287,7 +5287,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/16"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/16"
     },
     "qr2:6abb1d19cc841f3a": {
       "title": "Throughput rates divide swarm-lifetime byte counters by download-only elapsed time, inflating rx/tx per second",
@@ -5424,7 +5424,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/17"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/17"
     },
     "qr2:d82789a0a393efdf": {
       "title": "Swarm, store and temp dir leak if setup fails before the try/finally",
@@ -5622,7 +5622,7 @@
           ]
         }
       ],
-      "issue": "https://github.com/carlocifarelli/qvac-quality-review/issues/18"
+      "issue": "https://github.com/carlocifarelli/agentic-code-review/issues/18"
     }
   },
   "runs": [

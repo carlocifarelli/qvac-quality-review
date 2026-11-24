@@ -1,7 +1,7 @@
 {
   "project": {
-    "name": "qvac-quality-review",
-    "description": "the qvac-quality-review repository (Find, verify and rank defects worth fixing in a JS/TS repository (applied to tetherto/qvac))"
+    "name": "agentic-code-review",
+    "description": "the agentic-code-review repository (a TypeScript CLI and ESLint plugin, runs on Node)"
   },
   "include": [
     "src/**/*.{ts,tsx,js,mjs,cjs}",
@@ -9,5 +9,5 @@
     "*.{ts,tsx,js,mjs,cjs}"
   ],
   "reviewTop": 25,
-  "upstreamRepo": "carlocifarelli/qvac-quality-review"
+  "upstreamRepo": "carlocifarelli/agentic-code-review"
 }

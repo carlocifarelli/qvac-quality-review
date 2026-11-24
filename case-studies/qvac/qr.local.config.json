@@ -18,5 +18,5 @@
   "reviewModel": "reviewer",
   "verifyModel": "reviewer",
   "upstreamRepo": "tetherto/qvac",
-  "findingsRepo": "carlocifarelli/qvac-quality-review"
+  "findingsRepo": "carlocifarelli/agentic-code-review"
 }

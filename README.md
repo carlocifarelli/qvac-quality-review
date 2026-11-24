@@ -1,99 +1,120 @@
-# qvac-quality-review
+# agentic-code-review
 
-A repeatable pipeline that finds, verifies and ranks **defects worth fixing** in a JS/TS repository, applied to [tetherto/qvac](https://github.com/tetherto/qvac). Full design notes and measurements: [docs/DETAILS.md](docs/DETAILS.md).
+**An AI agent finds the bugs, an adversarial agent and a human verify them, and deterministic ESLint rules make sure that class of bug never comes back.**
 
-- **Analyzed:** `tetherto/qvac@0c8a1510ab4f` (main, 2026-11-18), 1,013 JS/TS files in scope, top 40 by risk reviewed by the agent, all 1,013 by the rules.
-- **Findings:** 32 confirmed by me and filed as issues [#1-#32](https://github.com/carlocifarelli/qvac-quality-review/issues) in this repo, ranked in [FINDINGS-SUMMARY.md](FINDINGS-SUMMARY.md) with evidence, impact, uncertainty and next action; 16 investigated and rejected, with reasons; 334 duplicate searches on upstream issues and PRs (open and closed), logged with dates.
-- **Time spent:** about 5 hours of the 8-hour budget.
+`qr` is a CLI and a GitHub Action for JavaScript/TypeScript repositories. It looks for behavioural defects that linters and metrics miss (leaks, races, lost cancellations, swallowed errors, crashes on error paths) and keeps the result as reviewable state in git, so each run only pays for what changed.
 
-## Run it
-
-```
-npm ci
-npx tsx src/cli.ts run /path/to/qvac                 # select -> AI review -> adversarial verify -> results/FINDINGS.md
-npx tsx src/cli.ts run /path/to/qvac --select-only   # deterministic stage only, ~10 s, $0
-npx tsx src/cli.ts rules /path/to/qvac [--changed origin/main]   # 6 qvac-quality rules, ~9 s, $0, exit 1 on untriaged hits
-npx tsx src/cli.ts pr /path/to/qvac --base origin/main           # one PR: rules (blocking) + agent on changed files (advisory)
-npx tsx src/cli.ts report /path/to/qvac              # re-render after editing state/overrides.json
-npx tsx src/cli.ts dedupe --human-confirmed          # search upstream issues + PRs, log queries with dates
-npx tsx src/cli.ts publish [--dry-run]               # file human-confirmed findings here (idempotent)
-npm test                                             # 56 tests
-```
-
-Requires Node 22+, git, the Claude Code CLI logged in (or `ANTHROPIC_API_KEY`), and `gh` for `dedupe`/`publish`. The local alternative needs no account: `qvac serve --openai` with `-c qr.local.config.json` (see below).
-
-**Human workflow:** `run` → read `results/FINDINGS.md` → reproduce or read the top leads → record decisions in `state/overrides.json` → `report` → `dedupe` → `publish`. Commit `state/` so the next run starts from these decisions.
+| Case study | Scope | Result |
+|---|---|---|
+| [**QVAC**](case-studies/qvac/) (Tether's local-AI SDK) | 1,013 files, top 40 reviewed by the agent | 47 candidates → **32 confirmed defects** (10 reproduced by script), 16 rejected with reasons; 6 rules written from them, 91% precise, which found 1 more bug. $27.47 for the first run, $0 for a re-run |
+| [**Nx**](case-studies/nx/) (build system) | 2,391 files, rules only | 7 rule hits in 11 s at $0: **5 leads** (read, not yet reproduced), 2 accepted. The first pass exposed 10 noisy hits, and the rules were fixed |
+| **Vite** | 143 files, rules only | 0 hits: no false alarms on a clean codebase |
 
 ## How it works
 
-QVAC already tracks size, structure and dependencies (`scripts/code-quality`) and a correctness lint pass found almost nothing, so the tool spends its effort on **behavioural defects** linters cannot see.
+```mermaid
+flowchart LR
+  A[git checkout] --> B["select<br/>risk signals × size × churn<br/>deterministic, free"]
+  B -->|top N files| C["review<br/>AI agent, read-only tools<br/>cached by file hash"]
+  C --> D["verify<br/>second agent tries to<br/>disprove each finding"]
+  D --> E{"human gate<br/>overrides.json"}
+  E -->|confirmed| F[report · dedupe · publish as issues]
+  E -->|has a syntactic shape| G["new ESLint rule<br/>with the finding as its test"]
+  G -->|blocks the class on every PR| B
+```
 
-1. **Select** (deterministic, free): risk signals (child processes, filesystem, network, untrusted parsing, timers, listeners, promises) × size × recent churn → ranked files, auditable in `results/selection.json`.
-2. **Review** (AI agent, read-only): Claude Code headless inside the checkout with only Read/Grep/Glob, so it can follow callers and library code; output schema-validated, quoted anchor lines re-checked against the file.
-3. **Verify** (AI agent, adversarial): a second pass tries to disprove each candidate.
-4. **Human gate:** I read every candidate and ran reproductions for 10 of the 31 confirmed findings (`verification/`). Only human-confirmed findings are filed.
-5. **Report, dedupe, publish** into this repo's issues.
+1. **Select** (deterministic, about 10 s, free). Files are ranked by risk signals (child processes, filesystem, network, untrusted parsing, timers, listeners, promises) times size times recent churn. The ranking is written to `selection.json`, so every choice can be checked.
+2. **Review.** Claude Code runs headless inside the checkout with only Read, Grep and Glob, so it can follow callers and types across files. Output is schema-validated, and every quoted line is checked against the file.
+3. **Verify.** A second pass gets only the claim and is told to disprove it (is it reachable, guarded elsewhere, intended, overstated?).
+4. **Human gate.** A person records each decision in `state/overrides.json`. Only human-confirmed findings are filed. The agent's "confirmed" is a lead, not a fact.
+5. **Prevent.** A confirmed finding with a syntactic shape becomes an ESLint rule, with the finding as its test case. Rules run on every file in seconds, block PRs through a triaged baseline, and move that bug class from the paid, advisory path to the free, blocking one.
 
-**The agent discovers, deterministic rules prevent.** Confirmed findings with a syntactic shape became a local ESLint plugin (`src/rules/`, 6 rules, RuleTester cases built from the findings). On the whole scope they flag all 9 source locations, found 1 new bug (#32), and are 91% precise (20 of 22 hits). A triaged baseline (`state/rules-baseline.json`) makes them a CI gate.
+Findings are fingerprinted by file and anchor line, not line number, so a re-run reports each one as present, moved or gone. Model answers are cached by prompt version, model and file hash. More in [docs/design.md](docs/design.md).
 
-## Subsequent runs (demonstrated)
+## Use it
 
-Findings are fingerprinted by file + anchor line, not line number, and re-located on every run as present, moved or gone. Model answers are cached by file hash.
+**On your repository, from a checkout of this one** (Node 22+, git, and the [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI logged in or `ANTHROPIC_API_KEY` set for the agent stages):
 
-| Run | Agent calls | Cost | Result |
-|---|---|---|---|
-| 1, analysed commit | 86 | $27.47 | 47 candidates → 31 confirmed, 16 rejected |
-| 2, same commit | 0 | $0 | identical, fully cached |
-| 3, next commit fixing one finding | 2 | $0.64 | the fixed finding reported as gone; only the changed file re-reviewed |
-| `qr pr` on a simulated PR | 4 | $0.88 | rule blocked the regression, agent flagged it too, fixed finding reported |
+```bash
+npm ci
+npx tsx src/cli.ts -w .qr init ../your-repo        # writes .qr/qr.config.json (name, scope, GitHub repo)
+npx tsx src/cli.ts -w .qr rules ../your-repo       # deterministic rules, seconds, $0
+npx tsx src/cli.ts -w .qr run ../your-repo --select-only   # the files the agent would review, $0
+npx tsx src/cli.ts -w .qr run ../your-repo         # select → review → verify → .qr/results/FINDINGS.md
+```
 
-**When it runs:** every PR (rules block, agent advises), a weekly scan of `main` that opens a triage PR here (running in Actions), publish when triage is merged, and a new rule whenever a confirmed finding has a shape. Workflows in `.github/workflows/`; the QVAC PR check is in `integrations/github/` and is proposed only.
+Then read `FINDINGS.md`, record decisions in `.qr/state/overrides.json`, and run `report` to re-rank, `dedupe` to search upstream issues and PRs, and `publish` to file confirmed findings in a repo you control. `qr --help` lists every command, and `pr` checks one change against a base ref.
 
-## Running on QVAC itself (demonstrated)
+**On every pull request, as a GitHub Action.** Commit `.qr/qr.config.json` (and `.qr/state/rules-baseline.json` once you have triaged hits), then:
 
-`backend: "openai-compatible"` runs review and verify on `qvac serve --openai`, so no code leaves the machine. Measured on an M4 Max against the 31 confirmed findings:
+```yaml
+on: pull_request
+permissions: { contents: read, pull-requests: write }
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: carlocifarelli/agentic-code-review@main   # pin to a commit
+        with:
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}   # optional: rules only without it
+```
 
-| | Claude | QVAC, Qwen3-4B | QVAC, KAT-Coder 35B MoE |
-|---|---|---|---|
-| Recall of the 31 | 31 (its own findings) | 0 (2 partial) | 1 (3 partial) |
-| Cost / time | $27.47 for 40 files | $0, 29.5 min | $0, 27 min |
+Rule hits not in the baseline fail the check, and agent leads are posted as advice in one sticky comment. This repository runs the action on itself in [CI](.github/workflows/ci.yml).
 
-It works end to end at zero cost, but local models do not yet find these defects and their verifiers reject everything; today it is a privacy option, with the rules carrying the gate. Details in `results/local-qvac*/`.
+**Just the rules, in your own ESLint config** (`npm i -D github:carlocifarelli/agentic-code-review`):
+
+```js
+// eslint.config.js
+import hygiene from 'agentic-code-review/eslint-plugin'
+export default [hygiene.configs.recommended]
+```
+
+| Rule | Flags |
+|---|---|
+| `abort-signal-race` | an `abort` listener added, or a signal passed on, after an await without re-checking `signal.aborted` |
+| `close-on-error` | a resource created locally, then an await that can throw before it is handed off or closed (classes configurable) |
+| `exit-code-ignores-signal` | `process.exit(code \|\| 0)` in a child's exit handler: a signal-killed child reports success |
+| `spawn-without-error-listener` | `spawn()` whose child has no `error` listener: a failed start becomes an uncaught exception |
+| `stale-error-reject` | `server.on('error', reject)` that outlives the startup promise and swallows later errors |
+| `throw-in-promise-listener` | a sync call that can throw inside an event listener in a `new Promise` executor |
+
+**Keeping code private:** `backend: "openai-compatible"` runs review and verify on a local server (llama.cpp, Ollama, vLLM, `qvac serve --openai`), so no code leaves the machine. It works end to end, but measured against the QVAC findings, today's local models recall almost none of them ([numbers](case-studies/qvac/docs/DETAILS.md#running-on-qvac-itself-a-local-model-no-code-leaves-the-machine-demonstrated-measured-with-two-models)).
 
 ## Design choices
 
-| Choice | Alternative |
+| Choice | Instead of |
 |---|---|
-| Model effort on behaviour, not metrics | More metrics, SonarQube: what QVAC already has |
-| Agent with read-only tools | One prompt with the file inlined: cheaper, blind to callers |
-| Adversarial verify, then a human | Trusting model confidence |
-| Anchor fingerprints, state as JSON in git | A database or issues as the only store |
-| Rules generated from confirmed findings | Running the model on every commit forever |
+| Spend model effort on behaviour, not metrics | More metrics or SonarQube, which most mature repos already have |
+| An agent with read-only tools | One prompt with the file pasted in: cheaper, but blind to callers |
+| An adversarial second pass, then a human | Trusting the model's confidence |
+| State as JSON in git, with anchor fingerprints | A database, or issues as the only store |
+| Rules generated from confirmed findings | Running a model on every commit forever |
+| Rules block, agents advise | Letting a non-deterministic check fail a build |
 
-- **Ease of use:** one command per stage, one JSON config with defaults, Markdown reports, `--select-only` as a free dry run.
-- **Cost:** observed $27.47 for a full first run (~$0.35 per review, ~$0.30 per verification), $0 on an unchanged commit, cents to ~$2 per PR; rules and the local backend are free. **Services:** Anthropic via Claude Code (or a local QVAC server) and the GitHub API. Nothing to host.
-- **Security:** the agent cannot write, execute or browse; code goes to Anthropic unless the QVAC backend is used; prompt injection is mitigated (read-only tools, schema, anchors, second pass, human gate), not eliminated; no credentials in the repo; findings go to this private repo only, never upstream.
-- **Maintainability:** ~1,500 lines of strict TypeScript, zod at every boundary, one file per stage, versioned prompts, a migration script for state changes, 56 tests.
+**Cost.** About $0.35 per file reviewed and $0.30 per verification with Opus; $0 for unchanged files; cents to about $2 per PR. Rules and the local backend are free.
+**Security.** The agent cannot write, execute or browse. Prompt injection from repository content is mitigated (read-only tools, schema, anchor checks, second pass, human gate), not eliminated. `publish` refuses to file into the upstream repository.
 
 ## Limitations
 
-- **Recall is unknown:** 40 of 681 candidate files were reviewed, and there is no labelled bug set.
-- **The agent verifier is lenient:** I rejected 8 of its 39 confirmations, so "agent confirmed" is a lead, not a fact.
-- **Rules were written after seeing the findings**, so their recall on unseen bugs is unmeasured. They are intra-file, which caused both false positives.
-- **Some findings were verified by reading, not executed** (runtime races in the registry, Hyperdrive collisions).
-- **Weekly and PR costs are extrapolated** from a few runs. Dedupe is keyword search and cannot prove absence.
+- **Recall is unknown.** There is no labelled bug set yet; the agent reviews the top N files by risk, not all of them.
+- **The agent verifier is lenient.** On QVAC I rejected 8 of its 39 confirmations, which is why a human decides.
+- **Rules are intra-file**, and they were written after seeing the findings. The Nx run is their first test on unseen code: it needed two precision fixes.
+- **Dedupe is keyword search.** It records what was searched; it cannot prove that a bug was never reported.
 
-## Next priorities (proposed)
+## Repository
 
-1. Install the PR check in QVAC with the maintainers, and review the callers of changed functions too.
-2. An evaluation set from QVAC's closed `fix:` PRs, to measure recall per model and prompt.
-3. Group findings by root cause before ranking.
-4. Propose the rules upstream as a lint preset next to `lunte`.
-5. Local models: disable reasoning in the final call, try dense models, give them rule hits as hints.
+```
+src/            CLI (cli.ts), stages (select, review, verify, rules, pr, dedupe, publish), backends, rules
+test/           unit tests and RuleTester cases built from the confirmed findings (npm test)
+action.yml      the GitHub Action
+docs/design.md  design notes: selection, identity across runs, ranking, workflow
+case-studies/   one folder per target: config, state (decisions, cache, baseline), results
+```
 
-## Demonstrated vs proposed
+## Origin
 
-**Demonstrated** (outputs committed): selection, review, verify, presence across commits, caching, dedupe, publish, all reproductions, the rules and their gate, `qr pr`, the weekly scan in Actions, the QVAC local backend.
-**Not demonstrated:** the agent stage inside Actions (no API key configured), `publish.yml` in Actions, the QVAC PR check (upstream changes are out of bounds), and a local model that matches Claude.
+I built the first version in one day as a take-home exercise in a hiring process: assess the code quality of the QVAC monorepo with a solution that can be reused. About five hours went into the pipeline and the first 31 confirmed findings, the rest of the day into the rules, the PR workflow and the local-model backend. Afterwards I made it target-agnostic and ran it on Nx and Vite. The QVAC findings are tracked as issues in this repository. How I used AI to build it is in [AI_USAGE.md](AI_USAGE.md).
 
-**AI use:** [AI_USAGE.md](AI_USAGE.md).
+MIT licensed. Built by Carlo Cifarelli.

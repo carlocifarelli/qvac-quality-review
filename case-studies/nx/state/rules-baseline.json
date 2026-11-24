@@ -1,0 +1,61 @@
+{
+  "commit": "741bf7670c40d41da1f0b460a8bb81bce836ec74",
+  "accepted": {
+    "rh:ad82fd6e0e02c25a": {
+      "rule": "async-hygiene/spawn-without-error-listener",
+      "file": "packages/create-nx-workspace/src/utils/child-process-utils.ts",
+      "code": "const childProcess = spawn(fullCommand, {",
+      "status": "accepted",
+      "reason": "shell: true: the shell itself always exists, so only a missing cwd could make the start fail. Low value; accepted.",
+      "triagedAt": "2026-11-24"
+    },
+    "rh:eb7666a2298ac181": {
+      "rule": "async-hygiene/abort-signal-race",
+      "file": "packages/gradle/src/utils/exec-gradle.ts",
+      "code": "signal?.addEventListener('abort', onAbort, { once: true });",
+      "status": "finding",
+      "reason": "Lead, not reproduced or reported: a signal that is already aborted never fires 'abort', so execGradleAsync starts and waits for the whole Gradle build. Depends on callers passing a pre-aborted signal, not checked.",
+      "triagedAt": "2026-11-24"
+    },
+    "rh:50e7f289d0432ce8": {
+      "rule": "async-hygiene/spawn-without-error-listener",
+      "file": "packages/nx/src/command-line/release/utils/launch-editor.ts",
+      "code": "const editorProcess = spawn(cmd, [...args, filePath], {",
+      "status": "finding",
+      "reason": "Lead, not reproduced or reported: an EDITOR/VISUAL that is not on PATH makes spawn emit 'error' with no listener, so `nx release` crashes with an uncaught ENOENT instead of rejecting with the 'Editor process exited' error the caller handles.",
+      "triagedAt": "2026-11-24"
+    },
+    "rh:1292a746e929a80b": {
+      "rule": "async-hygiene/spawn-without-error-listener",
+      "file": "packages/nx/src/command-line/watch/watch.ts",
+      "code": "const commandExec = spawn(this.command, {",
+      "status": "accepted",
+      "reason": "shell: true with cwd = process.cwd(): a start failure is not realistic.",
+      "triagedAt": "2026-11-24"
+    },
+    "rh:40624f91044a405a": {
+      "rule": "async-hygiene/throw-in-promise-listener",
+      "file": "packages/nx/src/nx-cloud/update-manager.ts",
+      "code": "mkdirSync(directoryPath, { recursive: true });",
+      "status": "finding",
+      "reason": "Lead, not reproduced or reported: same class as QVAC #6. mkdirSync inside the tar 'entry' listener can throw (EACCES, ENOSPC, a file where a directory is expected); the throw escapes the Promise executor, so the download neither rejects nor cleans its temp folder.",
+      "triagedAt": "2026-11-24"
+    },
+    "rh:c8a7820f40d9c93e": {
+      "rule": "async-hygiene/spawn-without-error-listener",
+      "file": "packages/nx/src/tasks-runner/cache.ts",
+      "code": "const p = spawn('node', [scriptPath, `${this.cachePath}`], {",
+      "status": "finding",
+      "reason": "Lead, not reproduced or reported: spawn('node', \u2026) with shell: false fails with ENOENT when `node` is not on PATH (Nx started via an absolute Node path); the 'error' event is emitted after the try/catch returned, so it is an uncaught exception in about 1 of 50 runs. process.execPath would avoid it.",
+      "triagedAt": "2026-11-24"
+    },
+    "rh:42b1591144278c18": {
+      "rule": "async-hygiene/abort-signal-race",
+      "file": "packages/nx/src/tasks-runner/readiness/probes.ts",
+      "code": "context.signal.addEventListener('abort', onAbort);",
+      "status": "finding",
+      "reason": "Lead, not reproduced or reported: the sibling probe checks context.signal.aborted after adding its listener (line 66) but waitForLogMatch does not, so a task that already exited waits for the readiness timeout instead of settling as 'exited'.",
+      "triagedAt": "2026-11-24"
+    }
+  }
+}

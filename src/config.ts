@@ -15,7 +15,7 @@ export const Config = z.object({
   include: z.array(z.string()).default(['**/*.{ts,tsx,js,mjs,cjs}']),
   exclude: z
     .array(z.string())
-    .default(['**/node_modules/**', '**/dist/**', '**/build/**', '**/*.d.ts', '**/test/**', '**/tests/**', '**/__tests__/**', '**/*.test.*', '**/*.spec.*', '**/examples/**', '**/e2e/**', '**/benchmarks/**', '**/fixtures/**', '**/generated/**']),
+    .default(['**/node_modules/**', '**/dist/**', '**/build/**', '**/*.d.ts', '**/test/**', '**/tests/**', '**/__tests__/**', '**/*.test.*', '**/*.spec.*', '**/examples/**', '**/e2e/**', '**/benchmarks/**', '**/fixtures/**', '**/__fixtures__/**', '**/__mocks__/**', '**/*testing-utils/**', '**/generated/**']),
   churnSince: z.string().default('6 months ago'),
   /** How many files the AI reviewer reads per run */
   reviewTop: z.number().int().default(25),

@@ -112,6 +112,9 @@ tester.run('exit-code-ignores-signal', r('exit-code-ignores-signal'), {
 tester.run('spawn-without-error-listener', r('spawn-without-error-listener'), {
   valid: [
     `const c = spawn('x', []); c.on('error', onError)`,
+    // the running Node binary: cannot be missing (nx case study)
+    `const c = fork(script, []); c.on('exit', done)`,
+    `const c = spawn(process.execPath, [script]); c.unref()`,
     `spawn('x', []).on('exit', done).on('error', done)`,
     `function f() { return spawn('x', []) }`,
     `async function f() { const c = spawn('x', []); await once(c, 'exit') }`,
@@ -162,6 +165,10 @@ tester.run('throw-in-promise-listener', r('throw-in-promise-listener'), {
   valid: [
     `new Promise((resolve, reject) => { extract.on('entry', (h, s, next) => { try { fs.mkdirSync(d) } catch (e) { reject(e) } }) })`,
     `function f() { extract.on('entry', () => { fs.mkdirSync(d) }) }`,
+    // existsSync reports through its return value (nx case study)
+    `new Promise((resolve, reject) => { extract.on('entry', () => { if (!fs.existsSync(d)) resolve() }) })`,
+    // TypeScript exhaustiveness check: unreachable while the types hold (nx case study)
+    `new Promise((resolve, reject) => { child.on('message', (m) => { switch (m.type) { case 'a': resolve(); break; default: { const u: never = m; throw new Error(String(u)) } } }) })`,
     `new Promise((resolve) => { fs.mkdirSync(d); resolve() })`,
   ],
   invalid: [

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { Config, loadConfig } from '../src/config.js'
-import { githubRepoOf, includeFor, initConfig } from '../src/init.js'
+import { githubRepoOf, includeFor, initConfig, pnpmWorkspaces } from '../src/init.js'
 import { reviewPrompt, verifyPrompt } from '../src/prompts.js'
 import { sourceLink, exec } from '../src/util.js'
 import type { Finding, ReviewUnit } from '../src/types.js'
@@ -57,9 +57,14 @@ describe('init', () => {
     expect(githubRepoOf('https://gitlab.com/a/b.git')).toBeUndefined()
   })
   it('scopes monorepo workspaces to their sources', () => {
-    expect(includeFor({ workspaces: ['packages/*'] })).toEqual(['packages/*/src/**/*.{ts,tsx,js,mjs,cjs}', 'packages/*/lib/**/*.{ts,tsx,js,mjs,cjs}'])
-    expect(includeFor({ workspaces: { packages: ['apps/**'] } })[0]).toBe('apps/*/src/**/*.{ts,tsx,js,mjs,cjs}')
-    expect(includeFor(undefined)).toContain('src/**/*.{ts,tsx,js,mjs,cjs}')
+    expect(includeFor(['packages/*'])).toEqual(['packages/*/src/**/*.{ts,tsx,js,mjs,cjs}', 'packages/*/lib/**/*.{ts,tsx,js,mjs,cjs}'])
+    expect(includeFor(['apps/**'])[0]).toBe('apps/*/src/**/*.{ts,tsx,js,mjs,cjs}')
+    expect(includeFor(['packages/*', 'playground/**', 'packages/**/__tests__/**', '!x', 'docs', 'e2e/*'])).toHaveLength(2)
+    expect(includeFor([])).toContain('src/**/*.{ts,tsx,js,mjs,cjs}')
+  })
+  it('reads pnpm-workspace.yaml packages', () => {
+    const yaml = "packages:\n  - 'packages/*'\n  # comment\n  - docs\n\nhoistPattern:\n  - postcss\n"
+    expect(pnpmWorkspaces(yaml)).toEqual(['packages/*', 'docs'])
   })
   it('writes a config from package.json and the remote, and refuses to overwrite', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'qr-init-'))

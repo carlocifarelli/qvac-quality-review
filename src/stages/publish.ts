@@ -12,7 +12,7 @@ import { severityOf } from '../types.js'
  */
 export async function publish(cfg: Config, state: State, opts: { dryRun: boolean }) {
   if (!cfg.findingsRepo) throw new Error('set findingsRepo in the config')
-  if (cfg.findingsRepo.toLowerCase() === cfg.upstreamRepo.toLowerCase()) throw new Error('refusing to file into the upstream repo')
+  if (cfg.findingsRepo.toLowerCase() === cfg.upstreamRepo?.toLowerCase()) throw new Error('refusing to file into the upstream repo')
   const out: string[] = []
   const ranked = Object.values(state.findings)
     .filter((f) => f.human?.status === 'confirmed' && f.presence !== 'gone' && !f.issue)

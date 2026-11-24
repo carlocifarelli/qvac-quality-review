@@ -1,12 +1,16 @@
 # Human decisions land on main (usually by merging a triage PR) -> search
 # upstream for duplicates and file the newly confirmed findings as issues in
-# this repo. Idempotent: findings that already have an issue are skipped.
+# the case study's findingsRepo. Idempotent: findings that already have an issue are skipped.
 name: publish
 on:
   push:
     branches: [main]
-    paths: [state/overrides.json]
+    paths: [case-studies/qvac/state/overrides.json]
   workflow_dispatch:
+    inputs:
+      workspace:
+        description: case study to publish
+        default: case-studies/qvac
 permissions:
   contents: write
   issues: write
@@ -17,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
+      WS: ${{ inputs.workspace || 'case-studies/qvac' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,12 +29,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx tsx src/cli.ts dedupe --human-confirmed
-      - run: npx tsx src/cli.ts publish
+      - run: npx tsx src/cli.ts -w "$WS" dedupe --human-confirmed
+      - run: npx tsx src/cli.ts -w "$WS" publish
       - name: Commit issue links back to state
         run: |
-          git diff --quiet -- state && exit 0
-          git config user.name "qvac-quality-review[bot]"
+          git diff --quiet -- "$WS/state" && exit 0
+          git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "Record duplicate searches and issue links"
           git push

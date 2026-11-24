@@ -1,0 +1,14 @@
+{
+  "project": {
+    "name": "Nx",
+    "description": "the Nx monorepo (build system and CLI for JS/TS monorepos, runs on Node)"
+  },
+  "include": [
+    "packages/*/src/**/*.{ts,tsx,js,mjs,cjs}",
+    "packages/*/lib/**/*.{ts,tsx,js,mjs,cjs}",
+    "packages/nx/native-packages/*/src/**/*.{ts,tsx,js,mjs,cjs}",
+    "packages/nx/native-packages/*/lib/**/*.{ts,tsx,js,mjs,cjs}"
+  ],
+  "reviewTop": 25,
+  "upstreamRepo": "nrwl/nx"
+}

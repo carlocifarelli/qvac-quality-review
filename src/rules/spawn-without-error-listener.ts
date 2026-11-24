@@ -10,6 +10,10 @@ import { type N, calleeName, isStringArg, rule } from './util.js'
  * Accepted as handled: an 'error' listener on the child in the same function,
  * passing the child to `once(child, …)` / another function, or returning the
  * child itself.
+ *
+ * Not reported: fork() and spawn(process.execPath, …), which start the running
+ * Node binary; it cannot be missing, so the realistic start failures do not
+ * apply (learned on the nx case study, where they were 7 of 11 hits).
  */
 const CP_OBJECT = /^(child_?process|cp|childProcess)$/i
 
@@ -20,7 +24,7 @@ export default rule(
     const source = context.sourceCode
     return {
       CallExpression(node: N) {
-        if (!isSpawn(node)) return
+        if (!isSpawn(node) || startsOwnNode(node)) return
         if (chainHasError(node)) return
         // Look through `cond ? spawn(a) : spawn(b)`, `x as ChildProcess`, `(spawn(...))`.
         let expr = node
@@ -56,6 +60,13 @@ function isSpawn(node: N): boolean {
   if (c.type === 'Identifier') return c.name === 'spawn' || c.name === 'fork'
   if (c.type === 'MemberExpression' && !c.computed && ['spawn', 'fork'].includes(c.property.name)) return c.object.type === 'Identifier' && CP_OBJECT.test(c.object.name)
   return false
+}
+
+function startsOwnNode(node: N): boolean {
+  const name = node.callee.type === 'Identifier' ? node.callee.name : node.callee.property?.name
+  if (name === 'fork') return true
+  const cmd = node.arguments[0]
+  return cmd?.type === 'MemberExpression' && cmd.object.type === 'Identifier' && cmd.object.name === 'process' && cmd.property.name === 'execPath'
 }
 
 function isErrorListen(call: N): boolean {

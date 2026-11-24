@@ -1,0 +1,63 @@
+{
+  "commit": "741bf7670c40d41da1f0b460a8bb81bce836ec74",
+  "files": 2391,
+  "ms": 10769,
+  "hits": [
+    {
+      "id": "rh:ad82fd6e0e02c25a",
+      "rule": "async-hygiene/spawn-without-error-listener",
+      "file": "packages/create-nx-workspace/src/utils/child-process-utils.ts",
+      "line": 22,
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
+      "code": "const childProcess = spawn(fullCommand, {"
+    },
+    {
+      "id": "rh:eb7666a2298ac181",
+      "rule": "async-hygiene/abort-signal-race",
+      "file": "packages/gradle/src/utils/exec-gradle.ts",
+      "line": 70,
+      "message": "'abort' listener on `signal` with no `signal.aborted` check: a signal that is already aborted never fires it.",
+      "code": "signal?.addEventListener('abort', onAbort, { once: true });"
+    },
+    {
+      "id": "rh:50e7f289d0432ce8",
+      "rule": "async-hygiene/spawn-without-error-listener",
+      "file": "packages/nx/src/command-line/release/utils/launch-editor.ts",
+      "line": 15,
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
+      "code": "const editorProcess = spawn(cmd, [...args, filePath], {"
+    },
+    {
+      "id": "rh:1292a746e929a80b",
+      "rule": "async-hygiene/spawn-without-error-listener",
+      "file": "packages/nx/src/command-line/watch/watch.ts",
+      "line": 132,
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
+      "code": "const commandExec = spawn(this.command, {"
+    },
+    {
+      "id": "rh:40624f91044a405a",
+      "rule": "async-hygiene/throw-in-promise-listener",
+      "file": "packages/nx/src/nx-cloud/update-manager.ts",
+      "line": 677,
+      "message": "`mkdirSync` can throw inside a listener registered in a Promise executor; the error escapes as an uncaught exception and the promise never settles. Wrap it in try/catch and reject.",
+      "code": "mkdirSync(directoryPath, { recursive: true });"
+    },
+    {
+      "id": "rh:c8a7820f40d9c93e",
+      "rule": "async-hygiene/spawn-without-error-listener",
+      "file": "packages/nx/src/tasks-runner/cache.ts",
+      "line": 525,
+      "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
+      "code": "const p = spawn('node', [scriptPath, `${this.cachePath}`], {"
+    },
+    {
+      "id": "rh:42b1591144278c18",
+      "rule": "async-hygiene/abort-signal-race",
+      "file": "packages/nx/src/tasks-runner/readiness/probes.ts",
+      "line": 140,
+      "message": "'abort' listener on `context.signal` with no `context.signal.aborted` check: a signal that is already aborted never fires it.",
+      "code": "context.signal.addEventListener('abort', onAbort);"
+    }
+  ]
+}

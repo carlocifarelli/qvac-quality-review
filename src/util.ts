@@ -43,3 +43,8 @@ export async function pool<T, R>(items: T[], n: number, fn: (t: T, i: number) =>
 
 /** Whitespace-insensitive form of a source line, used to re-locate anchors across edits. */
 export const normalizeLine = (s: string) => s.replace(/\s+/g, ' ').trim()
+
+/** Markdown link to a line on GitHub when the target repo is known, else a plain `file:line`. */
+export function sourceLink(repo: string | undefined, commit: string, file: string, line: number): string {
+  return repo ? `[${file}:${line}](https://github.com/${repo}/blob/${commit}/${file}#L${line})` : `\`${file}:${line}\``
+}

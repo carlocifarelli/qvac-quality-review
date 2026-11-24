@@ -1,14 +1,21 @@
+import type { Config } from './config.js'
 import type { ReviewUnit, Finding } from './types.js'
 
-/** Bump when a prompt changes: it is part of the cache key, so old answers are not reused. */
+type Project = Config['project']
+
+/**
+ * Bump when a prompt changes: it is part of the cache key, so old answers are not reused.
+ * The project name and description are rendered in; for the QVAC case study they
+ * reproduce the v1 text exactly (see test/prompts.test.ts), so its cache stays valid.
+ */
 export const PROMPT_VERSION = 'v1'
 
-export function reviewPrompt(u: ReviewUnit, partial: boolean, known: Finding[] = []): string {
+export function reviewPrompt(project: Project, u: ReviewUnit, partial: boolean, known: Finding[] = []): string {
   const knownText = known.length
     ? `\nAlready recorded for this file (do not report these again, even reworded):\n${known.map((f) => `- line ${f.line}: ${f.title}`).join('\n')}\n`
     : ''
   const lint = Object.entries(u.lint).map(([r, ls]) => `${r} at lines ${ls.join(', ')}`).join('; ') || 'none'
-  return `You are reviewing one file of the QVAC monorepo (Tether's local-AI SDK, JS/TS, runs on Node and Bare) for defects worth a maintainer's time.
+  return `You are reviewing one file of ${project.description} for defects worth a maintainer's time.
 
 File: ${u.file} (${u.loc} lines of code${partial ? '; large file: focus on the riskiest functions' : ''})
 Deterministic signals: ${JSON.stringify(u.signals)}; correctness lint: ${lint}
@@ -25,8 +32,8 @@ If an existing test or comment shows the behaviour is intentional, it is not a f
 Prefer an empty list to a weak finding. "anchor" must be the exact text of the primary line.`
 }
 
-export function verifyPrompt(f: Finding): string {
-  return `A reviewer claims a defect in the QVAC repository. Your job is to try to DISPROVE it. Read the code yourself; do not trust the claim.
+export function verifyPrompt(project: Project, f: Finding): string {
+  return `A reviewer claims a defect in the ${project.name} repository. Your job is to try to DISPROVE it. Read the code yourself; do not trust the claim.
 
 File: ${f.file}:${f.line}
 Claim: ${f.title}

@@ -1,0 +1,31 @@
+# Proposed for QVAC, not installed there: the workflow the target repository
+# would add to run the check on every pull request.
+#
+#  - rules on the changed files: deterministic, seconds, free, BLOCKING
+#  - agent review + verify of the riskiest changed files (prMaxFiles):
+#    minutes, ~$0.5-1 per file, ADVISORY, only when ANTHROPIC_API_KEY is set
+#  - one sticky comment on the PR with the result
+#
+# The target keeps its config and triaged baseline in .qr/ (copy
+# case-studies/qvac/qr.config.json and state/rules-baseline.json there).
+name: code-review
+on:
+  pull_request:
+    paths: ['packages/**/*.ts', 'packages/**/*.tsx', 'packages/**/*.js', 'packages/**/*.mjs', 'packages/**/*.cjs']
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: code-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: carlocifarelli/agentic-code-review@main # pin to a commit SHA
+        with:
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}

@@ -1,0 +1,13 @@
+{
+  "project": {
+    "name": "agentic-code-review",
+    "description": "the agentic-code-review repository (a TypeScript CLI and ESLint plugin, runs on Node)"
+  },
+  "include": [
+    "src/**/*.{ts,tsx,js,mjs,cjs}",
+    "lib/**/*.{ts,tsx,js,mjs,cjs}",
+    "*.{ts,tsx,js,mjs,cjs}"
+  ],
+  "reviewTop": 25,
+  "upstreamRepo": "carlocifarelli/agentic-code-review"
+}

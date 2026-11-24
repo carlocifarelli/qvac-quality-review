@@ -13,11 +13,25 @@ import { publish } from './stages/publish.js'
 import { Store, refreshPresence, score, type State } from './state.js'
 import { toMarkdown } from './report.js'
 import { git, writeJson } from './util.js'
+import { RULE_PREFIX } from './rules/index.js'
+import { initConfig } from './init.js'
 import type { Usage } from './types.js'
 
 const program = new Command()
   .name('qr')
   .description('Find, verify and rank defects worth fixing in a JS/TS repository')
+  .option('-w, --workspace <dir>', 'directory holding qr.config.json, state/ and results/ for one target', '.')
+
+interface PathOpts { config?: string; state?: string; out?: string }
+/** Per-command paths: explicit flags win, otherwise everything lives in the workspace. */
+function paths(o: PathOpts) {
+  const ws = program.opts<{ workspace: string }>().workspace
+  return { config: o.config ?? join(ws, 'qr.config.json'), explicitConfig: Boolean(o.config), state: o.state ?? join(ws, 'state'), out: o.out ?? join(ws, 'results') }
+}
+async function setup(o: PathOpts) {
+  const p = paths(o)
+  return { ...p, cfg: await loadConfig(p.config, { optional: !p.explicitConfig }) }
+}
 
 async function openState(dir: string): Promise<{ store: Store; state: State }> {
   const store = new Store(resolve(dir))
@@ -32,16 +46,17 @@ program
   .command('run')
   .description('select -> review -> verify -> report. dedupe and publish are separate because they call GitHub')
   .argument('<repo>', 'path to a git checkout of the target')
-  .option('-c, --config <file>', 'config file', 'qr.config.json')
-  .option('-s, --state <dir>', 'state directory (commit it)', 'state')
-  .option('-o, --out <dir>', 'report directory', 'results')
+  .option('-c, --config <file>', 'config file (default: <workspace>/qr.config.json)')
+  .option('-s, --state <dir>', 'state directory (commit it) (default: <workspace>/state)')
+  .option('-o, --out <dir>', 'report directory (default: <workspace>/results)')
   .option('--top <n>', 'override reviewTop')
   .option('--select-only', 'deterministic stage only: no LLM calls')
   .option('--typed-lint', 'type-aware lint (needs the target dependencies installed)')
   .option('--only <files...>', 'review only these files (repo-relative), e.g. to compare backends on known findings')
   .action(async (repo: string, o) => {
     const root = resolve(repo)
-    const cfg = await loadConfig(o.config)
+    const { cfg, ...p } = await setup(o)
+    o = { ...o, ...p }
     if (o.top) cfg.reviewTop = Number(o.top)
     const { store, state } = await openState(o.state)
     const usage: Usage = { calls: 0, cached: 0, costUsd: 0, seconds: 0 }
@@ -80,7 +95,7 @@ program
     })
     await store.save(state)
     await writeJson(join(o.out, 'run-log.json'), { commit: sel.commit, usage, failures: [...r.failures, ...v.failures] })
-    await writeFile(join(o.out, 'FINDINGS.md'), toMarkdown(state, cfg.upstreamRepo, sel.commit))
+    await writeFile(join(o.out, 'FINDINGS.md'), toMarkdown(state, cfg.upstreamRepo, sel.commit, cfg.upstreamRepo ?? cfg.project.name))
     console.error(
       `usage: ${usage.calls} agent calls (${usage.cached} cached), $${usage.costUsd.toFixed(2)}, ${Math.round(usage.seconds)}s agent time`,
     )
@@ -88,15 +103,16 @@ program
 
 program
   .command('rules')
-  .description('deterministic qvac-quality rules over the whole scope; exits 1 on hits not in the baseline (CI gate)')
+  .description(`deterministic ${RULE_PREFIX} rules over the whole scope; exits 1 on hits not in the baseline (CI gate)`)
   .argument('<repo>', 'path to a git checkout of the target')
-  .option('-c, --config <file>', 'config file', 'qr.config.json')
-  .option('-s, --state <dir>', 'state directory (holds rules-baseline.json)', 'state')
-  .option('-o, --out <dir>', 'report directory', 'results')
+  .option('-c, --config <file>', 'config file (default: <workspace>/qr.config.json)')
+  .option('-s, --state <dir>', 'state directory (holds rules-baseline.json) (default: <workspace>/state)')
+  .option('-o, --out <dir>', 'report directory (default: <workspace>/results)')
   .option('--changed <ref>', 'only files changed since this git ref (PR mode)')
   .action(async (repo: string, o) => {
     const root = resolve(repo)
-    const cfg = await loadConfig(o.config)
+    const { cfg, ...p } = await setup(o)
+    o = { ...o, ...p }
     let files = await scopeFiles(root, cfg)
     if (o.changed) {
       const changed = new Set((await git(root, ['diff', '--name-only', `${o.changed}...HEAD`])).split('\n'))
@@ -109,7 +125,7 @@ program
     const commit = (await git(root, ['rev-parse', 'HEAD'])).trim()
     await mkdir(o.out, { recursive: true })
     await writeJson(join(o.out, 'rules.json'), { commit, files: files.length, ms: Date.now() - started, hits })
-    await writeFile(join(o.out, 'RULES.md'), rulesMarkdown(hits, baseline, commit, cfg.upstreamRepo, files.length))
+    await writeFile(join(o.out, 'RULES.md'), rulesMarkdown(hits, baseline, commit, cfg.upstreamRepo, files.length, cfg.upstreamRepo ?? cfg.project.name))
     console.error(`rules: ${files.length} files in ${Date.now() - started} ms, ${hits.length} hits, ${fresh.length} not in baseline`)
     for (const h of fresh) console.log(`${h.file}:${h.line}  ${h.rule}  ${h.id}\n    ${h.message}`)
     process.exitCode = fresh.length ? 1 : 0
@@ -120,13 +136,14 @@ program
   .description('check one change: rules (blocking) + agent review of the changed files (advisory); writes a PR comment')
   .argument('<repo>', 'path to a git checkout of the target, with the PR head checked out')
   .requiredOption('--base <ref>', 'base to diff against, e.g. origin/main')
-  .option('-c, --config <file>', 'config file', 'qr.config.json')
-  .option('-s, --state <dir>', 'state directory', 'state')
-  .option('-o, --out <dir>', 'report directory', 'results')
+  .option('-c, --config <file>', 'config file (default: <workspace>/qr.config.json)')
+  .option('-s, --state <dir>', 'state directory (default: <workspace>/state)')
+  .option('-o, --out <dir>', 'report directory (default: <workspace>/results)')
   .option('--no-agent', 'rules and presence only (no LLM, no secret needed)')
   .action(async (repo: string, o) => {
     const root = resolve(repo)
-    const cfg = await loadConfig(o.config)
+    const { cfg, ...p } = await setup(o)
+    o = { ...o, ...p }
     const { store, state } = await openState(o.state)
     const baseline = await loadBaseline(baselinePath(o.state))
     const r = await runPr(root, cfg, store, state, baseline, { base: o.base, agent: o.agent })
@@ -141,29 +158,31 @@ program
   .command('report')
   .description('re-render FINDINGS.md from state (after editing overrides.json)')
   .argument('<repo>')
-  .option('-c, --config <file>', 'config file', 'qr.config.json')
-  .option('-s, --state <dir>', 'state directory', 'state')
-  .option('-o, --out <dir>', 'report directory', 'results')
+  .option('-c, --config <file>', 'config file (default: <workspace>/qr.config.json)')
+  .option('-s, --state <dir>', 'state directory (default: <workspace>/state)')
+  .option('-o, --out <dir>', 'report directory (default: <workspace>/results)')
   .action(async (repo: string, o) => {
-    const cfg = await loadConfig(o.config)
+    const { cfg, ...p } = await setup(o)
+    o = { ...o, ...p }
     const { store, state } = await openState(o.state)
     const commit = (await git(resolve(repo), ['rev-parse', 'HEAD'])).trim()
     await refreshPresence(resolve(repo), state, commit)
     for (const f of Object.values(state.findings)) f.score = score(f)
     await store.save(state)
     await mkdir(o.out, { recursive: true })
-    await writeFile(join(o.out, 'FINDINGS.md'), toMarkdown(state, cfg.upstreamRepo, commit))
+    await writeFile(join(o.out, 'FINDINGS.md'), toMarkdown(state, cfg.upstreamRepo, commit, cfg.upstreamRepo ?? cfg.project.name))
   })
 
 program
   .command('dedupe')
   .description('search upstream issues and PRs (open and closed) for each finding; logs queries with dates')
-  .option('-c, --config <file>', 'config file', 'qr.config.json')
-  .option('-s, --state <dir>', 'state directory', 'state')
+  .option('-c, --config <file>', 'config file (default: <workspace>/qr.config.json)')
+  .option('-s, --state <dir>', 'state directory (default: <workspace>/state)')
   .option('--force', 're-run searches already recorded')
   .option('--human-confirmed', 'only findings a human marked confirmed (cheaper, avoids the search rate limit)')
   .action(async (o) => {
-    const cfg = await loadConfig(o.config)
+    const { cfg, ...p } = await setup(o)
+    o = { ...o, ...p }
     const { store, state } = await openState(o.state)
     const only = o.humanConfirmed
       ? Object.values(state.findings).filter((f) => f.human?.status === 'confirmed').map((f) => f.fingerprint)
@@ -175,14 +194,25 @@ program
 program
   .command('publish')
   .description('file confirmed findings as issues in findingsRepo (idempotent)')
-  .option('-c, --config <file>', 'config file', 'qr.config.json')
-  .option('-s, --state <dir>', 'state directory', 'state')
+  .option('-c, --config <file>', 'config file (default: <workspace>/qr.config.json)')
+  .option('-s, --state <dir>', 'state directory (default: <workspace>/state)')
   .option('--dry-run')
   .action(async (o) => {
-    const cfg = await loadConfig(o.config)
+    const { cfg, ...p } = await setup(o)
+    o = { ...o, ...p }
     const { store, state } = await openState(o.state)
     console.log((await publish(cfg, state, { dryRun: Boolean(o.dryRun) })).join('\n'))
     await store.save(state)
+  })
+
+program
+  .command('init')
+  .description('write a starter qr.config.json for a target (project name, GitHub repo and scope detected from the checkout)')
+  .argument('<repo>', 'path to a git checkout of the target')
+  .option('--force', 'overwrite an existing config')
+  .action(async (repo: string, o: { force?: boolean }) => {
+    const { config } = paths({})
+    console.log(await initConfig(resolve(repo), config, Boolean(o.force)))
   })
 
 await program.parseAsync()

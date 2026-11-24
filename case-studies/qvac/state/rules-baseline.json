@@ -1,176 +1,176 @@
 {
   "commit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
   "accepted": {
-    "qq:6c7f57b3d86f247d": {
-      "rule": "qvac-quality/abort-signal-race",
+    "rh:94dcb520e078bc6c": {
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/handlers/load-model/download-lock.ts",
       "code": "await delay(LOCK_POLL_MS, signal)",
       "status": "accepted",
       "reason": "Pattern is real (delay() never checks an already-aborted signal) but the loop re-checks right after; the cost is at most one LOCK_POLL_MS (250 ms).",
       "triagedAt": "2026-11-18"
     },
-    "qq:269a2a76e23d0ff2": {
-      "rule": "qvac-quality/abort-signal-race",
+    "rh:8f45e492c4bea4f9": {
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/handlers/load-model/download-lock.ts",
       "code": "signal.addEventListener('abort', done, { once: true })",
       "status": "accepted",
       "reason": "delay() itself; see the line above. Bounded by 250 ms.",
       "triagedAt": "2026-11-18"
     },
-    "qq:35ab6deda83daf41": {
-      "rule": "qvac-quality/close-on-error",
+    "rh:64d295a4ac82f598": {
+      "rule": "async-hygiene/close-on-error",
       "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
       "code": "await drive.ready()",
       "status": "finding",
       "reason": "Issue #22.",
       "triagedAt": "2026-11-18"
     },
-    "qq:30a0893ed4bda556": {
-      "rule": "qvac-quality/abort-signal-race",
+    "rh:565c0adee1b4a27c": {
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
       "code": "await downloadAndValidateFile(",
       "status": "finding",
       "reason": "Issue #11, caller side: the signal goes to downloadAndValidateFile, which adds its listener without a check.",
       "triagedAt": "2026-11-18"
     },
-    "qq:62f1a1b5d42f6146": {
-      "rule": "qvac-quality/abort-signal-race",
+    "rh:d662828ef4eb98a2": {
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
       "code": "signal?.addEventListener('abort', () => reject(new DownloadCancelledError()), { once: true })",
       "status": "finding",
       "reason": "Issue #11 (reproduced).",
       "triagedAt": "2026-11-18"
     },
-    "qq:68ea159ab8d6af60": {
-      "rule": "qvac-quality/abort-signal-race",
+    "rh:248ef8f204b052e1": {
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/model-fit/description/fetch.ts",
       "code": "options.signal?.addEventListener('abort', onAbort, { once: true })",
       "status": "finding",
       "reason": "NEW, found by this rule: issue #32. withinBudget() never checks options.signal.aborted, so a load cancelled before the fit-stub step still runs the registry fetch for up to FIT_STUB_BUDGET_MS (40 s) and the caller (resolve-load.ts:150) waits for it.",
       "triagedAt": "2026-11-18"
     },
-    "qq:ea56a6dd04dfc91f": {
-      "rule": "qvac-quality/abort-signal-race",
+    "rh:a0d3aca047e2533c": {
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/model-fit/run/run.ts",
       "code": "signal?.addEventListener('abort', onAbort, { once: true })",
       "status": "finding",
       "reason": "Issue #16: bounded() is the callee that never checks signal.aborted.",
       "triagedAt": "2026-11-18"
     },
-    "qq:fba389fa03173db2": {
-      "rule": "qvac-quality/abort-signal-race",
+    "rh:348c74ce4d82b410": {
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/model-fit/run/run.ts",
       "code": "return bounded(fit, key, options.timeoutMs ?? FIT_TIMEOUT_MS, options.signal)",
       "status": "finding",
       "reason": "Issue #16.",
       "triagedAt": "2026-11-18"
     },
-    "qq:0c0af5e8d2ddefc3": {
-      "rule": "qvac-quality/abort-signal-race",
+    "rh:762cb1e591ec5df7": {
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/plugins/builtin/llamacpp-completion/ops/kv-cache-session.ts",
       "code": "const handle = makeHandle(cachePath, undefined, releaseWriteLock, input.signal)",
       "status": "false-positive",
       "reason": "The signal is stored in a handle (makeHandle), not used to wait; whether an abort during adoptPersistedCache is lost depends on code the rule cannot see. Not a demonstrated defect.",
       "triagedAt": "2026-11-18"
     },
-    "qq:0a98a08ee4b8406e": {
-      "rule": "qvac-quality/throw-in-promise-listener",
+    "rh:18ff6e1f50e0792d": {
+      "rule": "async-hygiene/throw-in-promise-listener",
       "file": "packages/inference/src/utils/archive.ts",
       "code": "fs.mkdirSync(dir, { recursive: true })",
       "status": "finding",
       "reason": "Issue #6 (reproduced).",
       "triagedAt": "2026-11-18"
     },
-    "qq:fb24ef68e5158925": {
-      "rule": "qvac-quality/close-on-error",
+    "rh:c8363fcc6dc55ff1": {
+      "rule": "async-hygiene/close-on-error",
       "file": "packages/registry-server/client/lib/profiler.js",
       "code": "const hcStats = await HypercoreStats.fromCorestore(store, { cacheExpiryMs: 1000 })",
       "status": "accepted",
       "reason": "Store and swarm leak if setup throws before the try/finally. Same as the agent lead qr2:d82789a0a393efdf, rejected by the verifier: diagnostic CLI whose process exits right after.",
       "triagedAt": "2026-11-18"
     },
-    "qq:07ba67689dff70fe": {
-      "rule": "qvac-quality/close-on-error",
+    "rh:7aac58fe790ca5c9": {
+      "rule": "async-hygiene/close-on-error",
       "file": "packages/registry-server/client/lib/profiler.js",
       "code": "const hcStats = await HypercoreStats.fromCorestore(store, { cacheExpiryMs: 1000 })",
       "status": "accepted",
       "reason": "Store and swarm leak if setup throws before the try/finally. Same as the agent lead qr2:d82789a0a393efdf, rejected by the verifier: diagnostic CLI whose process exits right after.",
       "triagedAt": "2026-11-18"
     },
-    "qq:be98e416fd26ee40": {
-      "rule": "qvac-quality/stale-error-reject",
+    "rh:b6747ea1556492ca": {
+      "rule": "async-hygiene/stale-error-reject",
       "file": "packages/registry-server/lib/metrics-server.js",
       "code": "this._server.on('error', reject)",
       "status": "finding",
       "reason": "Issue #29.",
       "triagedAt": "2026-11-18"
     },
-    "qq:6019e50d978d1f8b": {
-      "rule": "qvac-quality/exit-code-ignores-signal",
+    "rh:47bd43dfb7ac28dc": {
+      "rule": "async-hygiene/exit-code-ignores-signal",
       "file": "packages/test-suite/src/cli/commands/run-consumer-desktop.ts",
       "code": "process.exit(code || 0)",
       "status": "finding",
       "reason": "Issue #8 (folded sibling).",
       "triagedAt": "2026-11-18"
     },
-    "qq:7c09feba06be3e1e": {
-      "rule": "qvac-quality/exit-code-ignores-signal",
+    "rh:38a85398d5d9f26d": {
+      "rule": "async-hygiene/exit-code-ignores-signal",
       "file": "packages/test-suite/src/cli/commands/run-consumer-electron.ts",
       "code": "process.exit(code || 0)",
       "status": "finding",
       "reason": "Issue #8 (folded sibling).",
       "triagedAt": "2026-11-18"
     },
-    "qq:4d44afd13430f881": {
-      "rule": "qvac-quality/exit-code-ignores-signal",
+    "rh:85da4bba3c9d5573": {
+      "rule": "async-hygiene/exit-code-ignores-signal",
       "file": "packages/test-suite/src/cli/commands/run-consumer-external.ts",
       "code": "process.exit(code || 0)",
       "status": "finding",
       "reason": "Issue #8 (reproduced).",
       "triagedAt": "2026-11-18"
     },
-    "qq:cec9222048c25b89": {
-      "rule": "qvac-quality/stale-error-reject",
+    "rh:54ff4eb80eb8c084": {
+      "rule": "async-hygiene/stale-error-reject",
       "file": "packages/test-suite/src/cli/utils/local-broker.ts",
       "code": "tcpServer.on('error', reject)",
       "status": "accepted",
       "reason": "Same class as #29 in the local MQTT broker used by tests: errors after startup are swallowed. Test tooling; fix together with #29.",
       "triagedAt": "2026-11-18"
     },
-    "qq:82675b1bf1d71700": {
-      "rule": "qvac-quality/stale-error-reject",
+    "rh:b663441ca76429ce": {
+      "rule": "async-hygiene/stale-error-reject",
       "file": "packages/test-suite/src/cli/utils/local-broker.ts",
       "code": "httpServer.on('error', reject)",
       "status": "accepted",
       "reason": "Same as the line above, for the WebSocket server.",
       "triagedAt": "2026-11-18"
     },
-    "qq:29c82f8d771a1996": {
-      "rule": "qvac-quality/spawn-without-error-listener",
+    "rh:2a9ef6d20b7f993e": {
+      "rule": "async-hygiene/spawn-without-error-listener",
       "file": "packages/test-suite/src/cli/utils/process-manager.ts",
       "code": "const child = spawn(command, args, {",
       "status": "finding",
       "reason": "Issue #31 (reproduced).",
       "triagedAt": "2026-11-18"
     },
-    "qq:2b205c9c05640d58": {
-      "rule": "qvac-quality/spawn-without-error-listener",
+    "rh:52eaf9a99b25b7bc": {
+      "rule": "async-hygiene/spawn-without-error-listener",
       "file": "packages/test-suite/src/cli/utils/process-manager.ts",
       "code": "const child = spawn('idevicesyslog', ['-u', opts.udid, '--no-colors'], {",
       "status": "accepted",
       "reason": "Same class as #31 (idevicesyslog spawn, child returned in an object, no caller listens for error). Guarded by `which idevicesyslog` just before, so ENOENT is unlikely. Fix together with #31.",
       "triagedAt": "2026-11-18"
     },
-    "qq:b6feec0f56eeb04f": {
-      "rule": "qvac-quality/spawn-without-error-listener",
+    "rh:9cabf37e9669b273": {
+      "rule": "async-hygiene/spawn-without-error-listener",
       "file": "packages/test-suite/src/cli/utils/process-manager.ts",
       "code": "const child = spawn('adb', args, {",
       "status": "accepted",
       "reason": "Same class as #31 (adb logcat spawn, no caller listens for error). An Android run without adb on PATH crashes here instead of reporting it. Fix together with #31.",
       "triagedAt": "2026-11-18"
     },
-    "qq:f18ef09ca81eb2eb": {
-      "rule": "qvac-quality/abort-signal-race",
+    "rh:43cc3ea09f20f0a7": {
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/tts-ggml/src/lib/pocketLifecycle.ts",
       "code": "signal.addEventListener(\"abort\", onAbort, { once: true });",
       "status": "false-positive",

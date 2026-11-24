@@ -1,9 +1,9 @@
 import type { Baseline, RuleHit } from './stages/rules.js'
 import { effectiveStatus, type State } from './state.js'
 import { severityOf, type Finding } from './types.js'
+import { sourceLink } from './util.js'
+import { RULE_PREFIX } from './rules/index.js'
 
-const link = (repo: string, commit: string, f: Finding) =>
-  `https://github.com/${repo}/blob/${commit}/${f.file}#L${f.line}`
 const cell = (s: string, max = 400) => s.replace(/\n/g, ' ').replace(/\|/g, '\\|').slice(0, max)
 
 export function issueBody(f: Finding): string {
@@ -34,7 +34,7 @@ export function issueBody(f: Finding): string {
   ].join('\n')
 }
 
-export function toMarkdown(state: State, repo: string, commit: string): string {
+export function toMarkdown(state: State, repo: string | undefined, commit: string, title = repo ?? 'target'): string {
   const all = Object.values(state.findings)
   const by = (s: string) =>
     all.filter((f) => effectiveStatus(f) === s && f.presence !== 'gone').sort((a, b) => b.score - a.score)
@@ -47,11 +47,11 @@ export function toMarkdown(state: State, repo: string, commit: string): string {
   const gone = all.filter((f) => f.presence === 'gone')
   const fresh = all.filter((f) => f.firstSeenCommit === commit && f.presence !== 'gone')
   const row = (f: Finding, i: number) =>
-    `| ${i + 1} | ${f.score} | ${severityOf(f)} | ${f.category} | [${f.file}:${f.line}](${link(repo, commit, f)}) | ${cell(f.title)} | ${f.issue ? `[issue](${f.issue})` : '-'} |`
+    `| ${i + 1} | ${f.score} | ${severityOf(f)} | ${f.category} | ${sourceLink(repo, commit, f.file, f.line)} | ${cell(f.title)} | ${f.issue ? `[issue](${f.issue})` : '-'} |`
   const head = '| # | Score | Severity | Category | Location | Finding | Tracked |\n|---|---|---|---|---|---|---|'
   return (
     [
-      `# Findings for ${repo}@${commit.slice(0, 12)}`,
+      `# Findings for ${title}@${commit.slice(0, 12)}`,
       '',
       `Generated ${new Date().toISOString()}. ${confirmed.length} confirmed by a human, ${agentOnly.length} confirmed by the verifier agent only, ${uncertain.length} uncertain, ${candidate.length} unverified, ${rejected.length} rejected, ${gone.length} no longer present. ${fresh.length} first seen at this commit.`,
       '',
@@ -84,25 +84,25 @@ export function toMarkdown(state: State, repo: string, commit: string): string {
 }
 
 /** Report for the deterministic rules stage: new hits first, then the accepted baseline with its reasons. */
-export function rulesMarkdown(hits: RuleHit[], baseline: Baseline, commit: string, upstream: string, files: number): string {
-  const link = (h: RuleHit) => `[${h.file}:${h.line}](https://github.com/${upstream}/blob/${commit}/${h.file}#L${h.line})`
+export function rulesMarkdown(hits: RuleHit[], baseline: Baseline, commit: string, upstream: string | undefined, files: number, title = upstream ?? 'target'): string {
+  const link = (h: RuleHit) => sourceLink(upstream, commit, h.file, h.line)
   const fresh = hits.filter((h) => !baseline.accepted[h.id])
   const known = hits.filter((h) => baseline.accepted[h.id])
   const cell = (s: string) => s.replace(/\|/g, '\\|').replace(/`/g, "'")
   const out = [
-    `# qvac-quality rules on ${upstream}@${commit.slice(0, 12)}`,
+    `# ${RULE_PREFIX} rules on ${title}@${commit.slice(0, 12)}`,
     '',
     `${files} files, ${hits.length} hits: ${fresh.length} new, ${known.length} in the accepted baseline.`,
     '',
     '## New (not in the baseline)',
     '| Rule | Location | Code | Id |',
     '|---|---|---|---|',
-    ...fresh.map((h) => `| ${h.rule.replace('qvac-quality/', '')} | ${link(h)} | \`${cell(h.code).slice(0, 100)}\` | ${h.id} |`),
+    ...fresh.map((h) => `| ${h.rule.replace(`${RULE_PREFIX}/`, '')} | ${link(h)} | \`${cell(h.code).slice(0, 100)}\` | ${h.id} |`),
     '',
     '## Triaged baseline',
     '| Rule | Location | Status | Reason | Id |',
     '|---|---|---|---|---|',
-    ...known.map((h) => `| ${h.rule.replace('qvac-quality/', '')} | ${link(h)} | ${baseline.accepted[h.id]!.status} | ${cell(baseline.accepted[h.id]!.reason)} | ${h.id} |`),
+    ...known.map((h) => `| ${h.rule.replace(`${RULE_PREFIX}/`, '')} | ${link(h)} | ${baseline.accepted[h.id]!.status} | ${cell(baseline.accepted[h.id]!.reason)} | ${h.id} |`),
     '',
   ]
   return out.join('\n')

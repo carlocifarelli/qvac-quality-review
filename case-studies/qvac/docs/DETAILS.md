@@ -1,6 +1,6 @@
-# qvac-quality-review: details
+# QVAC case study: full notes
 
-The [README](../README.md) is the short version. This file keeps the full design notes, measurements and demos it summarises.
+The [case study README](../README.md) is the short version, and the tool's general design is in [docs/design.md](../../../docs/design.md). This file is the lab notebook of the QVAC run: design notes as they were written then, measurements and demos. Paths like `src/` and `.github/` are at the repository root; `results/`, `state/`, `demo/` and `verification/` are in this case study's folder. The rule plugin was called `qvac-quality` at the time; it is now `async-hygiene`.
 
 ## The problem as I framed it
 
@@ -69,15 +69,15 @@ Both runs below are recorded in `demo/` (state and reports), so they can be insp
 
 | Run | Target | Agent calls | Cost | Wall time | Result |
 |---|---|---|---|---|---|
-| 1 (submission) | `0c8a151` | 86 (40 reviews + 46 verifications) | $27.47 | ~10 min (5 parallel agents; 49 min of agent time) | 47 candidates. After human review of all 47: **31 confirmed** (issues #1-#31), **16 rejected** |
+| 1 (first run) | `0c8a151` | 86 (40 reviews + 46 verifications) | $27.47 | ~10 min (5 parallel agents; 49 min of agent time) | 47 candidates. After human review of all 47: **31 confirmed** (issues #1-#31), **16 rejected** |
 | 2 (same commit) | `0c8a151` | **0** (40 cache hits) | **$0.00** | 12 s | identical findings; nothing re-reviewed |
 | 3 (simulated next commit) | `0c8a151` + a local commit that fixes finding #9 in one file | **2** (39 cache hits) | **$0.64** | 87 s | the fixed finding moved to **"No longer present"**; only the changed file was re-reviewed and re-verified |
 
-Run 3 also exposed a defect in my own design, which I fixed and kept here as evidence: the re-review of the changed file found the *other* known finding in that file again, and classified it `correctness` instead of `concurrency`. Category was part of the v1 fingerprint, so it became a duplicate. The fix (v2): the fingerprint is `file + anchor` only, and the reviewer prompt now lists the findings already recorded for that file so it does not re-report them. `scripts/migrate-fingerprints-v2.ts` migrated the state and the human overrides.
+Run 3 also exposed a defect in my own design, which I fixed and kept here as evidence: the re-review of the changed file found the *other* known finding in that file again, and classified it `correctness` instead of `concurrency`. Category was part of the v1 fingerprint, so it became a duplicate. The fix (v2): the fingerprint is `file + anchor` only, and the reviewer prompt now lists the findings already recorded for that file so it does not re-report them. A one-off migration script (in the git history) migrated the state and the human overrides.
 
 ## Deterministic rules: the agent discovers, the rules prevent (demonstrated)
 
-After every candidate had a human decision, I looked for confirmed findings whose defect has a *shape* a parser can see, and wrote a local ESLint plugin, `qvac-quality` ([`src/rules/`](../src/rules/)), with one rule per class. Each rule's header names the findings it generalises; [`test/rules.test.ts`](../test/rules.test.ts) runs ESLint's `RuleTester` on reduced copies of those findings (invalid cases) and on the correct patterns QVAC already uses elsewhere (valid cases).
+After every candidate had a human decision, I looked for confirmed findings whose defect has a *shape* a parser can see, and wrote a local ESLint plugin, `qvac-quality` ([`src/rules/`](../../../src/rules/)), with one rule per class. Each rule's header names the findings it generalises; [`test/rules.test.ts`](../../../test/rules.test.ts) runs ESLint's `RuleTester` on reduced copies of those findings (invalid cases) and on the correct patterns QVAC already uses elsewhere (valid cases).
 
 | Rule | Generalises | What it flags |
 |---|---|---|
@@ -92,7 +92,7 @@ After every candidate had a human decision, I looked for confirmed findings whos
 
 - **Recall on the source findings:** all 9 code locations of the 7 findings above are flagged.
 - **13 hits beyond those 9**, each triaged by me:
-  - 1 **new finding** the agent had not reported: [#32](https://github.com/carlocifarelli/qvac-quality-review/issues/32). The fit-stub fetch ignores a signal that is already aborted, so a cancelled load waits up to 40 s.
+  - 1 **new finding** the agent had not reported: [#32](https://github.com/carlocifarelli/agentic-code-review/issues/32). The fit-stub fetch ignores a signal that is already aborted, so a cancelled load waits up to 40 s.
   - 2 are the caller side of #11 and #16.
   - 8 have the pattern but are not worth fixing, each with its reason (bounded at 250 ms, guarded by a `which`, diagnostic CLI, test-only broker).
   - 2 are false positives. Both involve a check that lives in a caller the rule does not follow.
@@ -115,11 +115,11 @@ A one-off review finds bugs once. To keep finding and preventing them, each part
 
 | When | What runs | Cost | Effect | Where |
 |---|---|---|---|---|
-| **Every pull request** in the target repo | `qr pr`: rules on the changed files; agent review + verify on the riskiest changed files (at most `prMaxFiles`, default 10) | rules: seconds, $0. Agent: ~1 min and ~$0.5-1 per file | Rule hits not in the baseline **block** the PR. Agent leads are **advisory**, in one sticky comment. Known findings fixed by the PR are reported. | [`integrations/github/qvac-quality-pr.yml`](../integrations/github/qvac-quality-pr.yml) (proposed for QVAC) |
-| **Weekly** (Mon 05:00 UTC) and on demand, on target `main` | rules on the whole scope; full `qr run` on the top-risk files (cache: unchanged files cost $0); report | ~10 s rules; agent ~$3-6 a week in steady state | Opens a **triage PR** in this repo with the new state and reports | [`.github/workflows/scheduled-scan.yml`](../.github/workflows/scheduled-scan.yml) |
-| **Triage PR merged** (a person edited `state/overrides.json` / `state/rules-baseline.json` in it) | `dedupe --human-confirmed`, `publish` | GitHub API only | Confirmed findings become issues, with the duplicate searches logged | [`.github/workflows/publish.yml`](../.github/workflows/publish.yml) |
+| **Every pull request** in the target repo | `qr pr`: rules on the changed files; agent review + verify on the riskiest changed files (at most `prMaxFiles`, default 10) | rules: seconds, $0. Agent: ~1 min and ~$0.5-1 per file | Rule hits not in the baseline **block** the PR. Agent leads are **advisory**, in one sticky comment. Known findings fixed by the PR are reported. | [`qvac-pr-check.yml`](../qvac-pr-check.yml) (proposed for QVAC) |
+| **Weekly** (Mon 05:00 UTC) and on demand, on target `main` | rules on the whole scope; full `qr run` on the top-risk files (cache: unchanged files cost $0); report | ~10 s rules; agent ~$3-6 a week in steady state | Opens a **triage PR** in this repo with the new state and reports | [`.github/workflows/scheduled-scan.yml`](../../../.github/workflows/scheduled-scan.yml) |
+| **Triage PR merged** (a person edited `state/overrides.json` / `state/rules-baseline.json` in it) | `dedupe --human-confirmed`, `publish` | GitHub API only | Confirmed findings become issues, with the duplicate searches logged | [`.github/workflows/publish.yml`](../../../.github/workflows/publish.yml) |
 | **When a confirmed finding has a syntactic shape** | a person (or the agent, reviewed) adds a rule in `src/rules/` with the finding as its RuleTester case | one PR | The class is blocked on every future PR at no cost | `src/rules/`, `test/rules.test.ts` |
-| Every change to this tool | typecheck, unit tests, RuleTester | free | | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) |
+| Every change to this tool | typecheck, unit tests, RuleTester | free | | [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) |
 
 Why this split:
 - **Deterministic checks block.** They are repeatable and cheap, and each hit has an id that can be accepted with a reason.
@@ -138,13 +138,13 @@ The gate on a fix and on a regression is in [`demo/rules/`](../demo/rules/).
 - Rules: 1,013 files in 13 s, 22 hits, 0 untriaged.
 - No agent stage, because no API key is configured.
 - Presence: all 47 findings are still present.
-- Result: "nothing to triage", [run 44277366964](https://github.com/carlocifarelli/qvac-quality-review/actions/runs/44277366964).
+- Result: "nothing to triage", [run 44277366964](https://github.com/carlocifarelli/agentic-code-review/actions/runs/44277366964).
 
 The first run had shown two problems, both fixed:
 - It treated a `lastSeenCommit` bump as something to triage. Now only new leads, disappeared or reappeared findings, or untriaged rule hits open a triage PR (`scripts/triage-needed.mjs`).
 - The repository does not allow Actions to create pull requests. The workflow now falls back to an issue.
 
-The QVAC PR workflow is proposed only, because the exercise forbids changes upstream.
+The QVAC PR workflow is proposed only: installing it upstream is the maintainers' call.
 
 ## Running on QVAC itself: a local model, no code leaves the machine (demonstrated, measured with two models)
 
@@ -152,9 +152,9 @@ The review and verify stages can run on any OpenAI-compatible endpoint instead o
 
 ```bash
 # 1. serve a local model with QVAC (config in local/qvac.config.json: Qwen3-4B, preloaded)
-cd local && npx @qvac/cli serve --openai --no-default
+cd case-studies/qvac/local && npx @qvac/cli serve --openai --no-default
 # 2. review with it (concurrency 1, reviewTop 10; cost $0)
-npx tsx src/cli.ts run ../qvac -c qr.local.config.json -s state-local --only <files>
+npx tsx src/cli.ts -w case-studies/qvac run ../qvac -c case-studies/qvac/qr.local.config.json -s state-local --only <files>
 ```
 
 How it works, since QVAC (like OpenAI) does not combine `tools` and `response_format` in one request:
@@ -175,11 +175,11 @@ Local models are small, so the file under review is inlined (line-numbered) in t
 
 The pipeline runs end to end on QVAC with no code leaving the machine, but neither local model finds the defects this tool is for (the 35B model reads the code much better than the 4B one, but recalls 1 of 31): they need following the code across functions and files, and the model mostly reports generic "possible leak/race" patterns. So today the local backend is a privacy-preserving plumbing option, not a replacement; on private code the deterministic rules carry the gate and the next lever is disabling reasoning in the final JSON call and trying a dense model, not just a bigger one. The runs also found integration bugs, now fixed (`openaiMaxTokens` is configurable): QVAC rejects tool calls unless the model is loaded with `tools: true` (and needs a larger context for inlined files), and without `max_tokens` one runaway generation blocked QVAC's single-slot server until requests timed out.
 
-## Scope and verification for this submission
+## Scope and verification
 
 - **Repository:** `tetherto/qvac` at the commit above, cloned fresh; `pnpm install --ignore-scripts` (no native builds needed for anything below).
 - **Scope (config `qr.config.json`):** `packages/*/src/**/*.{ts,tsx,js,mjs,cjs}` plus the registry server's `lib/`, `utils/`, `shared/`, `client/lib/`, `client/bin/` and `index.js`. Excluded: tests, examples, e2e, benchmarks, fixtures, generated code, `.d.ts`, files under 40 lines of code. Result: **1,013 files in scope, 681 above the size floor, top 40 reviewed** (list and signals in `results/selection.json`).
-- **Not in scope:** C++ addons, the Kotlin SDK, docs site, CI scripts. JS/TS only, as the brief allows.
+- **Not in scope:** C++ addons, the Kotlin SDK, docs site, CI scripts. JS/TS only.
 - **How results were verified, in three tiers:**
   1. *Agent verification* for all 47 candidates (adversarial second pass; reasoning stored per finding).
   2. *Human code reading* for every one of the 47 candidates: I read the cited paths and the callers named in the evidence, and wrote the decision and what I checked in `state/overrides.json` (31 confirmed, 16 rejected).
@@ -195,9 +195,9 @@ The pipeline runs end to end on QVAC with no code leaving the machine, but neith
 | Adversarial verify pass | Cuts false positives before a human looks; cheaper than human time | Self-consistency voting (more calls, same blind spots) |
 | Anchor-based fingerprints | Stable across edits, cheap, human-readable | AST-path fingerprints (more robust to edits inside the line, more code), QVAC's own `quality-v1` fingerprints (structure-only) |
 | State in JSON files committed to git | Diffable, reviewable in PRs, no service | SQLite/DB (overkill), GitHub issues as the only store (rate limits, not offline) |
-| Issues in a repo we control as the destination | Required by the brief, gives IDs, discussion and labels | Markdown only (no IDs/discussion) |
+| Issues in a repo I control as the destination | Gives IDs, discussion and labels without touching upstream | Markdown only (no IDs/discussion) |
 | Correctness lint as a finding source | Kept as a cheap selection signal only: on this codebase it produced noise, not defects | Type-aware ESLint everywhere (needs every package built; 36 hits on four packages, none actionable) |
-| Human reproduction for top findings | The brief asks for evidence; a running repro is the strongest | Trusting agent confidence |
+| Human reproduction for top findings | A running repro is the strongest evidence | Trusting agent confidence |
 
 ### Ease of use
 One command per stage; config in one JSON file with defaults; `--select-only` for a free dry run; reports are plain Markdown. Another engineer needs Node, git and a Claude Code login.
@@ -213,10 +213,10 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 - Source code is sent to the model provider (Anthropic). For a private codebase that is a policy decision; the backend is isolated in `src/backends/`, and the `openai-compatible` backend runs the same pipeline on a local model through `qvac serve` (see above).
 - Untrusted repository content reaches the prompt (prompt-injection surface). Mitigations: read-only tools, schema-validated output, anchors re-checked against the file, a second independent pass, and a human gate before anything is filed.
 - No credentials in the repo or the state: GitHub access goes through the operator's own `gh` login, and `publish` refuses to file into the upstream repo.
-- Sensitive findings: `publish` files into a private repo only; nothing is sent upstream.
+- Sensitive findings: `publish` files into a repo the operator controls; nothing is sent upstream automatically.
 
 ### Maintainability
-~1,500 lines of TypeScript (about 500 of them the rules), strict mode, zod at every boundary, unit tests for fingerprinting, presence tracking, ranking and signals, and RuleTester cases for every rule (`npm test`, 56 tests). Prompts are versioned (`PROMPT_VERSION`) and part of the cache key. State format changes ship with a migration script (`scripts/migrate-fingerprints-v2.ts`). Each stage is one file with one exported function, so a stage can be replaced (e.g. another backend in `src/backends/`) without touching the others.
+~1,500 lines of TypeScript (about 500 of them the rules), strict mode, zod at every boundary, unit tests for fingerprinting, presence tracking, ranking and signals, and RuleTester cases for every rule (`npm test`, 56 tests at the time). Prompts are versioned (`PROMPT_VERSION`) and part of the cache key. State format changes ship with a migration script (the v2 one is in the git history). Each stage is one file with one exported function, so a stage can be replaced (e.g. another backend in `src/backends/`) without touching the others.
 
 ## Limitations (honest)
 
@@ -245,13 +245,13 @@ One command per stage; config in one JSON file with defaults; `--select-only` fo
 ## Demonstrated vs proposed
 
 - **Demonstrated** (ran, outputs committed): selection, review, verify, report, presence tracking across commits, cache reuse, dedupe with logged searches, idempotent publish to this repo's issues, the fingerprint migration, all reproductions in `verification/`, the `qvac-quality` rules with their baseline gate on a fix and on a regression, including the PR-scoped `--changed` mode for the rules, and `qr pr` on a simulated pull request (rules + agent + presence, PR comment in `demo/pr/`).
-- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), the agent stage inside Actions (needs an `ANTHROPIC_API_KEY` secret), `publish.yml` in Actions (no triage PR has been merged yet), the QVAC PR workflow (cannot be installed upstream), and a local model that matches Claude. The QVAC local backend is demonstrated with two models (Qwen3-4B and KAT-Coder 35B MoE, measured in `results/local-qvac*/`). Everything under "Next priorities" is proposed only.
+- **Not demonstrated:** `--typed-lint` on the full scope (ran only exploratorily on four packages), the agent stage inside Actions (needs an `ANTHROPIC_API_KEY` secret), `publish.yml` in Actions (no triage PR has been merged yet), the QVAC PR workflow (not installed upstream), and a local model that matches Claude. The QVAC local backend is demonstrated with two models (Qwen3-4B and KAT-Coder 35B MoE, measured in `results/local-qvac*/`). Everything under "Next priorities" is proposed only.
 
 ## Time spent
 
-Assessment received 09:07 CET on 2026-11-18; first complete version pushed at about 09:45 CET. Timestamps in `state/findings.json` (`runs`), `results/run-log.json` and the duplicate-search log are in UTC and back this up. The agent stages ran in parallel (49 minutes of agent time in about 10 minutes of wall-clock time), which is why the elapsed time is short. Further work is logged below. **Total: about 5 hours** (09:07 to about 14:05 CET), within the 8-hour budget.
+Built in one day: about 5 hours from the task to the first complete version, then the rest of the day for the parts below. Timestamps in `state/findings.json` (`runs`), `results/run-log.json` and the duplicate-search log are in UTC. The agent stages ran in parallel (49 minutes of agent time in about 10 minutes of wall-clock time).
 
-- **Assessment completed (same day):** human decision on all remaining 24 agent leads (18 confirmed, 6 rejected; one of the rejections came from the duplicate search, because PR #4379 documents the behaviour), 2 new executed reproductions, 188 more duplicate searches, 18 more issues filed (#14-#31).
+- **Triage completed (same day):** human decision on all remaining 24 agent leads (18 confirmed, 6 rejected; one of the rejections came from the duplicate search, because PR #4379 documents the behaviour), 2 new executed reproductions, 188 more duplicate searches, 18 more issues filed (#14-#31).
 - **Deterministic rules (same day):** the `qvac-quality` ESLint plugin (6 rules, 42 RuleTester cases), the `qr rules` command with its triaged baseline and gate, a run over all 1,013 files with every hit triaged, one new finding filed (#32), and the fix and regression demos.
 - **Workflow (same day):** `qr pr` (rules blocking, agent advisory on changed files, fixed/open findings, PR comment), `prMaxFiles` cap, the simulated PR demo ($0.88), and four workflow files: tool CI, weekly scan with triage PR, publish on merge, and the proposed PR check for QVAC.
 - **QVAC local backend (same day):** the `openai-compatible` backend for `qvac serve`, and two measured runs on a workstation against the 31 confirmed findings (Qwen3-4B and KAT-Coder 35B MoE, about 30 minutes each, mostly unattended).

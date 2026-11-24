@@ -31,7 +31,7 @@ export async function review(root: string, units: ReviewUnit[], cfg: Config, sto
     if (out) usage.cached++
     else {
       try {
-        out = await ask(cfg, { cwd: root, model: cfg.reviewModel, prompt: reviewPrompt(u, u.loc > cfg.maxLoc, Object.values(state.findings).filter((f) => f.file === u.file && f.presence !== 'gone')), schema: ReviewOut }, usage, u.file)
+        out = await ask(cfg, { cwd: root, model: cfg.reviewModel, prompt: reviewPrompt(cfg.project, u, u.loc > cfg.maxLoc, Object.values(state.findings).filter((f) => f.file === u.file && f.presence !== 'gone')), schema: ReviewOut }, usage, u.file)
         await store.cachePut(key, out)
       } catch (err) {
         failures.push(`${u.file}: ${(err as Error).message.slice(0, 200)}`)
@@ -67,7 +67,7 @@ export async function verify(root: string, cfg: Config, store: Store, state: Sta
     if (v) usage.cached++
     else {
       try {
-        v = await ask(cfg, { cwd: root, model: cfg.verifyModel, prompt: verifyPrompt(f), schema: VerdictOut }, usage, f.file)
+        v = await ask(cfg, { cwd: root, model: cfg.verifyModel, prompt: verifyPrompt(cfg.project, f), schema: VerdictOut }, usage, f.file)
         await store.cachePut(key, v)
       } catch (err) {
         failures.push(`${f.fingerprint}: ${(err as Error).message.slice(0, 200)}`)

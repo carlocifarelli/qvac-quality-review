@@ -1,0 +1,75 @@
+name: Agentic code review
+description: Deterministic async-hygiene rules (blocking) plus an optional AI review of the changed files (advisory), as one PR comment.
+author: Carlo Cifarelli
+branding:
+  icon: search
+  color: blue
+inputs:
+  command:
+    description: "`pr`: rules on the changed files + agent review of the riskiest ones, posted as a PR comment. `rules`: rules over the whole scope (no AI)."
+    default: pr
+  workspace:
+    description: Directory in your repository holding qr.config.json and state/ (rules-baseline.json). Created with `qr init`.
+    default: .qr
+  base:
+    description: Ref to diff against in `pr` mode. Defaults to the PR base branch.
+    default: ''
+  anthropic-api-key:
+    description: Enables the agent review (Claude Code, read-only tools). Without it only the deterministic rules run.
+    default: ''
+  comment:
+    description: Post or update one sticky comment on the pull request (`pr` mode).
+    default: 'true'
+  fail-on-new-hits:
+    description: Fail the job when a rule hit is not in the triaged baseline.
+    default: 'true'
+outputs:
+  new-hits:
+    description: '"true" when a rule hit is not in the baseline'
+    value: ${{ steps.qr.outputs.new-hits }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Install the tool
+      shell: bash
+      run: npm ci --prefix "$GITHUB_ACTION_PATH" --no-audit --no-fund
+    - name: Install the agent CLI
+      if: inputs.anthropic-api-key != '' && inputs.command == 'pr'
+      shell: bash
+      run: npm install -g @anthropic-ai/claude-code
+    - name: Run
+      id: qr
+      shell: bash
+      env:
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        QR_COMMAND: ${{ inputs.command }}
+        QR_WORKSPACE: ${{ github.workspace }}/${{ inputs.workspace }}
+        QR_BASE: ${{ inputs.base || format('origin/{0}', github.base_ref) }}
+      run: |
+        cd "$GITHUB_ACTION_PATH"
+        set +e
+        if [ "$QR_COMMAND" = pr ]; then
+          agent=$([ -n "$ANTHROPIC_API_KEY" ] || echo --no-agent)
+          npx tsx src/cli.ts -w "$QR_WORKSPACE" pr "$GITHUB_WORKSPACE" --base "$QR_BASE" $agent
+        else
+          npx tsx src/cli.ts -w "$QR_WORKSPACE" rules "$GITHUB_WORKSPACE"
+        fi
+        code=$?
+        set -e
+        [ $code -le 1 ] || exit $code
+        echo "new-hits=$([ $code = 1 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+    - name: Comment on the pull request
+      if: inputs.command == 'pr' && inputs.comment == 'true' && github.event.pull_request.number
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh pr comment ${{ github.event.pull_request.number }} -R ${{ github.repository }} --body-file "${{ github.workspace }}/${{ inputs.workspace }}/results/PR.md" --edit-last --create-if-none
+    - name: Fail on rule hits not in the baseline
+      if: steps.qr.outputs.new-hits == 'true' && inputs.fail-on-new-hits == 'true'
+      shell: bash
+      run: |
+        echo "::error::New rule hits: fix them, or triage them into ${{ inputs.workspace }}/state/rules-baseline.json with a reason."
+        exit 1

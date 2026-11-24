@@ -22,4 +22,4 @@ Prerequisite for the TypeScript/Bare ones: `pnpm install --ignore-scripts` in th
 `run-inference-repros.sh` copies the test into `packages/inference/test/`, builds it with the package's
 own test tsconfig, runs only that file, and removes it again. Nothing is committed upstream.
 
-Recorded outputs from the submission run are in [`outputs.md`](outputs.md).
+Recorded outputs from the first run are in [`outputs.md`](outputs.md).

@@ -1,12 +1,14 @@
 // Used by scheduled-scan.yml: is there anything for a human to triage?
-// Compares the committed state/findings.json with the one the scan produced.
+// Compares the committed $WS/state/findings.json with the one the scan produced.
 // Prints a one-line summary and exits 0 when triage is needed, 1 when not.
 // `lastSeenCommit` and line moves alone are not worth a PR.
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 
-const before = JSON.parse(execFileSync('git', ['show', 'HEAD:state/findings.json'], { encoding: 'utf8' })).findings
-const after = JSON.parse(readFileSync('state/findings.json', 'utf8')).findings
+const ws = process.env.WS ?? '.'
+const file = `${ws}/state/findings.json`.replace(/^\.\//, '')
+const before = JSON.parse(execFileSync('git', ['show', `HEAD:${file}`], { encoding: 'utf8' })).findings
+const after = JSON.parse(readFileSync(file, 'utf8')).findings
 const rulesNew = Number(process.env.RULES_NEW || 0)
 
 const added = Object.keys(after).filter((k) => !before[k])

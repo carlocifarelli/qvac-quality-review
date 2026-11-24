@@ -26,7 +26,7 @@ export default rule(
         for (const fn of listeners) {
           const risky = collect(source, fn.body, (n) => (n.type === 'CallExpression' && throwsSync(n)) || n.type === 'ThrowStatement', false)
           for (const r of risky) {
-            if (insideTry(r, fn)) continue
+            if (insideTry(r, fn) || exhaustivenessGuard(r)) continue
             const what = r.type === 'ThrowStatement' ? 'throw' : source.getText(r.callee)
             context.report({ node: r, messageId: 'escape', data: { what } })
           }
@@ -36,10 +36,24 @@ export default rule(
   },
 )
 
+/** Sync fs calls that report through their return value instead of throwing. */
+const NEVER_THROWS = new Set(['existsSync'])
+
 function throwsSync(call: N): boolean {
   const name = calleeName(call) ?? ''
+  if (NEVER_THROWS.has(name)) return false
   if (/Sync$/.test(name)) return true
   return call.callee.type === 'MemberExpression' && call.callee.object.type === 'Identifier' && call.callee.object.name === 'JSON' && name === 'parse'
+}
+
+/**
+ * `const x: never = value; throw …` in the same block: a TypeScript
+ * exhaustiveness check, unreachable while the types hold (nx case study).
+ */
+function exhaustivenessGuard(node: N): boolean {
+  if (node.type !== 'ThrowStatement') return false
+  const body: N[] = node.parent?.body ?? node.parent?.consequent ?? []
+  return body.some((s: N) => s.type === 'VariableDeclaration' && s.declarations.some((d: N) => d.id.typeAnnotation?.typeAnnotation?.type === 'TSNeverKeyword'))
 }
 
 function insideTry(node: N, fn: N): boolean {

@@ -1,4 +1,8 @@
 {
+  "project": {
+    "name": "QVAC",
+    "description": "the QVAC monorepo (Tether's local-AI SDK, JS/TS, runs on Node and Bare)"
+  },
   "include": [
     "packages/*/src/**/*.{ts,tsx,js,mjs,cjs}",
     "packages/registry-server/{lib,utils,shared,client/lib,client/bin}/**/*.js",
@@ -11,5 +15,5 @@
   "reviewModel": "claude-opus-5-5",
   "verifyModel": "claude-opus-5-5",
   "upstreamRepo": "tetherto/qvac",
-  "findingsRepo": "carlocifarelli/qvac-quality-review"
+  "findingsRepo": "carlocifarelli/agentic-code-review"
 }

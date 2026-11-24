@@ -1,0 +1,13 @@
+{
+  "project": {
+    "name": "qvac-quality-review",
+    "description": "the qvac-quality-review repository (Find, verify and rank defects worth fixing in a JS/TS repository (applied to tetherto/qvac))"
+  },
+  "include": [
+    "src/**/*.{ts,tsx,js,mjs,cjs}",
+    "lib/**/*.{ts,tsx,js,mjs,cjs}",
+    "*.{ts,tsx,js,mjs,cjs}"
+  ],
+  "reviewTop": 25,
+  "upstreamRepo": "carlocifarelli/qvac-quality-review"
+}

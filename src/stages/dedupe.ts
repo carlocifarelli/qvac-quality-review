@@ -9,6 +9,8 @@ import { effectiveStatus, type State } from '../state.js'
  * a human reads them and marks a duplicate in overrides.json.
  */
 export async function dedupe(cfg: Config, state: State, opts: { force?: boolean; only?: string[] } = {}) {
+  const upstream = cfg.upstreamRepo
+  if (!upstream) throw new Error('set upstreamRepo in the config: dedupe searches its issues and pull requests')
   let queries = 0
   for (const f of Object.values(state.findings)) {
     if (opts.only && !opts.only.includes(f.fingerprint)) continue
@@ -18,7 +20,7 @@ export async function dedupe(cfg: Config, state: State, opts: { force?: boolean;
     const terms = [...new Set([...(f.verdict?.duplicateSearchTerms ?? []), base])]
     f.duplicates = []
     for (const t of terms) {
-      for (const r of await searchIssuesAndPrs(cfg.upstreamRepo, t)) {
+      for (const r of await searchIssuesAndPrs(upstream, t)) {
         f.duplicates.push({
           query: r.query,
           searchedAt: new Date().toISOString(),

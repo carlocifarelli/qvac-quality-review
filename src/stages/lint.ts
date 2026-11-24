@@ -1,10 +1,10 @@
 import { ESLint, type Linter } from 'eslint'
 import tseslint from 'typescript-eslint'
-import { RULES as QVAC_RULES, plugin as qvacQuality } from '../rules/index.js'
+import { RULES as HYGIENE_RULES, RULE_PREFIX, plugin as hygiene } from '../rules/index.js'
 
 /**
- * Correctness-only ESLint pass. Style is out of scope (QVAC lints with lunte
- * and prettier already). Type-aware rules run when the target has its
+ * Correctness-only ESLint pass. Style is out of scope: projects
+ * have their own linters and formatters for that. Type-aware rules run when the target has its
  * dependencies installed; otherwise the parser falls back to syntax-only rules.
  */
 const CORE_RULES = {
@@ -42,8 +42,8 @@ export async function runLint(root: string, files: string[], typed: boolean): Pr
     errorOnUnmatchedPattern: false,
     overrideConfig: [
       { linterOptions: { reportUnusedDisableDirectives: 'off', noInlineConfig: true } },
-      // The qvac-quality rules also feed the risk signals, so files with known bug patterns are reviewed first.
-      { files: ['**/*.{js,mjs,cjs,ts,tsx}'], languageOptions: { ecmaVersion: 'latest', sourceType: 'module' }, plugins: { 'qvac-quality': qvacQuality }, rules: { ...CORE_RULES, ...QVAC_RULES } },
+      // The async-hygiene rules also feed the risk signals, so files with known bug patterns are reviewed first.
+      { files: ['**/*.{js,mjs,cjs,ts,tsx}'], languageOptions: { ecmaVersion: 'latest', sourceType: 'module' }, plugins: { [RULE_PREFIX]: hygiene }, rules: { ...CORE_RULES, ...HYGIENE_RULES } },
       {
         files: ['**/*.{ts,tsx}'],
         languageOptions: {

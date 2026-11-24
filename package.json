@@ -1,11 +1,37 @@
 {
-  "name": "qvac-quality-review",
-  "version": "0.1.0",
-  "description": "Find, verify and rank defects worth fixing in a JS/TS repository (applied to tetherto/qvac)",
+  "name": "agentic-code-review",
+  "version": "0.2.0",
+  "description": "Find, verify and rank defects worth fixing in a JS/TS repository: an AI agent discovers, an adversarial pass and a human verify, deterministic ESLint rules keep the bug classes from coming back",
+  "license": "MIT",
+  "author": "Carlo Cifarelli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carlocifarelli/agentic-code-review.git"
+  },
+  "keywords": [
+    "code-review",
+    "ai",
+    "llm",
+    "agents",
+    "claude",
+    "eslint",
+    "eslint-plugin",
+    "static-analysis",
+    "github-action",
+    "typescript"
+  ],
   "type": "module",
   "bin": {
     "qr": "./dist/cli.js"
   },
+  "exports": {
+    "./eslint-plugin": "./dist/rules/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "action.yml"
+  ],
   "engines": {
     "node": ">=22"
   },
@@ -14,7 +40,8 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "qr": "tsx src/cli.ts"
+    "qr": "tsx src/cli.ts",
+    "prepare": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "commander": "^15.1.0",

@@ -6,12 +6,12 @@ import { git } from '../util.js'
 import type { AgentCall } from './claude-cli.js'
 
 /**
- * Backend for any OpenAI-compatible chat endpoint, built for `qvac serve --openai`
- * (QVAC's own local server): the model runs on this machine and no source code
+ * Backend for any OpenAI-compatible chat endpoint (llama.cpp, Ollama, vLLM,
+ * `qvac serve --openai`): with a local server the model runs on this machine and no source code
  * leaves it.
  *
- * Two phases, because QVAC (like OpenAI) does not combine `tools` with
- * `response_format` in one request:
+ * Two phases, because some servers (QVAC's among them) do not combine `tools`
+ * with `response_format` in one request:
  *  1. exploration: the model may call read-only tools (read_file, grep) inside
  *     the target checkout, up to `maxToolCalls`;
  *  2. answer: one more request with no tools and a JSON-schema response_format,

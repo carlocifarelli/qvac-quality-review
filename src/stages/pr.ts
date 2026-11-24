@@ -1,7 +1,8 @@
 import type { Config } from '../config.js'
 import { type State, type Store, effectiveStatus, refreshPresence } from '../state.js'
 import type { Finding, Usage } from '../types.js'
-import { git } from '../util.js'
+import { git, sourceLink } from '../util.js'
+import { RULE_PREFIX } from '../rules/index.js'
 import { type Baseline, type RuleHit, runRules } from './rules.js'
 import { review, verify } from './review.js'
 import { changedFiles, select } from './select.js'
@@ -64,15 +65,15 @@ export async function runPr(root: string, cfg: Config, store: Store, state: Stat
 }
 
 /** The PR comment. Short on purpose: blocking items first, then advice, then context. */
-export function prMarkdown(r: PrResult, upstream: string): string {
-  const at = (file: string, line: number) => `[${file}:${line}](https://github.com/${upstream}/blob/${r.head}/${file}#L${line})`
+export function prMarkdown(r: PrResult, upstream: string | undefined): string {
+  const at = (file: string, line: number) => sourceLink(upstream, r.head, file, line)
   const issue = (f: Finding) => (f.issue ? `[#${f.issue.split('/').pop()}](${f.issue})` : f.fingerprint)
-  const out: string[] = [`### qvac-quality: ${r.files.length} changed file(s) checked against \`${r.base}\``, '']
+  const out: string[] = [`### Code review: ${r.files.length} changed file(s) checked against \`${r.base}\``, '']
   if (!r.files.length) return [...out, 'No in-scope JS/TS files changed.', ''].join('\n')
 
   out.push(r.blocking.length ? `**Blocking: ${r.blocking.length} rule hit(s) not in the baseline**` : '**Rules: no new hits** (deterministic, blocking)')
-  for (const h of r.blocking) out.push(`- \`${h.rule.replace('qvac-quality/', '')}\` ${at(h.file, h.line)}: ${h.message}`)
-  if (r.blocking.length) out.push('', 'Fix it, or if it is intended, add the id to `state/rules-baseline.json` with a reason (reviewed like any code change).')
+  for (const h of r.blocking) out.push(`- \`${h.rule.replace(`${RULE_PREFIX}/`, '')}\` ${at(h.file, h.line)}: ${h.message}`)
+  if (r.blocking.length) out.push('', 'Fix it, or if it is intended, add the id to the rules baseline (`state/rules-baseline.json`) with a reason (reviewed like any code change).')
   out.push('')
 
   if (r.agent.length) {

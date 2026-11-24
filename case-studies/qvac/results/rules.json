@@ -1,179 +1,179 @@
 {
   "commit": "0c8a1510ab4fe89893de174b07eb4901a2f3e9fd",
   "files": 1013,
-  "ms": 9315,
+  "ms": 6394,
   "hits": [
     {
-      "id": "qq:6c7f57b3d86f247d",
-      "rule": "qvac-quality/abort-signal-race",
+      "id": "rh:94dcb520e078bc6c",
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/handlers/load-model/download-lock.ts",
       "line": 174,
       "message": "`signal.aborted` is checked only before an await; an abort during that await is lost when `signal` is used here.",
       "code": "await delay(LOCK_POLL_MS, signal)"
     },
     {
-      "id": "qq:269a2a76e23d0ff2",
-      "rule": "qvac-quality/abort-signal-race",
+      "id": "rh:8f45e492c4bea4f9",
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/handlers/load-model/download-lock.ts",
       "line": 220,
       "message": "'abort' listener on `signal` with no `signal.aborted` check: a signal that is already aborted never fires it.",
       "code": "signal.addEventListener('abort', done, { once: true })"
     },
     {
-      "id": "qq:35ab6deda83daf41",
-      "rule": "qvac-quality/close-on-error",
+      "id": "rh:64d295a4ac82f598",
+      "rule": "async-hygiene/close-on-error",
       "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
       "line": 85,
       "message": "`corestore` (new Corestore) is still local when this await runs; if it throws, `corestore` is never closed. Close it in a catch/finally, or hand it off first.",
       "code": "await drive.ready()"
     },
     {
-      "id": "qq:30a0893ed4bda556",
-      "rule": "qvac-quality/abort-signal-race",
+      "id": "rh:565c0adee1b4a27c",
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
       "line": 325,
       "message": "`signal.aborted` is checked only before an await; an abort during that await is lost when `signal` is used here.",
       "code": "await downloadAndValidateFile("
     },
     {
-      "id": "qq:62f1a1b5d42f6146",
-      "rule": "qvac-quality/abort-signal-race",
+      "id": "rh:d662828ef4eb98a2",
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/handlers/load-model/hyperdrive.ts",
       "line": 481,
       "message": "'abort' listener on `signal` is added after an await with no `signal.aborted` check after it: an abort in between is never seen.",
       "code": "signal?.addEventListener('abort', () => reject(new DownloadCancelledError()), { once: true })"
     },
     {
-      "id": "qq:68ea159ab8d6af60",
-      "rule": "qvac-quality/abort-signal-race",
+      "id": "rh:248ef8f204b052e1",
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/model-fit/description/fetch.ts",
       "line": 181,
       "message": "'abort' listener on `options.signal` with no `options.signal.aborted` check: a signal that is already aborted never fires it.",
       "code": "options.signal?.addEventListener('abort', onAbort, { once: true })"
     },
     {
-      "id": "qq:ea56a6dd04dfc91f",
-      "rule": "qvac-quality/abort-signal-race",
+      "id": "rh:a0d3aca047e2533c",
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/model-fit/run/run.ts",
       "line": 180,
       "message": "'abort' listener on `signal` with no `signal.aborted` check: a signal that is already aborted never fires it.",
       "code": "signal?.addEventListener('abort', onAbort, { once: true })"
     },
     {
-      "id": "qq:fba389fa03173db2",
-      "rule": "qvac-quality/abort-signal-race",
+      "id": "rh:348c74ce4d82b410",
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/model-fit/run/run.ts",
       "line": 256,
       "message": "`options.signal.aborted` is checked only before an await; an abort during that await is lost when `options.signal` is used here.",
       "code": "return bounded(fit, key, options.timeoutMs ?? FIT_TIMEOUT_MS, options.signal)"
     },
     {
-      "id": "qq:0c0af5e8d2ddefc3",
-      "rule": "qvac-quality/abort-signal-race",
+      "id": "rh:762cb1e591ec5df7",
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/inference/src/plugins/builtin/llamacpp-completion/ops/kv-cache-session.ts",
       "line": 483,
       "message": "`input.signal.aborted` is checked only before an await; an abort during that await is lost when `input.signal` is used here.",
       "code": "const handle = makeHandle(cachePath, undefined, releaseWriteLock, input.signal)"
     },
     {
-      "id": "qq:0a98a08ee4b8406e",
-      "rule": "qvac-quality/throw-in-promise-listener",
+      "id": "rh:18ff6e1f50e0792d",
+      "rule": "async-hygiene/throw-in-promise-listener",
       "file": "packages/inference/src/utils/archive.ts",
       "line": 170,
       "message": "`fs.mkdirSync` can throw inside a listener registered in a Promise executor; the error escapes as an uncaught exception and the promise never settles. Wrap it in try/catch and reject.",
       "code": "fs.mkdirSync(dir, { recursive: true })"
     },
     {
-      "id": "qq:fb24ef68e5158925",
-      "rule": "qvac-quality/close-on-error",
+      "id": "rh:c8363fcc6dc55ff1",
+      "rule": "async-hygiene/close-on-error",
       "file": "packages/registry-server/client/lib/profiler.js",
       "line": 173,
       "message": "`store` (new Corestore) is still local when this await runs; if it throws, `store` is never closed. Close it in a catch/finally, or hand it off first.",
       "code": "const hcStats = await HypercoreStats.fromCorestore(store, { cacheExpiryMs: 1000 })"
     },
     {
-      "id": "qq:07ba67689dff70fe",
-      "rule": "qvac-quality/close-on-error",
+      "id": "rh:7aac58fe790ca5c9",
+      "rule": "async-hygiene/close-on-error",
       "file": "packages/registry-server/client/lib/profiler.js",
       "line": 173,
       "message": "`swarm` (new Hyperswarm) is still local when this await runs; if it throws, `swarm` is never closed. Close it in a catch/finally, or hand it off first.",
       "code": "const hcStats = await HypercoreStats.fromCorestore(store, { cacheExpiryMs: 1000 })"
     },
     {
-      "id": "qq:be98e416fd26ee40",
-      "rule": "qvac-quality/stale-error-reject",
+      "id": "rh:b6747ea1556492ca",
+      "rule": "async-hygiene/stale-error-reject",
       "file": "packages/registry-server/lib/metrics-server.js",
       "line": 50,
       "message": "`this._server.on('error', reject)` outlives the startup promise: later errors from `this._server` are swallowed. Remove it after startup or replace it with a logging handler.",
       "code": "this._server.on('error', reject)"
     },
     {
-      "id": "qq:6019e50d978d1f8b",
-      "rule": "qvac-quality/exit-code-ignores-signal",
+      "id": "rh:47bd43dfb7ac28dc",
+      "rule": "async-hygiene/exit-code-ignores-signal",
       "file": "packages/test-suite/src/cli/commands/run-consumer-desktop.ts",
       "line": 51,
       "message": "`process.exit(code || 0)` exits 0 when the child was killed by a signal (code is null). Read the handler's `signal` argument and exit non-zero.",
       "code": "process.exit(code || 0)"
     },
     {
-      "id": "qq:7c09feba06be3e1e",
-      "rule": "qvac-quality/exit-code-ignores-signal",
+      "id": "rh:38a85398d5d9f26d",
+      "rule": "async-hygiene/exit-code-ignores-signal",
       "file": "packages/test-suite/src/cli/commands/run-consumer-electron.ts",
       "line": 205,
       "message": "`process.exit(code || 0)` exits 0 when the child was killed by a signal (code is null). Read the handler's `signal` argument and exit non-zero.",
       "code": "process.exit(code || 0)"
     },
     {
-      "id": "qq:4d44afd13430f881",
-      "rule": "qvac-quality/exit-code-ignores-signal",
+      "id": "rh:85da4bba3c9d5573",
+      "rule": "async-hygiene/exit-code-ignores-signal",
       "file": "packages/test-suite/src/cli/commands/run-consumer-external.ts",
       "line": 47,
       "message": "`process.exit(code || 0)` exits 0 when the child was killed by a signal (code is null). Read the handler's `signal` argument and exit non-zero.",
       "code": "process.exit(code || 0)"
     },
     {
-      "id": "qq:cec9222048c25b89",
-      "rule": "qvac-quality/stale-error-reject",
+      "id": "rh:54ff4eb80eb8c084",
+      "rule": "async-hygiene/stale-error-reject",
       "file": "packages/test-suite/src/cli/utils/local-broker.ts",
       "line": 172,
       "message": "`tcpServer.on('error', reject)` outlives the startup promise: later errors from `tcpServer` are swallowed. Remove it after startup or replace it with a logging handler.",
       "code": "tcpServer.on('error', reject)"
     },
     {
-      "id": "qq:82675b1bf1d71700",
-      "rule": "qvac-quality/stale-error-reject",
+      "id": "rh:b663441ca76429ce",
+      "rule": "async-hygiene/stale-error-reject",
       "file": "packages/test-suite/src/cli/utils/local-broker.ts",
       "line": 173,
       "message": "`httpServer.on('error', reject)` outlives the startup promise: later errors from `httpServer` are swallowed. Remove it after startup or replace it with a logging handler.",
       "code": "httpServer.on('error', reject)"
     },
     {
-      "id": "qq:29c82f8d771a1996",
-      "rule": "qvac-quality/spawn-without-error-listener",
+      "id": "rh:2a9ef6d20b7f993e",
+      "rule": "async-hygiene/spawn-without-error-listener",
       "file": "packages/test-suite/src/cli/utils/process-manager.ts",
       "line": 61,
       "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
       "code": "const child = spawn(command, args, {"
     },
     {
-      "id": "qq:2b205c9c05640d58",
-      "rule": "qvac-quality/spawn-without-error-listener",
+      "id": "rh:52eaf9a99b25b7bc",
+      "rule": "async-hygiene/spawn-without-error-listener",
       "file": "packages/test-suite/src/cli/utils/process-manager.ts",
       "line": 219,
       "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
       "code": "const child = spawn('idevicesyslog', ['-u', opts.udid, '--no-colors'], {"
     },
     {
-      "id": "qq:b6feec0f56eeb04f",
-      "rule": "qvac-quality/spawn-without-error-listener",
+      "id": "rh:9cabf37e9669b273",
+      "rule": "async-hygiene/spawn-without-error-listener",
       "file": "packages/test-suite/src/cli/utils/process-manager.ts",
       "line": 237,
       "message": "The child from `spawn(…)` has no 'error' listener: a failed start (ENOENT, EACCES) becomes an uncaught exception.",
       "code": "const child = spawn('adb', args, {"
     },
     {
-      "id": "qq:f18ef09ca81eb2eb",
-      "rule": "qvac-quality/abort-signal-race",
+      "id": "rh:43cc3ea09f20f0a7",
+      "rule": "async-hygiene/abort-signal-race",
       "file": "packages/tts-ggml/src/lib/pocketLifecycle.ts",
       "line": 131,
       "message": "'abort' listener on `signal` with no `signal.aborted` check: a signal that is already aborted never fires it.",

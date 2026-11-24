@@ -1,20 +1,22 @@
-# Systematic scan of tetherto/qvac main (runs in this repo; nothing is sent upstream).
+# Scan of a case study's target (runs in this repo; nothing is sent upstream).
+# The target repository and its scope come from <workspace>/qr.config.json.
 #
-# Weekly, or on demand:
+# On demand (it ran weekly on QVAC during the case study):
 #   1. rules over the whole scope (free, ~10 s)
 #   2. agent review of the top-risk files, only if ANTHROPIC_API_KEY is set
-#      (the cache in state/ means unchanged files cost nothing)
+#      (the cache in <workspace>/state/ means unchanged files cost nothing)
 #   3. a triage pull request in this repo with the updated state and reports.
-# A human triages in that PR (state/overrides.json, state/rules-baseline.json);
+# A human triages in that PR (<workspace>/state/overrides.json, rules-baseline.json);
 # merging it triggers publish.yml, which files the confirmed findings as issues.
 name: scheduled-scan
 on:
-  schedule:
-    - cron: '0 5 * * 1' # Mondays 05:00 UTC
   workflow_dispatch:
     inputs:
+      workspace:
+        description: case study to scan
+        default: case-studies/qvac
       ref:
-        description: tetherto/qvac ref to scan
+        description: target ref to scan
         default: main
 permissions:
   contents: write
@@ -27,12 +29,16 @@ jobs:
     timeout-minutes: 60
     env:
       HAS_AGENT: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      WS: ${{ inputs.workspace }}
     steps:
       - uses: actions/checkout@v4
+      - name: Target from the config
+        id: target
+        run: echo "repo=$(jq -r .upstreamRepo "$WS/qr.config.json")" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
-          repository: tetherto/qvac
-          ref: ${{ inputs.ref || 'main' }}
+          repository: ${{ steps.target.outputs.repo }}
+          ref: ${{ inputs.ref }}
           path: target
           fetch-depth: 0 # churn needs history
       - uses: actions/setup-node@v4
@@ -45,8 +51,8 @@ jobs:
         id: rules
         run: |
           set +e
-          npx tsx src/cli.ts rules target > rules-new.txt
-          echo "new=$(grep -c 'qvac-quality/' rules-new.txt || true)" >> "$GITHUB_OUTPUT"
+          npx tsx src/cli.ts -w "$WS" rules target > rules-new.txt
+          echo "new=$(grep -c 'async-hygiene/' rules-new.txt || true)" >> "$GITHUB_OUTPUT"
           cat rules-new.txt
 
       - name: Agent review + verify
@@ -55,28 +61,29 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           npm install -g @anthropic-ai/claude-code
-          npx tsx src/cli.ts run target
+          npx tsx src/cli.ts -w "$WS" run target
 
       - name: Report
-        run: npx tsx src/cli.ts report target
+        run: npx tsx src/cli.ts -w "$WS" report target
 
       - name: Open triage pull request
         env:
           GH_TOKEN: ${{ github.token }}
           RULES_NEW: ${{ steps.rules.outputs.new }}
+          TARGET: ${{ steps.target.outputs.repo }}
         run: |
           sha=$(git -C target rev-parse --short=12 HEAD)
           # Only new leads, findings that disappeared or came back, or untriaged rule hits need a person.
           if ! summary=$(node scripts/triage-needed.mjs); then echo "nothing to triage at $sha: $summary"; exit 0; fi
           branch="scan/$(date -u +%F)-$sha"
-          git config user.name "qvac-quality-review[bot]"
+          git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add state results
-          git commit -m "Scan of tetherto/qvac@$sha: $summary"
+          git add "$WS/state" "$WS/results"
+          git commit -m "Scan of $TARGET@$sha: $summary"
           git push -u origin "$branch"
-          body="Scan of tetherto/qvac@$sha: $summary. Read results/FINDINGS.md and results/RULES.md, then record decisions on this branch: state/overrides.json for agent leads, state/rules-baseline.json for rule hits. Merging files the confirmed findings as issues (publish.yml). A confirmed class with a syntactic shape should get a rule in src/rules/ with the finding as its test case."
+          body="Scan of $TARGET@$sha: $summary. Read $WS/results/FINDINGS.md and $WS/results/RULES.md, then record decisions on this branch: $WS/state/overrides.json for agent leads, $WS/state/rules-baseline.json for rule hits. Merging files the confirmed findings as issues (publish.yml). A confirmed class with a syntactic shape should get a rule in src/rules/ with the finding as its test case."
           # Creating PRs from Actions needs "Allow GitHub Actions to create and approve pull requests"
           # (Settings > Actions > General). Without it, fall back to an issue that links the branch.
-          gh pr create --base main --head "$branch" --title "Triage: tetherto/qvac@$sha ($summary)" --body "$body" \
-            || gh issue create --title "Triage: tetherto/qvac@$sha ($summary)" --body "$body Branch: $branch (open a PR from it)."
+          gh pr create --base main --head "$branch" --title "Triage: $TARGET@$sha ($summary)" --body "$body" \
+            || gh issue create --title "Triage: $TARGET@$sha ($summary)" --body "$body Branch: $branch (open a PR from it)."

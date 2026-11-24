@@ -11,7 +11,7 @@ RuleTester.afterAll = afterAll
 const tester = new RuleTester({ languageOptions: { parser: tseslint.parser, ecmaVersion: 'latest', sourceType: 'module' } })
 const r = (name: string) => plugin.rules![name]!
 
-// Invalid cases are reduced copies of the confirmed QVAC findings they generalise.
+// Invalid cases are reduced copies of the confirmed findings they generalise (QVAC case study).
 
 tester.run('abort-signal-race', r('abort-signal-race'), {
   valid: [

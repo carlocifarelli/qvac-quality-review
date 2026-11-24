@@ -1,18 +1,19 @@
 {
+  "project": {
+    "name": "QVAC",
+    "description": "the QVAC monorepo (Tether's local-AI SDK, JS/TS, runs on Node and Bare)"
+  },
   "include": [
     "packages/*/src/**/*.{ts,tsx,js,mjs,cjs}",
     "packages/registry-server/{lib,utils,shared,client/lib,client/bin}/**/*.js",
     "packages/registry-server/index.js"
   ],
   "churnSince": "6 months ago",
-  "reviewTop": 10,
+  "reviewTop": 40,
   "minLoc": 40,
-  "concurrency": 1,
-  "backend": "openai-compatible",
-  "openaiBaseUrl": "http://127.0.0.1:11435/v1",
-  "openaiMaxToolCalls": 6,
-  "reviewModel": "reviewer",
-  "verifyModel": "reviewer",
+  "concurrency": 5,
+  "reviewModel": "claude-opus-5-5",
+  "verifyModel": "claude-opus-5-5",
   "upstreamRepo": "tetherto/qvac",
   "findingsRepo": "carlocifarelli/qvac-quality-review"
 }

@@ -1,4 +1,6 @@
-# The tool's own checks: typecheck, unit tests and RuleTester cases for every rule.
+# The tool's own checks, then the tool on itself through the published action:
+# typecheck, unit tests, RuleTester cases for every rule, and the action run
+# against this repository (rules over the whole scope; on PRs, the PR check and its comment).
 name: ci
 on:
   push:
@@ -18,3 +20,23 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+
+  dogfood:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rules over the whole repository
+        uses: ./
+        with:
+          command: rules
+      - name: PR check (rules blocking; agent advisory when ANTHROPIC_API_KEY is set)
+        if: github.event_name == 'pull_request'
+        uses: ./
+        with:
+          command: pr
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
